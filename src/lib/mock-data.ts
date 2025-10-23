@@ -52,6 +52,61 @@ export const ROLE_ACTION_ITEMS: RoleActionItems = {
 
 
 export const ALL_TASKS: Task[] = [
+  // --- ROUND 1 SETUP TASKS ---
+  {
+    id: "T0.1",
+    title: "Confirm Initial Finished Goods Stock",
+    description: "Verify and adjust the starting inventory levels for all finished products. This is a one-time setup for Round 1.",
+    role: "Logistics",
+    transactionCode: "ZMB52",
+    priority: "Critical",
+    estimatedTime: 5,
+    roundRecurrence: "Once",
+    startRound: 1,
+    timeframeConstraint: "StartPhase",
+    dependencyIDs: [],
+    completionType: "Data-Confirmed",
+    taskType: "ERPsim Input Data",
+    dataFields: [
+      { fieldName: "Yogurt_Initial_Stock", dataType: "Integer", suggestedValue: 50000 },
+      { fieldName: "Muesli_Initial_Stock", dataType: "Integer", suggestedValue: 50000 },
+    ]
+  },
+  {
+    id: "T0.2",
+    title: "Confirm Initial Raw Material Stock",
+    description: "Verify and adjust the starting inventory for all raw materials. This is a one-time setup for Round 1.",
+    role: "Procurement",
+    transactionCode: "ZMB52",
+    priority: "Critical",
+    estimatedTime: 5,
+    roundRecurrence: "Once",
+    startRound: 1,
+    timeframeConstraint: "StartPhase",
+    dependencyIDs: [],
+    completionType: "Data-Confirmed",
+    taskType: "ERPsim Input Data",
+    dataFields: [
+      { fieldName: "Milk_Initial_Stock", dataType: "Integer", suggestedValue: 60000 },
+      { fieldName: "Packaging_Initial_Stock", dataType: "Integer", suggestedValue: 100000 },
+    ]
+  },
+  {
+    id: "T0.3",
+    title: "Validate & Confirm Bill of Materials (BOM)",
+    description: "Check the recipes for all products to ensure they are correct before starting production. This is a one-time setup for Round 1.",
+    role: "Production",
+    transactionCode: "CS03",
+    priority: "Critical",
+    estimatedTime: 10,
+    roundRecurrence: "Once",
+    startRound: 1,
+    timeframeConstraint: "StartPhase",
+    dependencyIDs: [],
+    completionType: "Manual-Tick",
+    taskType: "Standard"
+  },
+  // --- REGULAR TASKS ---
   {
     id: "T1",
     title: "Forecast Sales",
@@ -122,7 +177,7 @@ export const ALL_TASKS: Task[] = [
     estimatedTime: 10,
     roundRecurrence: "Continuous",
     timeframeConstraint: "None",
-dependencyIDs: [],
+    dependencyIDs: [],
     completionType: "Manual-Tick",
     taskType: "ERPsim Gather Data",
     dataFields: [{ fieldName: "Competitor_Avg_Price", dataType: "Currency" }]
@@ -191,3 +246,5 @@ export const MOCK_PEER_DATA: PeerData[] = [
     { name: 'Team Bravo', companyValuation: 48000000, netIncome: 2100000, totalEmissions: 1050 },
     { name: 'Team Charlie', companyValuation: 62000000, netIncome: 3500000, totalEmissions: 1500 },
 ];
+
+    

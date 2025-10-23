@@ -100,7 +100,10 @@ export const GameStateProvider = ({ children }: { children: ReactNode }) => {
     const latestKpis = newKpiHistory[newKpiHistory.length - 1];
     
     batch.update(gameDocRef, {
-        ...latestKpis,
+        companyValuation: latestKpis.companyValuation,
+        netIncome: latestKpis.netIncome,
+        inventoryValue: latestKpis.inventoryValue,
+        totalEmissions: latestKpis.totalEmissions,
         kpiHistory: newKpiHistory,
         'timerState.isBreakActive': false,
         'timerState.timeLeft': roundDuration,
@@ -115,7 +118,7 @@ export const GameStateProvider = ({ children }: { children: ReactNode }) => {
   }, [breakDuration]);
 
   useEffect(() => {
-    if (isPaused || isLoading) return;
+    if (isPaused || isLoading || !firestore) return;
 
     const timerInterval = setInterval(() => {
         setTimeLeft(prev => {
@@ -138,7 +141,7 @@ export const GameStateProvider = ({ children }: { children: ReactNode }) => {
     }, 1000);
 
     return () => clearInterval(timerInterval);
-  }, [isPaused, isBreakActive, isBreakEnabled, isLoading, advanceRound, startBreak]);
+  }, [isPaused, isBreakActive, isBreakEnabled, isLoading, advanceRound, startBreak, firestore]);
 
   const togglePause = () => {
     updateTimerState({ isPaused: !isPaused });
@@ -186,7 +189,10 @@ export const GameStateProvider = ({ children }: { children: ReactNode }) => {
     const latestKpis = newKpiHistory[newKpiHistory.length - 1];
 
     batch.update(gameDocRef, {
-        ...latestKpis,
+        companyValuation: latestKpis.companyValuation,
+        netIncome: latestKpis.netIncome,
+        inventoryValue: latestKpis.inventoryValue,
+        totalEmissions: latestKpis.totalEmissions,
         kpiHistory: newKpiHistory.slice(-10),
         'timerState.isBreakActive': false,
         'timerState.timeLeft': roundDuration,

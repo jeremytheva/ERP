@@ -10,205 +10,138 @@
           "type": "string",
           "description": "Unique identifier for the user profile."
         },
-        "username": {
+        "name": {
           "type": "string",
-          "description": "The username or display name of the user."
+          "description": "The display name of the user."
+        },
+        "avatarUrl": {
+          "type": "string",
+          "description": "URL for the user's avatar."
         }
       },
-      "required": [
-        "id",
-        "username"
-      ]
+      "required": ["id", "name"]
     },
-    "KpiData": {
+    "GameState": {
       "$schema": "http://json-schema.org/draft-07/schema#",
-      "title": "KpiData",
+      "title": "GameState",
       "type": "object",
-      "description": "Represents Key Performance Indicator (KPI) data for the dashboard.",
+      "description": "Represents the complete state of a single game simulation.",
       "properties": {
-        "id": {
-          "type": "string",
-          "description": "Unique identifier for the KPI data entry."
+        "companyValuation": {"type": "number"},
+        "netIncome": {"type": "number"},
+        "inventoryValue": {"type": "number"},
+        "totalEmissions": {"type": "number"},
+        "teamStrategy": {"type": "string"},
+        "kpiHistory": {
+          "type": "array",
+          "items": { "$ref": "#/entities/KpiHistoryEntry" }
         },
-        "companyValuation": {
-          "type": "number",
-          "description": "The company valuation KPI."
-        },
-        "netIncome": {
-          "type": "number",
-          "description": "The net income KPI."
-        },
-        "inventoryValue": {
-          "type": "number",
-          "description": "The inventory value KPI."
-        },
-        "totalEmissions": {
-          "type": "number",
-          "description": "The total emissions KPI."
-        },
-        "timestamp": {
-          "type": "string",
-          "description": "Timestamp of when the KPI data was recorded.",
-          "format": "date-time"
-        }
-      },
-      "required": [
-        "id",
-        "companyValuation",
-        "netIncome",
-        "inventoryValue",
-        "totalEmissions",
-        "timestamp"
-      ]
+        "timerState": { "$ref": "#/entities/TimerState" }
+      }
     },
-    "ActionItem": {
+    "KpiHistoryEntry": {
       "$schema": "http://json-schema.org/draft-07/schema#",
-      "title": "ActionItem",
+      "title": "KpiHistoryEntry",
       "type": "object",
-      "description": "Represents an action item in the user's to-do list.",
       "properties": {
-        "id": {
-          "type": "string",
-          "description": "Unique identifier for the action item."
-        },
-        "userId": {
-          "type": "string",
-          "description": "Reference to UserProfile. (Relationship: UserProfile 1:N ActionItem)"
-        },
-        "description": {
-          "type": "string",
-          "description": "Description of the action item."
-        },
-        "isCompleted": {
-          "type": "boolean",
-          "description": "Indicates whether the action item is completed."
-        }
-      },
-      "required": [
-        "id",
-        "userId",
-        "description",
-        "isCompleted"
-      ]
+        "round": {"type": "number"},
+        "companyValuation": {"type": "number"},
+        "netIncome": {"type": "number"},
+        "inventoryValue": {"type": "number"},
+        "totalEmissions": {"type": "number"}
+      }
     },
-    "CompetitorAnalysisLog": {
+    "TimerState": {
       "$schema": "http://json-schema.org/draft-07/schema#",
-      "title": "CompetitorAnalysisLog",
+      "title": "TimerState",
+      "type": "object",
+      "properties": {
+        "timeLeft": {"type": "number"},
+        "isPaused": {"type": "boolean"},
+        "isBreakActive": {"type": "boolean"},
+        "isBreakEnabled": {"type": "boolean"},
+        "roundDuration": {"type": "number"},
+        "breakDuration": {"type": "number"}
+      }
+    },
+    "Task": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "Task",
+      "type": "object",
+      "description": "Represents a single task or action item.",
+      "properties": {
+        "id": {"type": "string"},
+        "title": {"type": "string"},
+        "description": {"type": "string"},
+        "role": {"type": "string"},
+        "transactionCode": {"type": "string"},
+        "priority": {"type": "string"},
+        "estimatedTime": {"type": "number"},
+        "roundRecurrence": {"type": "string"},
+        "startRound": {"type": "number"},
+        "dependencyIDs": {"type": "array", "items": {"type": "string"}},
+        "completionType": {"type": "string"},
+        "taskType": {"type": "string"},
+        "completed": {"type": "boolean"},
+        "dataFields": {
+          "type": "array",
+          "items": { "$ref": "#/entities/TaskDataField" }
+        }
+      }
+    },
+    "TaskDataField": {
+       "$schema": "http://json-schema.org/draft-07/schema#",
+       "title": "TaskDataField",
+       "type": "object",
+       "properties": {
+         "fieldName": {"type": "string"},
+         "dataType": {"type": "string"},
+         "value": {"type": ["number", "string", "null"]},
+         "suggestedValue": {"type": ["number", "string", "null"]},
+         "aiRationale": {"type": "string"}
+       }
+    },
+    "TeamSettings": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "TeamSettings",
+      "type": "object",
+      "description": "Stores team-wide settings.",
+      "properties": {
+        "teamLeader": {"type": "string"}
+      }
+    },
+    "CompetitorLogEntry": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "CompetitorLogEntry",
       "type": "object",
       "description": "Represents a log entry for competitor analysis.",
       "properties": {
-        "id": {
-          "type": "string",
-          "description": "Unique identifier for the competitor analysis log entry."
-        },
-        "authorId": {
-          "type": "string",
-          "description": "Reference to UserProfile. (Relationship: UserProfile 1:N CompetitorAnalysisLog)"
-        },
-        "teamName": {
-          "type": "string",
-          "description": "Name of the competitor team being analyzed."
-        },
-        "notes": {
-          "type": "string",
-          "description": "Notes about the competitor's strategy or performance."
-        },
-        "timestamp": {
-          "type": "string",
-          "description": "Timestamp of when the log entry was created.",
-          "format": "date-time"
-        }
-      },
-      "required": [
-        "id",
-        "authorId",
-        "teamName",
-        "notes",
-        "timestamp"
-      ]
+        "id": {"type": "string"},
+        "text": {"type": "string"},
+        "author": {"type": "string"},
+        "createdAt": {"type": "string", "format": "date-time"}
+      }
     }
   },
   "auth": {
-    "providers": [
-      "password",
-      "anonymous"
-    ]
+    "providers": ["anonymous"]
   },
   "firestore": {
-    "structure": [
-      {
-        "path": "/userProfiles/{userId}",
-        "definition": {
-          "entityName": "UserProfile",
-          "schema": {
-            "$ref": "#/backend/entities/UserProfile"
-          },
-          "description": "Stores user profile data.  Uses path-based ownership for simple authorization rules.",
-          "params": [
-            {
-              "name": "userId",
-              "description": "The unique identifier for the user."
-            }
-          ]
-        }
-      },
-      {
-        "path": "/kpiData/{kpiId}",
-        "definition": {
-          "entityName": "KpiData",
-          "schema": {
-            "$ref": "#/backend/entities/KpiData"
-          },
-          "description": "Stores Key Performance Indicator (KPI) data. Accessible globally for analysis and display on the dashboard.",
-          "params": [
-            {
-              "name": "kpiId",
-              "description": "The unique identifier for the KPI data entry."
-            }
-          ]
-        }
-      },
-      {
-        "path": "/userProfiles/{userId}/actionItems/{actionItemId}",
-        "definition": {
-          "entityName": "ActionItem",
-          "schema": {
-            "$ref": "#/backend/entities/ActionItem"
-          },
-          "description": "Stores action items specific to each user. Uses path-based ownership for security.",
-          "params": [
-            {
-              "name": "userId",
-              "description": "The unique identifier for the user."
-            },
-            {
-              "name": "actionItemId",
-              "description": "The unique identifier for the action item."
-            }
-          ]
-        }
-      },
-      {
-        "path": "/userProfiles/{userId}/competitorAnalysisLogs/{logId}",
-        "definition": {
-          "entityName": "CompetitorAnalysisLog",
-          "schema": {
-            "$ref": "#/backend/entities/CompetitorAnalysisLog"
-          },
-          "description": "Stores competitor analysis logs specific to each user.  Uses path-based ownership for security.",
-          "params": [
-            {
-              "name": "userId",
-              "description": "The unique identifier for the user."
-            },
-            {
-              "name": "logId",
-              "description": "The unique identifier for the competitor analysis log entry."
-            }
-          ]
-        }
-      }
-    ],
-    "reasoning": "The Firestore structure is designed to ensure authorization independence, clarity, and scalability for the ERPsim Dashboard application. User profiles are stored in a dedicated collection. KPI data is stored in its own collection without user-specific scoping to allow for global access and analysis, recognizing it is not tightly coupled with specific users but represents overall game state. Action items and competitor analysis logs are structured as subcollections under user documents, enabling straightforward path-based authorization rules and efficient querying of user-specific data. This structure facilitates secure `list` operations (QAPs) by isolating data based on ownership and purpose, thus avoiding the need for complex filtering within rules. The membership map pattern is not applicable in this scenario as all entities are based on individual ownership or global data."
+    "/games/{gameId}": {
+      "schema": { "$ref": "#/entities/GameState" },
+      "description": "Stores the entire state for a single game instance."
+    },
+    "/tasks/{taskId}": {
+      "schema": { "$ref": "#/entities/Task" },
+      "description": "Stores all defined tasks for the application."
+    },
+    "/settings/{settingsId}": {
+      "schema": { "$ref": "#/entities/TeamSettings" },
+      "description": "Stores global settings for the team."
+    },
+    "/competitor_log/{logId}": {
+      "schema": { "$ref": "#/entities/CompetitorLogEntry" },
+      "description": "Stores a timeline of competitor analysis notes."
+    }
   }
 }

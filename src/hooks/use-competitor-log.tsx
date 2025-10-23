@@ -28,7 +28,7 @@ export const CompetitorLogProvider = ({ children }: { children: ReactNode }) => 
       const entries = querySnapshot.docs.map(doc => ({
         id: doc.id,
         ...doc.data(),
-        createdAt: doc.data().createdAt.toDate(),
+        createdAt: doc.data().createdAt?.toDate(),
       } as CompetitorLogEntry));
       setLogEntries(entries);
     });

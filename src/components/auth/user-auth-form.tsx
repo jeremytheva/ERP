@@ -28,9 +28,15 @@ export function UserAuthForm({ className, ...props }: UserAuthFormProps) {
     if (!user) {
         initiateAnonymousSignIn(auth);
     }
-    await login(selectedProfile);
-    setIsLoading(false);
+    // The onAuthStateChanged listener in AuthProvider will handle the user state change
+    // and we can then proceed with login. We will wait for the user object to be available.
   };
+
+  React.useEffect(() => {
+    if (user && isLoading) {
+      login(selectedProfile).finally(() => setIsLoading(false));
+    }
+  }, [user, isLoading, login, selectedProfile]);
 
   return (
     <div className={cn("grid gap-6", className)} {...props}>

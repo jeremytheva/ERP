@@ -28,6 +28,7 @@ export const TeamSettingsProvider = ({ children }: { children: ReactNode }) => {
       if (docSnap.exists()) {
         setTeamLeaderState(docSnap.data().teamLeader || null);
       } else {
+        // Initialize settings document if it doesn't exist
         setDoc(settingsDocRef, { teamLeader: null });
       }
     });

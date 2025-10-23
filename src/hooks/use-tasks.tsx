@@ -24,7 +24,11 @@ export const TasksProvider = ({ children }: { children: ReactNode }) => {
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    if (!user || !firestore) return;
+    if (!user || !firestore) {
+      setTasks(ALL_TASKS); // Fallback to mock data if firestore is not available
+      setIsLoading(false);
+      return;
+    }
     setIsLoading(true);
     
     const tasksColRef = collection(firestore, "tasks");
@@ -69,7 +73,7 @@ export const TasksProvider = ({ children }: { children: ReactNode }) => {
     if (!user || !firestore) return;
     const taskDocRef = doc(firestore, "tasks", taskId);
     const batch = writeBatch(firestore);
-    batch.delete(taskDocRef);
+batch.delete(taskDocRef);
     await batch.commit();
   };
   

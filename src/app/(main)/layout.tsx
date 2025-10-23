@@ -24,12 +24,14 @@ export default function MainLayout({ children }: { children: React.ReactNode }) 
 
   return (
     <SidebarProvider>
-      <MainSidebar />
-      <div className="flex-1 flex flex-col">
-        <Header />
-        <main className="flex-1 overflow-y-auto p-4 md:p-6 lg:p-8">
-          {children}
-        </main>
+      <div className="flex min-h-screen">
+        <MainSidebar />
+        <div className="flex-1 flex flex-col">
+          <Header />
+          <main className="flex-1 overflow-y-auto p-4 md:p-6 lg:p-8">
+            {children}
+          </main>
+        </div>
       </div>
       <AiCopilot />
     </SidebarProvider>

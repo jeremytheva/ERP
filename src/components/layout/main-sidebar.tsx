@@ -22,7 +22,6 @@ import type { Role } from "@/types";
 const baseMenuItems = [
   { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
   { href: "/action-items", label: "Action Items", icon: ListTodo },
-  { href: "/competitor-log", label: "Competitor Log", icon: Users },
 ];
 
 const salesMenuItems = [
@@ -68,7 +67,7 @@ export function MainSidebar() {
     }
     
     // Sort menu items to a consistent order
-    const desiredOrder = ["/dashboard", "/action-items", "/competitor-log", "/scenario-planning", "/strategic-advisor", "/debriefing", "/settings"];
+    const desiredOrder = ["/dashboard", "/action-items", "/scenario-planning", "/strategic-advisor", "/debriefing", "/settings"];
     menu.sort((a, b) => desiredOrder.indexOf(a.href) - desiredOrder.indexOf(b.href));
 
     return menu;

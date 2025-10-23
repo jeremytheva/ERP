@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState } from "react";
@@ -43,7 +44,7 @@ export function ScenarioForm() {
     },
   });
 
-  const onSubmit = async (values: z.infer<typeof formSchema>>) => {
+  const onSubmit = async (values: z.infer<typeof formSchema>) => {
     setIsLoading(true);
     setResults(null);
     const result = await simulateScenarioAction({

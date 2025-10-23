@@ -13,8 +13,8 @@ import { Toaster } from "@/components/ui/toaster";
 export function AppProviders({ children }: { children: React.ReactNode }) {
   return (
     <FirebaseClientProvider>
-      <AuthProvider>
-        <UserProfilesProvider>
+      <UserProfilesProvider>
+        <AuthProvider>
           <TeamSettingsProvider>
             <GameStateProvider>
               <TasksProvider>
@@ -25,8 +25,8 @@ export function AppProviders({ children }: { children: React.ReactNode }) {
               </TasksProvider>
             </GameStateProvider>
           </TeamSettingsProvider>
-        </UserProfilesProvider>
-      </AuthProvider>
+        </AuthProvider>
+      </UserProfilesProvider>
     </FirebaseClientProvider>
   );
 }

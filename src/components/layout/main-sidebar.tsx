@@ -42,17 +42,15 @@ export function MainSidebar() {
       <SidebarMenu className="flex-1 p-2">
         {menuItems.map(({ href, label, icon: Icon }) => (
           <SidebarMenuItem key={href}>
-            <Link href={href} passHref legacyBehavior>
+            <Link href={href} passHref>
               <SidebarMenuButton
-                asChild
+                as="a"
                 isActive={pathname === href}
                 tooltip={{ children: label, side: "right", align:"center" }}
                 className="justify-start"
               >
-                <a>
-                  <Icon />
-                  <span>{label}</span>
-                </a>
+                <Icon />
+                <span>{label}</span>
               </SidebarMenuButton>
             </Link>
           </SidebarMenuItem>

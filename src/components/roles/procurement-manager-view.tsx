@@ -14,16 +14,24 @@ import { Button } from "@/components/ui/button";
 import { Label } from '@/components/ui/label';
 
 const RAW_MATERIALS = [
-    { id: 'RM-01', name: 'Wheat', stock: 6000, required: 12000, vendor: 'fast' },
-    { id: 'RM-02', name: 'Oats', stock: 4500, required: 15000, vendor: 'fast' },
-    { id: 'RM-03', name: 'Nuts', stock: 8000, required: 9000, vendor: 'green' },
-    { id: 'RM-04', name: 'Raisins', stock: 7000, required: 7500, vendor: 'fast' },
-    { id: 'RM-05', name: 'Blueberries', stock: 2000, required: 5000, vendor: 'green' },
-    { id: 'RM-06', name: 'Strawberries', stock: 11000, required: 6000, vendor: 'fast' },
+    { id: 'RM-01', name: 'Wheat', stock: 6000, required: 12000, vendor: 'v01' },
+    { id: 'RM-02', name: 'Oats', stock: 4500, required: 15000, vendor: 'v01' },
+    { id: 'RM-03', name: 'Nuts', stock: 8000, required: 9000, vendor: 'v11' },
+    { id: 'RM-04', name: 'Raisins', stock: 7000, required: 7500, vendor: 'v01' },
+    { id: 'RM-05', name: 'Blueberries', stock: 2000, required: 5000, vendor: 'v11' },
+    { id: 'RM-06', name: 'Strawberries', stock: 11000, required: 6000, vendor: 'v01' },
 ];
 
+const PACKAGING_MATERIALS = [
+    { id: 'PKG-01', name: 'Small Bag', vendor: 'v02'},
+    { id: 'PKG-02', name: 'Large Bag', vendor: 'v02'},
+    { id: 'PKG-03', name: 'Small Box', vendor: 'v02'},
+    { id: 'PKG-04', name: 'Large Box', vendor: 'v02'},
+]
+
 type ProcurementFormData = {
-    sourcing: { materialId: string; vendor: 'fast' | 'green' }[];
+    sourcing: { materialId: string; vendor: 'v01' | 'v11' }[];
+    packagingSourcing: { materialId: string; vendor: 'v02' | 'v12' }[];
     orders: { materialId: string; orderQty: number }[];
     sustainabilityInvestment: number;
 };
@@ -35,13 +43,15 @@ export function ProcurementManagerView() {
 
     const { register, control, watch } = useForm<ProcurementFormData>({
         defaultValues: {
-            sourcing: RAW_MATERIALS.map(rm => ({ materialId: rm.id, vendor: rm.vendor })),
+            sourcing: RAW_MATERIALS.map(rm => ({ materialId: rm.id, vendor: rm.vendor as 'v01' | 'v11' })),
+            packagingSourcing: PACKAGING_MATERIALS.map(pkg => ({ materialId: pkg.id, vendor: pkg.vendor as 'v02' | 'v12'})),
             orders: RAW_MATERIALS.map(rm => ({ materialId: rm.id, orderQty: Math.max(0, rm.required - rm.stock) })),
             sustainabilityInvestment: 50000,
         }
     });
 
     const { fields: sourcingFields } = useFieldArray({ control, name: 'sourcing' });
+    const { fields: packagingSourcingFields } = useFieldArray({ control, name: 'packagingSourcing'});
     const { fields: orderFields } = useFieldArray({ control, name: 'orders' });
 
     return (
@@ -92,40 +102,79 @@ export function ProcurementManagerView() {
                              <TabsContent value="sourcing">
                                 <Card>
                                     <CardHeader><CardTitle>Sourcing Decision</CardTitle><CardDescription>Set the order strategy and vendor selection for each raw material.</CardDescription></CardHeader>
-                                    <CardContent>
-                                        <Table>
-                                            <TableHeader>
-                                                <TableRow>
-                                                    <TableHead>Material</TableHead>
-                                                    <TableHead>Vendor Selection</TableHead>
-                                                </TableRow>
-                                            </TableHeader>
-                                            <TableBody>
-                                                {sourcingFields.map((field, index) => {
-                                                    const material = RAW_MATERIALS.find(rm => rm.id === field.materialId);
-                                                    return (
-                                                        <TableRow key={field.id}>
-                                                            <TableCell>{material?.name}</TableCell>
-                                                            <TableCell>
-                                                                <Controller
-                                                                    control={control}
-                                                                    name={`sourcing.${index}.vendor`}
-                                                                    render={({ field: controllerField }) => (
-                                                                        <Select onValueChange={controllerField.onChange} value={controllerField.value}>
-                                                                            <SelectTrigger><SelectValue /></SelectTrigger>
-                                                                            <SelectContent>
-                                                                                <SelectItem value="fast">Fast Vendors (V01/V02)</SelectItem>
-                                                                                <SelectItem value="green">Green Vendors (V11/V12)</SelectItem>
-                                                                            </SelectContent>
-                                                                        </Select>
-                                                                    )}
-                                                                />
-                                                            </TableCell>
-                                                        </TableRow>
-                                                    )
-                                                })}
-                                            </TableBody>
-                                        </Table>
+                                    <CardContent className="space-y-6">
+                                        <div>
+                                            <h4 className="font-medium mb-2">Raw Material Sourcing</h4>
+                                            <Table>
+                                                <TableHeader>
+                                                    <TableRow>
+                                                        <TableHead>Material</TableHead>
+                                                        <TableHead>Vendor Selection</TableHead>
+                                                    </TableRow>
+                                                </TableHeader>
+                                                <TableBody>
+                                                    {sourcingFields.map((field, index) => {
+                                                        const material = RAW_MATERIALS.find(rm => rm.id === field.materialId);
+                                                        return (
+                                                            <TableRow key={field.id}>
+                                                                <TableCell>{material?.name}</TableCell>
+                                                                <TableCell>
+                                                                    <Controller
+                                                                        control={control}
+                                                                        name={`sourcing.${index}.vendor`}
+                                                                        render={({ field: controllerField }) => (
+                                                                            <Select onValueChange={controllerField.onChange} value={controllerField.value}>
+                                                                                <SelectTrigger><SelectValue /></SelectTrigger>
+                                                                                <SelectContent>
+                                                                                    <SelectItem value="v01">Fast Vendors (V01)</SelectItem>
+                                                                                    <SelectItem value="v11">Green Vendors (V11)</SelectItem>
+                                                                                </SelectContent>
+                                                                            </Select>
+                                                                        )}
+                                                                    />
+                                                                </TableCell>
+                                                            </TableRow>
+                                                        )
+                                                    })}
+                                                </TableBody>
+                                            </Table>
+                                        </div>
+                                         <div>
+                                            <h4 className="font-medium mb-2">Packaging Sourcing</h4>
+                                            <Table>
+                                                <TableHeader>
+                                                    <TableRow>
+                                                        <TableHead>Material</TableHead>
+                                                        <TableHead>Vendor Selection</TableHead>
+                                                    </TableRow>
+                                                </TableHeader>
+                                                <TableBody>
+                                                    {packagingSourcingFields.map((field, index) => {
+                                                        const material = PACKAGING_MATERIALS.find(rm => rm.id === field.materialId);
+                                                        return (
+                                                            <TableRow key={field.id}>
+                                                                <TableCell>{material?.name}</TableCell>
+                                                                <TableCell>
+                                                                    <Controller
+                                                                        control={control}
+                                                                        name={`packagingSourcing.${index}.vendor`}
+                                                                        render={({ field: controllerField }) => (
+                                                                            <Select onValueChange={controllerField.onChange} value={controllerField.value}>
+                                                                                <SelectTrigger><SelectValue /></SelectTrigger>
+                                                                                <SelectContent>
+                                                                                    <SelectItem value="v02">Packaging Vendors (V02)</SelectItem>
+                                                                                    <SelectItem value="v12">Packaging-Green Vendors (V12)</SelectItem>
+                                                                                </SelectContent>
+                                                                            </Select>
+                                                                        )}
+                                                                    />
+                                                                </TableCell>
+                                                            </TableRow>
+                                                        )
+                                                    })}
+                                                </TableBody>
+                                            </Table>
+                                        </div>
                                     </CardContent>
                                 </Card>
                             </TabsContent>
@@ -185,3 +234,5 @@ export function ProcurementManagerView() {
         </Card>
     );
 }
+
+    

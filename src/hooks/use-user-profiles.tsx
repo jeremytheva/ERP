@@ -42,7 +42,14 @@ export const UserProfilesProvider = ({ children }: { children: ReactNode }) => {
                 const profileDocRef = doc(firestore, "users", profile.id);
                 batch.set(profileDocRef, profile);
             });
-            await batch.commit();
+            // Non-blocking commit
+            batch.commit().catch(error => {
+                 const contextualError = new FirestorePermissionError({
+                    path: 'users',
+                    operation: 'write',
+                });
+                errorEmitter.emit('permission-error', contextualError);
+            });
         } else {
             setProfiles(firestoreProfiles.length > 0 ? firestoreProfiles : USER_PROFILES);
             setLoading(false);

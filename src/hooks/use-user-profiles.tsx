@@ -21,8 +21,6 @@ export const UserProfilesProvider = ({ children }: { children: ReactNode }) => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // The user object is not available here directly, but the auth instance is.
-    // The onSnapshot will trigger based on the firestore instance being ready.
     if (!auth || !firestore) {
       setProfiles(USER_PROFILES);
       setLoading(false);
@@ -45,7 +43,6 @@ export const UserProfilesProvider = ({ children }: { children: ReactNode }) => {
                 batch.set(profileDocRef, profile);
             });
             await batch.commit();
-            // onSnapshot will re-run with the new data.
         } else {
             setProfiles(firestoreProfiles.length > 0 ? firestoreProfiles : USER_PROFILES);
             setLoading(false);

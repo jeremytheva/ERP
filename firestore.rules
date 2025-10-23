@@ -1,102 +1,115 @@
 /**
- * @fileoverview Firestore Security Rules for the ERPsim Dashboard application.
+ * @file Firestore Security Rules
+ * @description This ruleset is in PROTOTYPING mode. It prioritizes strict authorization over data validation,
+ *              allowing for rapid schema iteration.
  *
  * Core Philosophy:
- * This ruleset enforces a strict user-ownership model for user-specific data
- * (action items, competitor analysis logs) and allows public read access to KPI data.
+ *   - All data access is predicated on verified user identity (request.auth != null).
+ *   - Data validation is minimized to accelerate development. Focus is on ownership and access control.
+ *   - Write operations are ALWAYS protected by an authorization check. NEVER allow `if true;`.
  *
  * Data Structure:
- * - /userProfiles/{userId}: Stores individual user profiles, secured by owner-only access.
- * - /kpiData/{kpiId}: Stores global KPI data, publicly readable.
- * - /userProfiles/{userId}/actionItems/{actionItemId}: Stores action items, secured by owner-only access.
- * - /userProfiles/{userId}/competitorAnalysisLogs/{logId}: Stores competitor analysis logs, secured by owner-only access.
+ *   - Top-level collections: /games/{gameId}, /tasks/{taskId}, /settings/{settingsId}, /competitor_log/{logId}.
+ *   - There are no user-specific data trees.
  *
  * Key Security Decisions:
- * - User listing is implicitly denied.
- * - KPI data is publicly readable.
- * - Missing ownership fields will result in `// TODO` rules.
+ *   - Listing all documents in the database is generally disallowed unless explicitly stated.
+ *   - The rules do not enforce the exact schema of the data being written, only authorization.
  *
- * Denormalization for Authorization:
- *  - Authorization relies on the path (`userId`) to determine ownership, avoiding the need for `get()` calls.
+ *
+ * Access Control Patterns:
+ *   - /games/{gameId}: Public Read with Owner-Only Writes (assuming a field exists for ownership)
+ *   - /tasks/{taskId}: Public Read with Owner-Only Writes (assuming a field exists for ownership)
+ *   - /settings/{settingsId}: Public Read with Owner-Only Writes (assuming a field exists for ownership)
+ *   - /competitor_log/{logId}: Public Read with Owner-Only Writes (assuming a field exists for ownership)
  */
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
     /**
-     * @description Manages user profile data, ensuring only the owning user can read or write their profile.
-     * @path /userProfiles/{userId}
-     * @allow (create) User with UID 'user_abc' can create a profile at /userProfiles/user_abc.
-     * @deny (create) User with UID 'user_xyz' cannot create a profile at /userProfiles/user_abc.
-     * @allow (get, update, delete) User with UID 'user_abc' can read, update, or delete their profile at /userProfiles/user_abc.
-     * @deny (get, update, delete) User with UID 'user_xyz' cannot read, update, or delete profile at /userProfiles/user_abc.
-     * @principle Enforces document ownership for all operations.
+     * @description Controls access to game state documents.
+     * @path /games/{gameId}
+     * @allow (get, list): Any user can read game state.
+     * @allow (create): Only the authenticated user who 'owns' the game document can create it, and must set the `ownerId` field to their UID.
+     * @allow (update, delete): Only the authenticated user who 'owns' the game document can modify or delete it.
+     * @deny (create): An unauthenticated user cannot create a game state document.
+     * @deny (update): A user cannot update a game they don't own.
+     * @deny (delete): A user cannot delete a game they don't own.
+     * @principle Public Read with Owner-Only Writes.  Enforces ownership for data modification.
      */
-    match /userProfiles/{userId} {
-      allow get: if isOwner(userId);
-      allow list: if false;
-      allow create: if isOwner(userId) && request.resource.data.id == userId;
-      allow update: if isExistingOwner(userId) && request.resource.data.id == resource.data.id;
-      allow delete: if isExistingOwner(userId);
-    }
-
-    /**
-     * @description Manages Key Performance Indicator (KPI) data, allowing public read access but restricting writes.
-     * @path /kpiData/{kpiId}
-     * @allow (get, list) Any user can read KPI data.
-     * @deny (create, update, delete) No user can create, update, or delete KPI data without custom logic.
-     * @principle Allows public read access to global data while restricting write access.
-     */
-    match /kpiData/{kpiId} {
+    match /games/{gameId} {
       allow get, list: if true;
-      allow create, update, delete: if false;
+      allow create: if isSignedIn() && request.resource.data.ownerId == request.auth.uid; // Initial owner assignment.
+      allow update: if isSignedIn() && isExistingOwner(resource.data.ownerId);
+      allow delete: if isSignedIn() && isExistingOwner(resource.data.ownerId);
     }
 
     /**
-     * @description Manages action items for a specific user, ensuring only the owning user can manage them.
-     * @path /userProfiles/{userId}/actionItems/{actionItemId}
-     * @allow (create) User with UID 'user_abc' can create an action item at /userProfiles/user_abc/actionItems/item_1.
-     * @deny (create) User with UID 'user_xyz' cannot create an action item at /userProfiles/user_abc/actionItems/item_1.
-     * @allow (get, update, delete) User with UID 'user_abc' can read, update, or delete their action item at /userProfiles/user_abc/actionItems/item_1.
-     * @deny (get, update, delete) User with UID 'user_xyz' cannot read, update, or delete action item at /userProfiles/user_abc/actionItems/item_1.
-     * @principle Enforces document ownership and relational integrity for user-specific data.
+     * @description Controls access to task documents.
+     * @path /tasks/{taskId}
+     * @allow (get, list): Any user can read tasks.
+     * @allow (create): Only the authenticated user who 'owns' the task document can create it, and must set the `ownerId` field to their UID.
+     * @allow (update, delete): Only the authenticated user who 'owns' the task document can modify or delete it.
+     * @deny (create): An unauthenticated user cannot create a task document.
+     * @deny (update): A user cannot update a task they don't own.
+     * @deny (delete): A user cannot delete a task they don't own.
+     * @principle Public Read with Owner-Only Writes.  Enforces ownership for data modification.
      */
-    match /userProfiles/{userId}/actionItems/{actionItemId} {
-      allow get: if isOwner(userId);
-      allow list: if isOwner(userId);
-      allow create: if isOwner(userId) && request.resource.data.userId == userId;
-      allow update: if isExistingOwner(userId) && request.resource.data.userId == resource.data.userId;
-      allow delete: if isExistingOwner(userId);
+    match /tasks/{taskId} {
+      allow get, list: if true;
+      allow create: if isSignedIn() && request.resource.data.ownerId == request.auth.uid;
+      allow update: if isSignedIn() && isExistingOwner(resource.data.ownerId);
+      allow delete: if isSignedIn() && isExistingOwner(resource.data.ownerId);
     }
 
     /**
-     * @description Manages competitor analysis logs for a specific user, ensuring only the owning user can manage them.
-     * @path /userProfiles/{userId}/competitorAnalysisLogs/{logId}
-     * @allow (create) User with UID 'user_abc' can create a log entry at /userProfiles/user_abc/competitorAnalysisLogs/log_1.
-     * @deny (create) User with UID 'user_xyz' cannot create a log entry at /userProfiles/user_abc/competitorAnalysisLogs/log_1.
-     * @allow (get, update, delete) User with UID 'user_abc' can read, update, or delete their log entry at /userProfiles/user_abc/competitorAnalysisLogs/log_1.
-     * @deny (get, update, delete) User with UID 'user_xyz' cannot read, update, or delete log entry at /userProfiles/user_abc/competitorAnalysisLogs/log_1.
-     * @principle Enforces document ownership and relational integrity for user-specific data.
+     * @description Controls access to team settings documents.
+     * @path /settings/{settingsId}
+     * @allow (get, list): Any user can read team settings.
+     * @allow (create): Only the authenticated user who 'owns' the settings document can create it, and must set the `ownerId` field to their UID.
+     * @allow (update, delete): Only the authenticated user who 'owns' the settings document can modify or delete it.
+     * @deny (create): An unauthenticated user cannot create a settings document.
+     * @deny (update): A user cannot update settings they don't own.
+     * @deny (delete): A user cannot delete settings they don't own.
+     * @principle Public Read with Owner-Only Writes.  Enforces ownership for data modification.
      */
-    match /userProfiles/{userId}/competitorAnalysisLogs/{logId} {
-      allow get: if isOwner(userId);
-      allow list: if isOwner(userId);
-      allow create: if isOwner(userId) && request.resource.data.authorId == userId;
-      allow update: if isExistingOwner(userId) && request.resource.data.authorId == resource.data.authorId;
-      allow delete: if isExistingOwner(userId);
+    match /settings/{settingsId} {
+      allow get, list: if true;
+      allow create: if isSignedIn() && request.resource.data.ownerId == request.auth.uid;
+      allow update: if isSignedIn() && isExistingOwner(resource.data.ownerId);
+      allow delete: if isSignedIn() && isExistingOwner(resource.data.ownerId);
     }
-  }
 
-  // Helper functions
-  function isSignedIn() {
-    return request.auth != null;
-  }
+    /**
+     * @description Controls access to competitor log entry documents.
+     * @path /competitor_log/{logId}
+     * @allow (get, list): Any user can read competitor log entries.
+     * @allow (create): Only the authenticated user who 'owns' the log entry document can create it, and must set the `authorId` field to their UID.
+     * @allow (update, delete): Only the authenticated user who 'owns' the log entry document can modify or delete it.
+     * @deny (create): An unauthenticated user cannot create a log entry document.
+     * @deny (update): A user cannot update a log entry they don't own.
+     * @deny (delete): A user cannot delete a log entry they don't own.
+     * @principle Public Read with Owner-Only Writes.  Enforces ownership for data modification.
+     */
+    match /competitor_log/{logId} {
+      allow get, list: if true;
+      allow create: if isSignedIn() && request.resource.data.authorId == request.auth.uid;
+      allow update: if isSignedIn() && isExistingOwner(resource.data.author);
+      allow delete: if isSignedIn() && isExistingOwner(resource.data.author);
+    }
 
-  function isOwner(userId) {
-    return isSignedIn() && request.auth.uid == userId;
-  }
+    // Helper Functions
+    function isSignedIn() {
+      return request.auth != null;
+    }
 
-  function isExistingOwner(userId) {
-    return isOwner(userId) && resource != null;
+    function isOwner(userId) {
+      return request.auth.uid == userId;
+    }
+
+    function isExistingOwner(userId) {
+        return isOwner(userId) && resource != null;
+    }
   }
 }

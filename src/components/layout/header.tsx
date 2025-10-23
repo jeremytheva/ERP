@@ -15,7 +15,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { ChevronsUpDown, LogOut, Clock, Settings, Play, Pause, RefreshCw, ChevronLeft, ChevronRight, Coffee } from "lucide-react";
+import { ChevronsUpDown, LogOut, Clock, Settings, Play, Pause, RefreshCw, ChevronLeft, ChevronRight, Coffee, ShieldQuestion } from "lucide-react";
 import { usePathname } from "next/navigation";
 import { SidebarTrigger } from "../ui/sidebar";
 import { useGameState } from "@/hooks/use-game-data";
@@ -64,12 +64,14 @@ export function Header() {
     isBreakEnabled,
     roundDuration,
     breakDuration,
+    confirmNextRound,
     togglePause, 
     resetTimer, 
     setRound,
     setRoundDuration,
     setBreakDuration,
     setIsBreakEnabled,
+    setConfirmNextRound
   } = useGameState();
   const pathname = usePathname();
   const pageTitle = getPageTitle(pathname);
@@ -152,6 +154,13 @@ export function Header() {
                      <div className="flex items-center justify-between">
                          <Label htmlFor="break-enabled" className="text-sm">Enable Breaks</Label>
                          <Switch id="break-enabled" checked={isBreakEnabled} onCheckedChange={setIsBreakEnabled} />
+                     </div>
+                     <div className="flex items-center justify-between">
+                         <Label htmlFor="confirm-next-round" className="text-sm flex items-center gap-1">
+                            <ShieldQuestion className="h-3 w-3" />
+                            Confirm Next Round
+                        </Label>
+                         <Switch id="confirm-next-round" checked={confirmNextRound} onCheckedChange={setConfirmNextRound} />
                      </div>
                  </div>
             </DropdownMenuContent>

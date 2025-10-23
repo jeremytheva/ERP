@@ -25,6 +25,7 @@ export const INITIAL_GAME_STATE: GameState = {
     isBreakEnabled: true,
     roundDuration: 1200, // 20 minutes
     breakDuration: 300, // 5 minutes
+    confirmNextRound: true,
   }
 };
 

@@ -24,6 +24,7 @@ export type TimerState = {
   isBreakEnabled: boolean;
   roundDuration: number;
   breakDuration: number;
+  confirmNextRound: boolean; // Add this line
 }
 
 export type GameState = Kpi & {

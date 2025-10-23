@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useAuth } from "@/hooks/use-auth";
@@ -7,6 +8,7 @@ import { SidebarProvider } from "@/components/ui/sidebar";
 import { MainSidebar } from "@/components/layout/main-sidebar";
 import { Header } from "@/components/layout/header";
 import { AiCopilot } from "@/components/ai/ai-copilot";
+import { ConfirmRoundStartDialog } from "@/components/game/confirm-round-start-dialog";
 
 export default function MainLayout({ children }: { children: React.ReactNode }) {
   const { user, loading } = useAuth();
@@ -34,6 +36,7 @@ export default function MainLayout({ children }: { children: React.ReactNode }) 
         </div>
       </div>
       <AiCopilot />
+      <ConfirmRoundStartDialog />
     </SidebarProvider>
   );
 }

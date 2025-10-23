@@ -11,6 +11,7 @@ import {
   SidebarFooter,
   SidebarTrigger,
 } from "@/components/ui/sidebar";
+import { Button } from "@/components/ui/button";
 import { Bot, LayoutDashboard, Boxes, Lightbulb, BookText, ListTodo, Users, PanelLeft } from "lucide-react";
 
 const menuItems = [

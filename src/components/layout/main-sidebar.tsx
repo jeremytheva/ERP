@@ -22,17 +22,32 @@ import type { Role } from "@/types";
 const baseMenuItems = [
   { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
   { href: "/action-items", label: "Action Items", icon: ListTodo },
+  { href: "/settings", label: "Settings", icon: Settings },
 ];
 
 const salesMenuItems = [
-  ...baseMenuItems,
+  { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
+  { href: "/action-items", label: "Action Items", icon: ListTodo },
   { href: "/scenario-planning", label: "Scenario Planning", icon: Boxes },
   { href: "/strategic-advisor", label: "Strategic Advisor", icon: Lightbulb },
+  { href: "/settings", label: "Settings", icon: Settings },
 ];
 
-const procurementMenuItems = [...baseMenuItems];
-const productionMenuItems = [...baseMenuItems];
-const logisticsMenuItems = [...baseMenuItems];
+const procurementMenuItems = [
+    { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
+    { href: "/action-items", label: "Action Items", icon: ListTodo },
+    { href: "/settings", label: "Settings", icon: Settings },
+];
+const productionMenuItems = [
+    { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
+    { href: "/action-items", label: "Action Items", icon: ListTodo },
+    { href: "/settings", label: "Settings", icon: Settings },
+];
+const logisticsMenuItems = [
+    { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
+    { href: "/action-items", label: "Action Items", icon: ListTodo },
+    { href: "/settings", label: "Settings", icon: Settings },
+];
 
 const teamLeaderMenuItems = [
   { href: "/scenario-planning", label: "Scenario Planning", icon: Boxes },

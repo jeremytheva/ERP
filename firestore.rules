@@ -1,115 +1,72 @@
 /**
  * @file Firestore Security Rules
- * @description This ruleset is in PROTOTYPING mode. It prioritizes strict authorization over data validation,
- *              allowing for rapid schema iteration.
+ * @description This ruleset defines access control for the ERPsim Dashboard application.
  *
  * Core Philosophy:
- *   - All data access is predicated on verified user identity (request.auth != null).
- *   - Data validation is minimized to accelerate development. Focus is on ownership and access control.
- *   - Write operations are ALWAYS protected by an authorization check. NEVER allow `if true;`.
+ * The rules prioritize security by default, restricting data access unless explicitly allowed.
+ * Public read access is enabled only for specific collections where it's appropriate.
+ * All write operations require authentication and authorization.
  *
  * Data Structure:
- *   - Top-level collections: /games/{gameId}, /tasks/{taskId}, /settings/{settingsId}, /competitor_log/{logId}.
- *   - There are no user-specific data trees.
+ * - /games/{gameId}: Stores game state information. Public read, no writes.
+ * - /tasks/{taskId}: Stores predefined tasks. Public read, no writes.
+ * - /settings/{settingsId}: Stores team settings. Public read, no writes.
+ * - /competitor_log/{logId}: Stores competitor log entries. Public read, no writes.
  *
  * Key Security Decisions:
- *   - Listing all documents in the database is generally disallowed unless explicitly stated.
- *   - The rules do not enforce the exact schema of the data being written, only authorization.
- *
- *
- * Access Control Patterns:
- *   - /games/{gameId}: Public Read with Owner-Only Writes (assuming a field exists for ownership)
- *   - /tasks/{taskId}: Public Read with Owner-Only Writes (assuming a field exists for ownership)
- *   - /settings/{settingsId}: Public Read with Owner-Only Writes (assuming a field exists for ownership)
- *   - /competitor_log/{logId}: Public Read with Owner-Only Writes (assuming a field exists for ownership)
+ * - Public read access is granted to the `/games`, `/tasks`, `/settings`, and `/competitor_log` collections.
+ * - No write access is granted through the rules to `/games`, `/tasks`, `/settings`, and `/competitor_log` collections.
  */
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
     /**
-     * @description Controls access to game state documents.
+     * @description Grants public read access to game state data. Write access is denied.
      * @path /games/{gameId}
      * @allow (get, list): Any user can read game state.
-     * @allow (create): Only the authenticated user who 'owns' the game document can create it, and must set the `ownerId` field to their UID.
-     * @allow (update, delete): Only the authenticated user who 'owns' the game document can modify or delete it.
-     * @deny (create): An unauthenticated user cannot create a game state document.
-     * @deny (update): A user cannot update a game they don't own.
-     * @deny (delete): A user cannot delete a game they don't own.
-     * @principle Public Read with Owner-Only Writes.  Enforces ownership for data modification.
+     * @deny (create, update, delete): No user can create, update, or delete game state through rules.
+     * @principle Allows public read access for game state data.
      */
     match /games/{gameId} {
       allow get, list: if true;
-      allow create: if isSignedIn() && request.resource.data.ownerId == request.auth.uid; // Initial owner assignment.
-      allow update: if isSignedIn() && isExistingOwner(resource.data.ownerId);
-      allow delete: if isSignedIn() && isExistingOwner(resource.data.ownerId);
+      allow create, update, delete: if false;
     }
 
     /**
-     * @description Controls access to task documents.
+     * @description Grants public read access to predefined tasks. Write access is denied.
      * @path /tasks/{taskId}
-     * @allow (get, list): Any user can read tasks.
-     * @allow (create): Only the authenticated user who 'owns' the task document can create it, and must set the `ownerId` field to their UID.
-     * @allow (update, delete): Only the authenticated user who 'owns' the task document can modify or delete it.
-     * @deny (create): An unauthenticated user cannot create a task document.
-     * @deny (update): A user cannot update a task they don't own.
-     * @deny (delete): A user cannot delete a task they don't own.
-     * @principle Public Read with Owner-Only Writes.  Enforces ownership for data modification.
+     * @allow (get, list): Any user can read task definitions.
+     * @deny (create, update, delete): No user can create, update, or delete task definitions through rules.
+     * @principle Allows public read access for task definitions.
      */
     match /tasks/{taskId} {
       allow get, list: if true;
-      allow create: if isSignedIn() && request.resource.data.ownerId == request.auth.uid;
-      allow update: if isSignedIn() && isExistingOwner(resource.data.ownerId);
-      allow delete: if isSignedIn() && isExistingOwner(resource.data.ownerId);
+      allow create, update, delete: if false;
     }
 
     /**
-     * @description Controls access to team settings documents.
+     * @description Grants public read access to team settings. Write access is denied.
      * @path /settings/{settingsId}
      * @allow (get, list): Any user can read team settings.
-     * @allow (create): Only the authenticated user who 'owns' the settings document can create it, and must set the `ownerId` field to their UID.
-     * @allow (update, delete): Only the authenticated user who 'owns' the settings document can modify or delete it.
-     * @deny (create): An unauthenticated user cannot create a settings document.
-     * @deny (update): A user cannot update settings they don't own.
-     * @deny (delete): A user cannot delete settings they don't own.
-     * @principle Public Read with Owner-Only Writes.  Enforces ownership for data modification.
+     * @deny (create, update, delete): No user can create, update, or delete team settings through rules.
+     * @principle Allows public read access for team settings.
      */
     match /settings/{settingsId} {
       allow get, list: if true;
-      allow create: if isSignedIn() && request.resource.data.ownerId == request.auth.uid;
-      allow update: if isSignedIn() && isExistingOwner(resource.data.ownerId);
-      allow delete: if isSignedIn() && isExistingOwner(resource.data.ownerId);
+      allow create, update, delete: if false;
     }
 
     /**
-     * @description Controls access to competitor log entry documents.
+     * @description Grants public read access to competitor log entries. Write access is denied.
      * @path /competitor_log/{logId}
      * @allow (get, list): Any user can read competitor log entries.
-     * @allow (create): Only the authenticated user who 'owns' the log entry document can create it, and must set the `authorId` field to their UID.
-     * @allow (update, delete): Only the authenticated user who 'owns' the log entry document can modify or delete it.
-     * @deny (create): An unauthenticated user cannot create a log entry document.
-     * @deny (update): A user cannot update a log entry they don't own.
-     * @deny (delete): A user cannot delete a log entry they don't own.
-     * @principle Public Read with Owner-Only Writes.  Enforces ownership for data modification.
+     * @deny (create, update, delete): No user can create, update, or delete competitor log entries through rules.
+     * @principle Allows public read access for competitor log entries.
      */
     match /competitor_log/{logId} {
       allow get, list: if true;
-      allow create: if isSignedIn() && request.resource.data.authorId == request.auth.uid;
-      allow update: if isSignedIn() && isExistingOwner(resource.data.author);
-      allow delete: if isSignedIn() && isExistingOwner(resource.data.author);
-    }
-
-    // Helper Functions
-    function isSignedIn() {
-      return request.auth != null;
-    }
-
-    function isOwner(userId) {
-      return request.auth.uid == userId;
-    }
-
-    function isExistingOwner(userId) {
-        return isOwner(userId) && resource != null;
+      allow create, update, delete: if false;
     }
   }
 }

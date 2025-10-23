@@ -1,4 +1,5 @@
 
+
 "use client";
 
 import { useState, useEffect } from 'react';
@@ -39,11 +40,7 @@ type ProcurementFormData = {
 export default function ProcurementPage() {
     const searchParams = useSearchParams();
     const defaultSection = searchParams.get('section') || 'inventory-check';
-    const [activeSectionTab, setActiveSectionTab] = useState(defaultSection);
-
-    useEffect(() => {
-        setActiveSectionTab(defaultSection);
-    }, [defaultSection]);
+    const [activeTab, setActiveTab] = useState(defaultSection);
 
     const { register, control, watch } = useForm<ProcurementFormData>({
         defaultValues: {
@@ -61,178 +58,174 @@ export default function ProcurementPage() {
     return (
         <Card>
             <CardHeader>
-                <CardTitle className="font-headline text-3xl">Procurement Manager View</CardTitle>
+                <CardTitle className="font-headline text-3xl">Procurement Manager</CardTitle>
                 <CardDescription>RM sourcing, inventory replenishment, and sustainability investment.</CardDescription>
             </CardHeader>
             <CardContent>
-                <Tabs value={activeSectionTab} onValueChange={setActiveSectionTab} orientation="vertical">
-                    <div className="grid md:grid-cols-4 gap-6">
-                        <TabsList className="md:col-span-1 flex md:flex-col md:h-auto h-auto overflow-x-auto overflow-y-hidden w-full">
-                            <TabsTrigger value="inventory-check" className="justify-start"><Package className="mr-2 h-4 w-4" />Inventory Check (ZMB52)</TabsTrigger>
-                            <TabsTrigger value="sourcing" className="justify-start"><Users className="mr-2 h-4 w-4" />Sourcing (ZME12)</TabsTrigger>
-                            <TabsTrigger value="order-calculation" className="justify-start"><Truck className="mr-2 h-4 w-4" />Order Calc (ME59N)</TabsTrigger>
-                            <TabsTrigger value="sustainability" className="justify-start"><Leaf className="mr-2 h-4 w-4" />Sustainability (ZFB50)</TabsTrigger>
-                        </TabsList>
-                        <div className="md:col-span-3">
-                            <TabsContent value="inventory-check">
-                                <Card>
-                                    <CardHeader><CardTitle>Inventory Check</CardTitle><CardDescription>Pulls current raw material stock and status from the LIT.</CardDescription></CardHeader>
-                                    <CardContent>
-                                        <Table>
-                                            <TableHeader>
-                                                <TableRow>
-                                                    <TableHead>Material</TableHead>
-                                                    <TableHead>Current Stock (kg)</TableHead>
-                                                    <TableHead>Status</TableHead>
-                                                </TableRow>
-                                            </TableHeader>
-                                            <TableBody>
-                                                {RAW_MATERIALS.map(rm => (
-                                                    <TableRow key={rm.id}>
-                                                        <TableCell>{rm.name}</TableCell>
-                                                        <TableCell>{rm.stock.toLocaleString()}</TableCell>
+                <Tabs value={activeTab} onValueChange={setActiveTab}>
+                    <TabsList className="grid w-full grid-cols-4">
+                        <TabsTrigger value="inventory-check"><Package className="mr-2 h-4 w-4" />Inventory Check (ZMB52)</TabsTrigger>
+                        <TabsTrigger value="sourcing"><Users className="mr-2 h-4 w-4" />Sourcing (ZME12)</TabsTrigger>
+                        <TabsTrigger value="order-calculation"><Truck className="mr-2 h-4 w-4" />Order Calc (ME59N)</TabsTrigger>
+                        <TabsTrigger value="sustainability"><Leaf className="mr-2 h-4 w-4" />Sustainability (ZFB50)</TabsTrigger>
+                    </TabsList>
+                    <TabsContent value="inventory-check" className="mt-6">
+                        <Card>
+                            <CardHeader><CardTitle>Inventory Check</CardTitle><CardDescription>Pulls current raw material stock and status from the LIT.</CardDescription></CardHeader>
+                            <CardContent>
+                                <Table>
+                                    <TableHeader>
+                                        <TableRow>
+                                            <TableHead>Material</TableHead>
+                                            <TableHead>Current Stock (kg)</TableHead>
+                                            <TableHead>Status</TableHead>
+                                        </TableRow>
+                                    </TableHeader>
+                                    <TableBody>
+                                        {RAW_MATERIALS.map(rm => (
+                                            <TableRow key={rm.id}>
+                                                <TableCell>{rm.name}</TableCell>
+                                                <TableCell>{rm.stock.toLocaleString()}</TableCell>
+                                                <TableCell>
+                                                    {rm.stock < 5000 ? 
+                                                        <span className="flex items-center text-red-500"><AlertTriangle className="h-4 w-4 mr-2" /> Low Stock</span> : 
+                                                        <span className="text-green-500">OK</span>}
+                                                </TableCell>
+                                            </TableRow>
+                                        ))}
+                                    </TableBody>
+                                </Table>
+                            </CardContent>
+                        </Card>
+                    </TabsContent>
+                        <TabsContent value="sourcing" className="mt-6">
+                        <Card>
+                            <CardHeader><CardTitle>Sourcing Decision</CardTitle><CardDescription>Set the order strategy and vendor selection for each raw material.</CardDescription></CardHeader>
+                            <CardContent className="space-y-6">
+                                <div>
+                                    <h4 className="font-medium mb-2">Raw Material Sourcing</h4>
+                                    <Table>
+                                        <TableHeader>
+                                            <TableRow>
+                                                <TableHead>Material</TableHead>
+                                                <TableHead>Vendor Selection</TableHead>
+                                            </TableRow>
+                                        </TableHeader>
+                                        <TableBody>
+                                            {sourcingFields.map((field, index) => {
+                                                const material = RAW_MATERIALS.find(rm => rm.id === field.materialId);
+                                                return (
+                                                    <TableRow key={field.id}>
+                                                        <TableCell>{material?.name}</TableCell>
                                                         <TableCell>
-                                                            {rm.stock < 5000 ? 
-                                                                <span className="flex items-center text-red-500"><AlertTriangle className="h-4 w-4 mr-2" /> Low Stock</span> : 
-                                                                <span className="text-green-500">OK</span>}
+                                                            <Controller
+                                                                control={control}
+                                                                name={`sourcing.${index}.vendor`}
+                                                                render={({ field: controllerField }) => (
+                                                                    <Select onValueChange={controllerField.onChange} value={controllerField.value}>
+                                                                        <SelectTrigger><SelectValue /></SelectTrigger>
+                                                                        <SelectContent>
+                                                                            <SelectItem value="v01">Fast Vendors (V01)</SelectItem>
+                                                                            <SelectItem value="v11">Green Vendors (V11)</SelectItem>
+                                                                        </SelectContent>
+                                                                    </Select>
+                                                                )}
+                                                            />
                                                         </TableCell>
                                                     </TableRow>
-                                                ))}
-                                            </TableBody>
-                                        </Table>
-                                    </CardContent>
-                                </Card>
-                            </TabsContent>
-                             <TabsContent value="sourcing">
-                                <Card>
-                                    <CardHeader><CardTitle>Sourcing Decision</CardTitle><CardDescription>Set the order strategy and vendor selection for each raw material.</CardDescription></CardHeader>
-                                    <CardContent className="space-y-6">
-                                        <div>
-                                            <h4 className="font-medium mb-2">Raw Material Sourcing</h4>
-                                            <Table>
-                                                <TableHeader>
-                                                    <TableRow>
-                                                        <TableHead>Material</TableHead>
-                                                        <TableHead>Vendor Selection</TableHead>
+                                                )
+                                            })}
+                                        </TableBody>
+                                    </Table>
+                                </div>
+                                    <div>
+                                    <h4 className="font-medium mb-2">Packaging Sourcing</h4>
+                                    <Table>
+                                        <TableHeader>
+                                            <TableRow>
+                                                <TableHead>Material</TableHead>
+                                                <TableHead>Vendor Selection</TableHead>
+                                            </TableRow>
+                                        </TableHeader>
+                                        <TableBody>
+                                            {packagingSourcingFields.map((field, index) => {
+                                                const material = PACKAGING_MATERIALS.find(rm => rm.id === field.materialId);
+                                                return (
+                                                    <TableRow key={field.id}>
+                                                        <TableCell>{material?.name}</TableCell>
+                                                        <TableCell>
+                                                            <Controller
+                                                                control={control}
+                                                                name={`packagingSourcing.${index}.vendor`}
+                                                                render={({ field: controllerField }) => (
+                                                                    <Select onValueChange={controllerField.onChange} value={controllerField.value}>
+                                                                        <SelectTrigger><SelectValue /></SelectTrigger>
+                                                                        <SelectContent>
+                                                                            <SelectItem value="v02">Packaging Vendors (V02)</SelectItem>
+                                                                            <SelectItem value="v12">Packaging-Green Vendors (V12)</SelectItem>
+                                                                        </SelectContent>
+                                                                    </Select>
+                                                                )}
+                                                            />
+                                                        </TableCell>
                                                     </TableRow>
-                                                </TableHeader>
-                                                <TableBody>
-                                                    {sourcingFields.map((field, index) => {
-                                                        const material = RAW_MATERIALS.find(rm => rm.id === field.materialId);
-                                                        return (
-                                                            <TableRow key={field.id}>
-                                                                <TableCell>{material?.name}</TableCell>
-                                                                <TableCell>
-                                                                    <Controller
-                                                                        control={control}
-                                                                        name={`sourcing.${index}.vendor`}
-                                                                        render={({ field: controllerField }) => (
-                                                                            <Select onValueChange={controllerField.onChange} value={controllerField.value}>
-                                                                                <SelectTrigger><SelectValue /></SelectTrigger>
-                                                                                <SelectContent>
-                                                                                    <SelectItem value="v01">Fast Vendors (V01)</SelectItem>
-                                                                                    <SelectItem value="v11">Green Vendors (V11)</SelectItem>
-                                                                                </SelectContent>
-                                                                            </Select>
-                                                                        )}
-                                                                    />
-                                                                </TableCell>
-                                                            </TableRow>
-                                                        )
-                                                    })}
-                                                </TableBody>
-                                            </Table>
-                                        </div>
-                                         <div>
-                                            <h4 className="font-medium mb-2">Packaging Sourcing</h4>
-                                            <Table>
-                                                <TableHeader>
-                                                    <TableRow>
-                                                        <TableHead>Material</TableHead>
-                                                        <TableHead>Vendor Selection</TableHead>
-                                                    </TableRow>
-                                                </TableHeader>
-                                                <TableBody>
-                                                    {packagingSourcingFields.map((field, index) => {
-                                                        const material = PACKAGING_MATERIALS.find(rm => rm.id === field.materialId);
-                                                        return (
-                                                            <TableRow key={field.id}>
-                                                                <TableCell>{material?.name}</TableCell>
-                                                                <TableCell>
-                                                                    <Controller
-                                                                        control={control}
-                                                                        name={`packagingSourcing.${index}.vendor`}
-                                                                        render={({ field: controllerField }) => (
-                                                                            <Select onValueChange={controllerField.onChange} value={controllerField.value}>
-                                                                                <SelectTrigger><SelectValue /></SelectTrigger>
-                                                                                <SelectContent>
-                                                                                    <SelectItem value="v02">Packaging Vendors (V02)</SelectItem>
-                                                                                    <SelectItem value="v12">Packaging-Green Vendors (V12)</SelectItem>
-                                                                                </SelectContent>
-                                                                            </Select>
-                                                                        )}
-                                                                    />
-                                                                </TableCell>
-                                                            </TableRow>
-                                                        )
-                                                    })}
-                                                </TableBody>
-                                            </Table>
-                                        </div>
-                                    </CardContent>
-                                </Card>
-                            </TabsContent>
-                            <TabsContent value="order-calculation">
-                                <Card>
-                                    <CardHeader><CardTitle>Order Calculation</CardTitle><CardDescription>Calculate the required quantity to order based on MRP forecast and current stock.</CardDescription></CardHeader>
-                                    <CardContent className="space-y-4">
-                                        <Table>
-                                            <TableHeader>
-                                                <TableRow>
-                                                    <TableHead>Material</TableHead>
-                                                    <TableHead>Required (kg)</TableHead>
-                                                    <TableHead>Current Stock (kg)</TableHead>
-                                                    <TableHead>Final PO Qty (kg)</TableHead>
+                                                )
+                                            })}
+                                        </TableBody>
+                                    </Table>
+                                </div>
+                            </CardContent>
+                        </Card>
+                    </TabsContent>
+                    <TabsContent value="order-calculation" className="mt-6">
+                        <Card>
+                            <CardHeader><CardTitle>Order Calculation</CardTitle><CardDescription>Calculate the required quantity to order based on MRP forecast and current stock.</CardDescription></CardHeader>
+                            <CardContent className="space-y-4">
+                                <Table>
+                                    <TableHeader>
+                                        <TableRow>
+                                            <TableHead>Material</TableHead>
+                                            <TableHead>Required (kg)</TableHead>
+                                            <TableHead>Current Stock (kg)</TableHead>
+                                            <TableHead>Final PO Qty (kg)</TableHead>
+                                        </TableRow>
+                                    </TableHeader>
+                                    <TableBody>
+                                        {orderFields.map((field, index) => {
+                                                const material = RAW_MATERIALS.find(rm => rm.id === field.materialId);
+                                                return (
+                                                <TableRow key={field.id}>
+                                                    <TableCell>{material?.name}</TableCell>
+                                                    <TableCell>{material?.required.toLocaleString()}</TableCell>
+                                                    <TableCell>{material?.stock.toLocaleString()}</TableCell>
+                                                    <TableCell>
+                                                        <Input type="number" step="100" {...register(`orders.${index}.orderQty`, { valueAsNumber: true })} />
+                                                    </TableCell>
                                                 </TableRow>
-                                            </TableHeader>
-                                            <TableBody>
-                                                {orderFields.map((field, index) => {
-                                                     const material = RAW_MATERIALS.find(rm => rm.id === field.materialId);
-                                                     return (
-                                                        <TableRow key={field.id}>
-                                                            <TableCell>{material?.name}</TableCell>
-                                                            <TableCell>{material?.required.toLocaleString()}</TableCell>
-                                                            <TableCell>{material?.stock.toLocaleString()}</TableCell>
-                                                            <TableCell>
-                                                                <Input type="number" step="100" {...register(`orders.${index}.orderQty`, { valueAsNumber: true })} />
-                                                            </TableCell>
-                                                        </TableRow>
-                                                     )
-                                                })}
-                                            </TableBody>
-                                        </Table>
-                                        <div className="flex justify-end">
-                                            <Button>Push PO Qty to LIT (for ME59N)</Button>
-                                        </div>
-                                    </CardContent>
-                                </Card>
-                            </TabsContent>
-                            <TabsContent value="sustainability">
-                                <Card>
-                                    <CardHeader><CardTitle>Sustainability Investment</CardTitle><CardDescription>Track sustainability goals and investment amounts for ZFB50.</CardDescription></CardHeader>
-                                    <CardContent className="space-y-4">
-                                        <div className="space-y-2">
-                                            <Label htmlFor="sustainabilityInvestment">Actual ZFB50 Posting (€)</Label>
-                                            <Input id="sustainabilityInvestment" type="number" step="1000" {...register("sustainabilityInvestment", { valueAsNumber: true })} />
-                                        </div>
-                                         <div className="flex justify-end">
-                                            <Button>Save Investment</Button>
-                                        </div>
-                                    </CardContent>
-                                </Card>
-                            </TabsContent>
-                        </div>
-                    </div>
+                                                )
+                                        })}
+                                    </TableBody>
+                                </Table>
+                                <div className="flex justify-end">
+                                    <Button>Push PO Qty to LIT (for ME59N)</Button>
+                                </div>
+                            </CardContent>
+                        </Card>
+                    </TabsContent>
+                    <TabsContent value="sustainability" className="mt-6">
+                        <Card>
+                            <CardHeader><CardTitle>Sustainability Investment</CardTitle><CardDescription>Track sustainability goals and investment amounts for ZFB50.</CardDescription></CardHeader>
+                            <CardContent className="space-y-4">
+                                <div className="space-y-2">
+                                    <Label htmlFor="sustainabilityInvestment">Actual ZFB50 Posting (€)</Label>
+                                    <Input id="sustainabilityInvestment" type="number" step="1000" {...register("sustainabilityInvestment", { valueAsNumber: true })} />
+                                </div>
+                                    <div className="flex justify-end">
+                                    <Button>Save Investment</Button>
+                                </div>
+                            </CardContent>
+                        </Card>
+                    </TabsContent>
                 </Tabs>
             </CardContent>
         </Card>

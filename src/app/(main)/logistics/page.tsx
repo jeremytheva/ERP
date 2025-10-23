@@ -1,8 +1,8 @@
 
+
 "use client";
 
-import { useState, useMemo, useEffect } from 'react';
-import { useSearchParams } from 'next/navigation';
+import { useState, useMemo } from 'react';
 import { useForm, Controller, useFieldArray } from 'react-hook-form';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -25,13 +25,7 @@ type LogisticsFormData = {
 };
 
 export default function LogisticsPage() {
-    const searchParams = useSearchParams();
-    const defaultSection = searchParams.get('section') || 'liquidity-check';
-    const [activeSectionTab, setActiveSectionTab] = useState(defaultSection);
-
-    useEffect(() => {
-        setActiveSectionTab(defaultSection);
-    }, [defaultSection]);
+    const [activeTab, setActiveTab] = useState('liquidity-check');
 
     const cashBalance = 85000; // Mock data from Key Metrics
     const isCashAlertActive = cashBalance < 100000;
@@ -67,110 +61,106 @@ export default function LogisticsPage() {
     return (
         <Card>
             <CardHeader>
-                <CardTitle className="font-headline text-3xl">Logistics Manager View</CardTitle>
+                <CardTitle className="font-headline text-3xl">Logistics Manager</CardTitle>
                 <CardDescription>Finished goods transfer, cash flow monitoring, and contingency planning.</CardDescription>
             </CardHeader>
             <CardContent>
-                <Tabs value={activeSectionTab} onValueChange={setActiveSectionTab} orientation="vertical">
-                    <div className="grid md:grid-cols-4 gap-6">
-                        <TabsList className="md:col-span-1 flex md:flex-col md:h-auto h-auto overflow-x-auto overflow-y-hidden w-full">
-                            <TabsTrigger value="liquidity-check" className="justify-start"><Banknote className="mr-2 h-4 w-4" />Liquidity Check (ZFF7B)</TabsTrigger>
-                            <TabsTrigger value="stock-transfer" className="justify-start"><PackageOpen className="mr-2 h-4 w-4" />Stock Transfer (ZMB1B)</TabsTrigger>
-                            <TabsTrigger value="delivery-monitoring" className="justify-start"><Ship className="mr-2 h-4 w-4" />Delivery Monitoring (ZME2N)</TabsTrigger>
-                        </TabsList>
-                        <div className="md:col-span-3">
-                            <TabsContent value="liquidity-check">
-                                <Card>
-                                    <CardHeader><CardTitle>Liquidity & Cash Flow Check</CardTitle><CardDescription>Monitor current Cash Balance from ZFF7B.</CardDescription></CardHeader>
-                                    <CardContent className="space-y-4">
-                                         {isCashAlertActive && (
-                                            <div className="rounded-lg border border-red-500/50 bg-red-500/10 p-4 text-sm text-red-200">
-                                                <div className="flex items-center gap-2">
-                                                    <AlertTriangle className="h-5 w-5" />
-                                                    <h4 className="font-semibold text-red-100">Red Cash Alert</h4>
-                                                </div>
-                                                <p className="pl-7">Cash Balance is below €100,000. Immediately alert Procurement to hold or cancel large POs to prevent overdraft.</p>
-                                            </div>
-                                        )}
-                                        <div className="rounded-lg border bg-secondary/30 p-4 space-y-1">
-                                            <p className="text-sm text-muted-foreground">Current Cash Balance (from Key Metrics)</p>
-                                            <p className="text-3xl font-bold">{new Intl.NumberFormat('de-DE', { style: 'currency', currency: 'EUR' }).format(cashBalance)}</p>
+                <Tabs value={activeTab} onValueChange={setActiveTab}>
+                    <TabsList className="grid w-full grid-cols-3">
+                        <TabsTrigger value="liquidity-check"><Banknote className="mr-2 h-4 w-4" />Liquidity Check (ZFF7B)</TabsTrigger>
+                        <TabsTrigger value="stock-transfer"><PackageOpen className="mr-2 h-4 w-4" />Stock Transfer (ZMB1B)</TabsTrigger>
+                        <TabsTrigger value="delivery-monitoring"><Ship className="mr-2 h-4 w-4" />Delivery Monitoring (ZME2N)</TabsTrigger>
+                    </TabsList>
+                    <TabsContent value="liquidity-check" className="mt-6">
+                        <Card>
+                            <CardHeader><CardTitle>Liquidity & Cash Flow Check</CardTitle><CardDescription>Monitor current Cash Balance from ZFF7B.</CardDescription></CardHeader>
+                            <CardContent className="space-y-4">
+                                    {isCashAlertActive && (
+                                    <div className="rounded-lg border border-red-500/50 bg-red-500/10 p-4 text-sm text-red-200">
+                                        <div className="flex items-center gap-2">
+                                            <AlertTriangle className="h-5 w-5" />
+                                            <h4 className="font-semibold text-red-100">Red Cash Alert</h4>
                                         </div>
-                                    </CardContent>
-                                </Card>
-                            </TabsContent>
-                            <TabsContent value="stock-transfer">
-                                <Card>
-                                    <CardHeader>
-                                        <CardTitle>Stock Transfer Planning</CardTitle>
-                                        <CardDescription>Calculate and plan stock transfers to DCs using ZMB1B. The Final Transfer Qty will be pushed to the LIT.</CardDescription>
-                                    </CardHeader>
-                                    <CardContent className="space-y-4">
-                                        {isStockOutRisk && (
-                                            <div className="rounded-lg border border-red-500/50 bg-red-500/10 p-3 text-sm text-red-200">
-                                                <div className="flex items-center gap-2">
-                                                    <AlertTriangle className="h-5 w-5" />
-                                                    <h4 className="font-semibold text-red-100">Stock Out Risk</h4>
-                                                </div>
-                                                <p className="pl-7">At least one DC has less than 5,000 units, increasing the risk of missed sales.</p>
-                                            </div>
-                                        )}
-                                        <Table>
-                                            <TableHeader>
-                                                <TableRow>
-                                                    <TableHead>DC</TableHead>
-                                                    <TableHead>Current Stock</TableHead>
-                                                    <TableHead>Target DOS</TableHead>
-                                                    <TableHead>Final Transfer Qty</TableHead>
+                                        <p className="pl-7">Cash Balance is below €100,000. Immediately alert Procurement to hold or cancel large POs to prevent overdraft.</p>
+                                    </div>
+                                )}
+                                <div className="rounded-lg border bg-secondary/30 p-4 space-y-1">
+                                    <p className="text-sm text-muted-foreground">Current Cash Balance (from Key Metrics)</p>
+                                    <p className="text-3xl font-bold">{new Intl.NumberFormat('de-DE', { style: 'currency', currency: 'EUR' }).format(cashBalance)}</p>
+                                </div>
+                            </CardContent>
+                        </Card>
+                    </TabsContent>
+                    <TabsContent value="stock-transfer" className="mt-6">
+                        <Card>
+                            <CardHeader>
+                                <CardTitle>Stock Transfer Planning</CardTitle>
+                                <CardDescription>Calculate and plan stock transfers to DCs using ZMB1B. The Final Transfer Qty will be pushed to the LIT.</CardDescription>
+                            </CardHeader>
+                            <CardContent className="space-y-4">
+                                {isStockOutRisk && (
+                                    <div className="rounded-lg border border-red-500/50 bg-red-500/10 p-3 text-sm text-red-200">
+                                        <div className="flex items-center gap-2">
+                                            <AlertTriangle className="h-5 w-5" />
+                                            <h4 className="font-semibold text-red-100">Stock Out Risk</h4>
+                                        </div>
+                                        <p className="pl-7">At least one DC has less than 5,000 units, increasing the risk of missed sales.</p>
+                                    </div>
+                                )}
+                                <Table>
+                                    <TableHeader>
+                                        <TableRow>
+                                            <TableHead>DC</TableHead>
+                                            <TableHead>Current Stock</TableHead>
+                                            <TableHead>Target DOS</TableHead>
+                                            <TableHead>Final Transfer Qty</TableHead>
+                                        </TableRow>
+                                    </TableHeader>
+                                    <TableBody>
+                                        {transferFields.map((field, index) => {
+                                            const fg = FINISHED_GOODS[index];
+                                            return (
+                                                <TableRow key={field.id}>
+                                                    <TableCell>{field.dc}</TableCell>
+                                                    <TableCell>{fg.currentStock.toLocaleString()}</TableCell>
+                                                    <TableCell>
+                                                        <Input type="number" min="0" value={watchedTransfers[index].targetDOS} onChange={(e) => handleDosChange(index, parseInt(e.target.value, 10))} />
+                                                    </TableCell>
+                                                    <TableCell>
+                                                        <Input readOnly disabled value={watchedTransfers[index].transferQty.toLocaleString()} />
+                                                    </TableCell>
                                                 </TableRow>
-                                            </TableHeader>
-                                            <TableBody>
-                                                {transferFields.map((field, index) => {
-                                                    const fg = FINISHED_GOODS[index];
-                                                    return (
-                                                        <TableRow key={field.id}>
-                                                            <TableCell>{field.dc}</TableCell>
-                                                            <TableCell>{fg.currentStock.toLocaleString()}</TableCell>
-                                                            <TableCell>
-                                                                <Input type="number" min="0" value={watchedTransfers[index].targetDOS} onChange={(e) => handleDosChange(index, parseInt(e.target.value, 10))} />
-                                                            </TableCell>
-                                                            <TableCell>
-                                                                <Input readOnly disabled value={watchedTransfers[index].transferQty.toLocaleString()} />
-                                                            </TableCell>
-                                                        </TableRow>
-                                                    )
-                                                })}
-                                            </TableBody>
-                                        </Table>
-                                         <div className="flex justify-end">
-                                            <Button>Push Transfer Qty to LIT (for ZMB1B)</Button>
-                                        </div>
-                                    </CardContent>
-                                </Card>
-                            </TabsContent>
-                            <TabsContent value="delivery-monitoring">
-                                <Card>
-                                    <CardHeader><CardTitle>Delivery & PO Monitoring</CardTitle><CardDescription>Track incoming raw material deliveries from ZME2N and log execution data.</CardDescription></CardHeader>
-                                    <CardContent className="space-y-4">
-                                         <div className="rounded-lg border bg-secondary/30 p-4">
-                                            <p className="font-semibold">PO Delivery Status (from Procurement)</p>
-                                            <p className="text-sm text-muted-foreground">All POs on schedule. No late deliveries to flag.</p>
-                                         </div>
-                                         <div className="grid sm:grid-cols-2 gap-4">
-                                            <div className="space-y-2">
-                                                <Label htmlFor="numTransfers">Number of Transfers Executed</Label>
-                                                <Input id="numTransfers" type="number" {...register('numTransfers', { valueAsNumber: true })} />
-                                            </div>
-                                             <div className="space-y-2">
-                                                <Label htmlFor="onTimeDeliveryRate">On-Time Delivery Rate (%)</Label>
-                                                <Input id="onTimeDeliveryRate" type="number" {...register('onTimeDeliveryRate', { valueAsNumber: true })} />
-                                            </div>
-                                         </div>
-                                    </CardContent>
-                                </Card>
-                            </TabsContent>
-                        </div>
-                    </div>
+                                            )
+                                        })}
+                                    </TableBody>
+                                </Table>
+                                    <div className="flex justify-end">
+                                    <Button>Push Transfer Qty to LIT (for ZMB1B)</Button>
+                                </div>
+                            </CardContent>
+                        </Card>
+                    </TabsContent>
+                    <TabsContent value="delivery-monitoring" className="mt-6">
+                        <Card>
+                            <CardHeader><CardTitle>Delivery & PO Monitoring</CardTitle><CardDescription>Track incoming raw material deliveries from ZME2N and log execution data.</CardDescription></CardHeader>
+                            <CardContent className="space-y-4">
+                                    <div className="rounded-lg border bg-secondary/30 p-4">
+                                    <p className="font-semibold">PO Delivery Status (from Procurement)</p>
+                                    <p className="text-sm text-muted-foreground">All POs on schedule. No late deliveries to flag.</p>
+                                    </div>
+                                    <div className="grid sm:grid-cols-2 gap-4">
+                                    <div className="space-y-2">
+                                        <Label htmlFor="numTransfers">Number of Transfers Executed</Label>
+                                        <Input id="numTransfers" type="number" {...register('numTransfers', { valueAsNumber: true })} />
+                                    </div>
+                                        <div className="space-y-2">
+                                        <Label htmlFor="onTimeDeliveryRate">On-Time Delivery Rate (%)</Label>
+                                        <Input id="onTimeDeliveryRate" type="number" {...register('onTimeDeliveryRate', { valueAsNumber: true })} />
+                                    </div>
+                                    </div>
+                            </CardContent>
+                        </Card>
+                    </TabsContent>
                 </Tabs>
             </CardContent>
         </Card>

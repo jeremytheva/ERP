@@ -2,7 +2,7 @@
 
 "use client";
 
-import { usePathname, useSearchParams } from "next/navigation";
+import { usePathname } from "next/navigation";
 import Link from "next/link";
 import {
   Sidebar,
@@ -32,19 +32,19 @@ const salesMenuItems = [
   { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
   { href: "/key-metrics", label: "Key Metrics", icon: BarChart2 },
   { href: "/live-inventory", label: "Inventory/Stock Status (LIT)", icon: FileText },
-  { href: "/sales?section=market-analysis", label: "Market Analysis (ZMARKET)", icon: BarChart2 },
-  { href: "/sales?section=forecasting", label: "Forecasting (MD61)", icon: FileText },
-  { href: "/sales?section=pricing", label: "Pricing (VK32)", icon: BarChart2 },
-  { href: "/sales?section=marketing", label: "Marketing (ZADS)", icon: Factory },
+  { href: "/sales", label: "Market Analysis (ZMARKET)", icon: BarChart2 },
+  { href: "/debriefing", label: "Forecasting (MD61)", icon: FileText },
+  { href: "/strategic-advisor", label: "Pricing (VK32)", icon: BarChart2 },
+  { href: "/scenario-planning", label: "Marketing (ZADS)", icon: Factory },
   { href: "/master-data", label: "Master Data", icon: Database },
 ];
 
 const productionMenuItems = [
   ...generalMenuItems,
-  { href: "/production?section=planning-capacity", label: "Planning & Capacity", icon: Factory },
-  { href: "/production?section=mrp", label: "MRP (MD01)", icon: Truck },
-  { href: "/production?section=production-release", label: "Production Release (CO41)", icon: Briefcase },
-  { href: "/production?section=bom-review", label: "BOM Review (ZCS02)", icon: ShoppingCart },
+  { href: "/production", label: "Planning & Capacity", icon: Factory },
+  { href: "/production", label: "MRP (MD01)", icon: Truck },
+  { href: "/production", label: "Production Release (CO41)", icon: Briefcase },
+  { href: "/production", label: "BOM Review (ZCS02)", icon: ShoppingCart },
   { href: "/live-inventory", label: "RM Stock Status (LIT)", icon: FileText },
   { href: "/master-data", label: "Master Data", icon: Database },
 ];
@@ -52,17 +52,17 @@ const productionMenuItems = [
 const procurementMenuItems = [
     ...generalMenuItems,
     { href: "/live-inventory", label: "RM Stock Status (LIT)", icon: FileText },
-    { href: "/procurement?section=sourcing", label: "Sourcing (ZME12)", icon: Users },
-    { href: "/procurement?section=order-calculation", label: "Order Calculation (ME59N)", icon: BarChart2 },
-    { href: "/procurement?section=sustainability", label: "Sustainability (ZFB50)", icon: Leaf },
+    { href: "/procurement", label: "Sourcing (ZME12)", icon: Users },
+    { href: "/procurement", label: "Order Calculation (ME59N)", icon: BarChart2 },
+    { href: "/procurement", label: "Sustainability (ZFB50)", icon: Leaf },
     { href: "/master-data", label: "Master Data", icon: Database },
 ];
 
 const logisticsMenuItems = [
     ...generalMenuItems,
-    { href: "/logistics?section=liquidity-check", label: "Liquidity Check (ZFF7B)", icon: BarChart2 },
-    { href: "/logistics?section=stock-transfer", label: "Stock Transfer (ZMB1B)", icon: Truck },
-    { href: "/logistics?section=delivery-monitoring", label: "Delivery Monitoring (ZME2N)", icon: Briefcase },
+    { href: "/logistics", label: "Liquidity Check (ZFF7B)", icon: BarChart2 },
+    { href: "/logistics", label: "Stock Transfer (ZMB1B)", icon: Truck },
+    { href: "/logistics", label: "Delivery Monitoring (ZME2N)", icon: Briefcase },
     { href: "/master-data", label: "Master Data", icon: Database },
 ];
 
@@ -77,7 +77,6 @@ const teamLeaderMenuItems = [
 
 export function MainSidebar() {
   const pathname = usePathname();
-  const searchParams = useSearchParams();
   const { profile } = useAuth();
   const { teamLeader } = useTeamSettings();
 
@@ -95,16 +94,7 @@ export function MainSidebar() {
   }, [profile, isTeamLeader]);
 
   const isActive = (href: string) => {
-    const [hrefPath, hrefQuery] = href.split('?');
-    if (pathname !== hrefPath) {
-      return false;
-    }
-    if (!hrefQuery) {
-      return true;
-    }
-    const hrefParams = new URLSearchParams(hrefQuery);
-    const section = hrefParams.get('section');
-    return searchParams.get('section') === section;
+    return pathname === href;
   }
 
   return (
@@ -165,5 +155,6 @@ export function MainSidebar() {
     </Sidebar>
   );
 }
+
 
 

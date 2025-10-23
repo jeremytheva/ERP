@@ -2,14 +2,7 @@
 import type { Metadata } from "next";
 import { Inter, Source_Code_Pro } from "next/font/google";
 import "./globals.css";
-import { AuthProvider } from "@/context/auth-context";
-import { Toaster } from "@/components/ui/toaster";
-import { TeamSettingsProvider } from "@/hooks/use-team-settings";
-import { TasksProvider } from "@/hooks/use-tasks";
-import { GameStateProvider } from "@/hooks/use-game-data";
-import { CompetitorLogProvider } from "@/hooks/use-competitor-log";
-import { FirebaseClientProvider } from "@/firebase";
-import { UserProfilesProvider } from "@/hooks/use-user-profiles";
+import { AppProviders } from "./providers";
 
 export const metadata: Metadata = {
   title: "ERPsim Dashboard",
@@ -40,22 +33,7 @@ export default function RootLayout({
         <link href="https://fonts.googleapis.com/css2?family=Source+Code+Pro&display=swap" rel="stylesheet" />
       </head>
       <body className={`${inter.variable} ${sourceCodePro.variable} font-body antialiased`} suppressHydrationWarning>
-        <FirebaseClientProvider>
-          <AuthProvider>
-            <UserProfilesProvider>
-              <TeamSettingsProvider>
-                <GameStateProvider>
-                  <TasksProvider>
-                    <CompetitorLogProvider>
-                      {children}
-                      <Toaster />
-                    </CompetitorLogProvider>
-                  </TasksProvider>
-                </GameStateProvider>
-              </TeamSettingsProvider>
-            </UserProfilesProvider>
-          </AuthProvider>
-        </FirebaseClientProvider>
+        <AppProviders>{children}</AppProviders>
       </body>
     </html>
   );

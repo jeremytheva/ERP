@@ -14,19 +14,41 @@ import {
 } from "@/components/ui/sidebar";
 import { Button } from "@/components/ui/button";
 import { Bot, LayoutDashboard, Boxes, Lightbulb, BookText, ListTodo, Users, Settings } from "lucide-react";
+import { useAuth } from "@/hooks/use-auth";
+import { useTeamSettings } from "@/hooks/use-team-settings";
+import { useMemo } from "react";
+import type { Role } from "@/types";
 
-const menuItems = [
-  { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
-  { href: "/scenario-planning", label: "Scenario Planning", icon: Boxes },
-  { href: "/strategic-advisor", label: "Strategic Advisor", icon: Lightbulb },
-  { href: "/debriefing", label: "Round Debriefing", icon: BookText },
-  { href: "/action-items", label: "Action Items", icon: ListTodo },
-  { href: "/competitor-log", label: "Competitor Log", icon: Users },
-  { href: "/settings", label: "Settings", icon: Settings },
+const allMenuItems = [
+  { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard, roles: ["Sales", "Procurement", "Production", "Logistics", "Team Leader"] },
+  { href: "/action-items", label: "Action Items", icon: ListTodo, roles: ["Sales", "Procurement", "Production", "Logistics", "Team Leader"] },
+  { href: "/competitor-log", label: "Competitor Log", icon: Users, roles: ["Sales", "Procurement", "Production", "Logistics", "Team Leader"] },
+  { href: "/scenario-planning", label: "Scenario Planning", icon: Boxes, roles: ["Sales", "Team Leader"] },
+  { href: "/strategic-advisor", label: "Strategic Advisor", icon: Lightbulb, roles: ["Sales", "Team Leader"] },
+  { href: "/debriefing", label: "Round Debriefing", icon: BookText, roles: ["Team Leader"] },
+  { href: "/settings", label: "Settings", icon: Settings, roles: ["Team Leader"] },
 ];
 
 export function MainSidebar() {
   const pathname = usePathname();
+  const { profile } = useAuth();
+  const { teamLeader } = useTeamSettings();
+
+  const userRoles = useMemo(() => {
+    if (!profile) return [];
+    const roles: Role[] = [profile.id as Role];
+    if (profile.id === teamLeader) {
+      roles.push("Team Leader");
+    }
+    return roles;
+  }, [profile, teamLeader]);
+
+  const visibleMenuItems = useMemo(() => {
+    return allMenuItems.filter(item => 
+      item.roles.some(role => userRoles.includes(role))
+    );
+  }, [userRoles]);
+
 
   return (
     <Sidebar collapsible="icon" className="border-r">
@@ -42,7 +64,7 @@ export function MainSidebar() {
         <SidebarTrigger className="hidden md:flex" />
       </SidebarHeader>
       <SidebarMenu className="flex-1 p-2">
-        {menuItems.map(({ href, label, icon: Icon }) => (
+        {visibleMenuItems.map(({ href, label, icon: Icon }) => (
           <SidebarMenuItem key={href}>
             <Link href={href} passHref>
               <SidebarMenuButton

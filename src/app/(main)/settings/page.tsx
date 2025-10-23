@@ -1,28 +1,30 @@
 
-
 import { TeamSettings } from "@/components/settings/team-settings";
-import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
-import { Settings } from "lucide-react";
+import { TaskManager } from "@/components/tasks/task-manager";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Settings, ClipboardCheck } from "lucide-react";
 
 export default function SettingsPage() {
   return (
-    <div className="container mx-auto max-w-2xl py-8">
-        <Card>
-          <CardHeader>
-            <div className="flex items-center gap-4">
-                <Settings className="h-8 w-8 text-primary" />
-                <div>
-                    <CardTitle className="font-headline text-3xl">Team Settings</CardTitle>
-                    <CardDescription>
-                        Configure your team structure and assign a Team Leader. The Team Leader will have additional responsibilities and tasks.
-                    </CardDescription>
-                </div>
-            </div>
-          </CardHeader>
-          <CardContent>
+    <div className="container mx-auto py-8">
+       <Tabs defaultValue="team">
+        <TabsList className="grid w-full max-w-md grid-cols-2">
+          <TabsTrigger value="team">
+            <Settings className="mr-2 h-4 w-4" />
+            Team Settings
+          </TabsTrigger>
+          <TabsTrigger value="tasks">
+            <ClipboardCheck className="mr-2 h-4 w-4" />
+            Task Management
+            </TabsTrigger>
+        </TabsList>
+        <TabsContent value="team" className="mt-6">
             <TeamSettings />
-          </CardContent>
-        </Card>
+        </TabsContent>
+        <TabsContent value="tasks" className="mt-6">
+            <TaskManager />
+        </TabsContent>
+      </Tabs>
     </div>
   );
 }

@@ -13,14 +13,13 @@ import {
   SidebarTrigger,
 } from "@/components/ui/sidebar";
 import { Button } from "@/components/ui/button";
-import { Bot, LayoutDashboard, Boxes, Lightbulb, BookText, ListTodo, Users, Settings, ClipboardCheck } from "lucide-react";
+import { Bot, LayoutDashboard, Boxes, Lightbulb, BookText, ListTodo, Users, Settings } from "lucide-react";
 
 const menuItems = [
   { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
   { href: "/scenario-planning", label: "Scenario Planning", icon: Boxes },
   { href: "/strategic-advisor", label: "Strategic Advisor", icon: Lightbulb },
   { href: "/debriefing", label: "Round Debriefing", icon: BookText },
-  { href: "/tasks", label: "Tasks", icon: ClipboardCheck },
   { href: "/action-items", label: "Action Items", icon: ListTodo },
   { href: "/competitor-log", label: "Competitor Log", icon: Users },
   { href: "/settings", label: "Settings", icon: Settings },
@@ -48,7 +47,7 @@ export function MainSidebar() {
             <Link href={href} passHref>
               <SidebarMenuButton
                 as="a"
-                isActive={pathname === href}
+                isActive={pathname.startsWith(href)}
                 tooltip={{ children: label, side: "right", align:"center" }}
                 className="justify-start"
               >

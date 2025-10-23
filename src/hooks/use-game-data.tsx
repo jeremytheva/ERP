@@ -15,6 +15,7 @@ interface GameStateContextType {
   timeLeft: number;
   isPaused: boolean;
   isBreakActive: boolean;
+
   isBreakEnabled: boolean;
   roundDuration: number;
   breakDuration: number;
@@ -44,7 +45,12 @@ export const GameStateProvider = ({ children }: { children: ReactNode }) => {
   } = gameState.timerState || { isPaused: true, isBreakActive: false, isBreakEnabled: true, roundDuration: 1200, breakDuration: 300 };
 
   useEffect(() => {
-    if (!user || !firestore) return;
+    if (!user || !firestore) {
+      setGameState(INITIAL_GAME_STATE);
+      setTimeLeft(INITIAL_GAME_STATE.timerState.timeLeft);
+      setIsLoading(false);
+      return;
+    };
     setIsLoading(true);
     const gameDocRef = doc(firestore, "games", GAME_ID);
 

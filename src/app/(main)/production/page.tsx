@@ -1,7 +1,7 @@
 
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Factory, Wrench, PackageCheck, FileBox } from "lucide-react";
+import { Factory, Wrench, PackageCheck, FileBox, FileSignature } from "lucide-react";
 
 export default function ProductionPage() {
   return (

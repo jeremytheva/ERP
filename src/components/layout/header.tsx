@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useAuth } from "@/hooks/use-auth";
@@ -11,10 +12,13 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { ChevronsUpDown, LogOut, Clock, Settings, Play, Pause, RefreshCw, ChevronLeft, ChevronRight } from "lucide-react";
+import { ChevronsUpDown, LogOut, Clock, Settings, Play, Pause, RefreshCw, ChevronLeft, ChevronRight, Coffee } from "lucide-react";
 import { usePathname } from "next/navigation";
 import { SidebarTrigger } from "../ui/sidebar";
 import { useGameState } from "@/hooks/use-game-data";
+import { Label } from "../ui/label";
+import { Input } from "../ui/input";
+import { Switch } from "../ui/switch";
 
 const getPageTitle = (pathname: string): string => {
     const segment = pathname.split("/").pop() || "dashboard";
@@ -37,6 +41,7 @@ const getPageTitle = (pathname: string): string => {
   };
 
   const formatTime = (seconds: number): string => {
+    if (isNaN(seconds) || seconds < 0) return "00:00";
     const minutes = Math.floor(seconds / 60);
     const remainingSeconds = seconds % 60;
     return `${minutes.toString().padStart(2, "0")}:${remainingSeconds.toString().padStart(2, "0")}`;
@@ -44,10 +49,39 @@ const getPageTitle = (pathname: string): string => {
 
 export function Header() {
   const { profile, logout } = useAuth();
-  const { gameState, roundTimeLeft, isPaused, togglePause, resetTimer, setRound } = useGameState();
+  const { 
+    gameState, 
+    timeLeft, 
+    isPaused, 
+    isBreakActive,
+    isBreakEnabled,
+    roundDuration,
+    breakDuration,
+    togglePause, 
+    resetTimer, 
+    setRound,
+    setRoundDuration,
+    setBreakDuration,
+    setIsBreakEnabled,
+  } = useGameState();
   const pathname = usePathname();
   const pageTitle = getPageTitle(pathname);
   const currentRound = gameState.kpiHistory[gameState.kpiHistory.length - 1]?.round || 1;
+
+  const handleRoundDurationChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const minutes = parseInt(e.target.value, 10);
+    if (!isNaN(minutes)) {
+        setRoundDuration(minutes * 60);
+    }
+  };
+
+  const handleBreakDurationChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const minutes = parseInt(e.target.value, 10);
+    if (!isNaN(minutes)) {
+        setBreakDuration(minutes * 60);
+    }
+  };
+
 
   return (
     <header className="sticky top-0 z-10 flex h-16 items-center gap-4 border-b bg-background/80 backdrop-blur-sm px-4 md:px-6">
@@ -58,10 +92,10 @@ export function Header() {
 
       <div className="flex items-center gap-2 ml-auto">
         <div className="flex items-center gap-2 rounded-md bg-muted px-3 py-1.5 text-sm font-medium">
-            <span className="font-semibold">Round {currentRound}</span>
+            <span className="font-semibold">{isBreakActive ? 'Break' : `Round ${currentRound}`}</span>
             <span className="text-muted-foreground">|</span>
-            <Clock className="h-4 w-4 text-muted-foreground" />
-            <span>{formatTime(roundTimeLeft)}</span>
+            {isBreakActive ? <Coffee className="h-4 w-4 text-muted-foreground" /> : <Clock className="h-4 w-4 text-muted-foreground" />}
+            <span>{formatTime(timeLeft)}</span>
         </div>
         <DropdownMenu>
             <DropdownMenuTrigger asChild>
@@ -69,7 +103,7 @@ export function Header() {
                     <Settings className="h-4 w-4" />
                 </Button>
             </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="w-56">
+            <DropdownMenuContent align="end" className="w-64">
                 <DropdownMenuLabel>Game Controls</DropdownMenuLabel>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem onClick={togglePause}>
@@ -90,6 +124,22 @@ export function Header() {
                     <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => setRound(currentRound + 1)}>
                         <ChevronRight className="h-4 w-4" />
                     </Button>
+                 </div>
+                 <DropdownMenuSeparator />
+                 <DropdownMenuLabel>Timer Settings</DropdownMenuLabel>
+                 <div className="grid gap-4 px-2 py-1.5">
+                    <div className="grid grid-cols-3 items-center gap-2">
+                        <Label htmlFor="round-duration" className="text-sm">Round</Label>
+                        <Input id="round-duration" type="number" className="col-span-2 h-8" value={roundDuration / 60} onChange={handleRoundDurationChange}/>
+                    </div>
+                     <div className="grid grid-cols-3 items-center gap-2">
+                        <Label htmlFor="break-duration" className="text-sm">Break</Label>
+                        <Input id="break-duration" type="number" className="col-span-2 h-8" value={breakDuration / 60} onChange={handleBreakDurationChange} disabled={!isBreakEnabled} />
+                    </div>
+                     <div className="flex items-center justify-between">
+                         <Label htmlFor="break-enabled" className="text-sm">Enable Breaks</Label>
+                         <Switch id="break-enabled" checked={isBreakEnabled} onCheckedChange={setIsBreakEnabled} />
+                     </div>
                  </div>
             </DropdownMenuContent>
         </DropdownMenu>

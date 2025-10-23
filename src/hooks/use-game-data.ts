@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
@@ -8,16 +9,17 @@ import {
 } from "@/lib/mock-data";
 import type { GameState, ActionItem, CompetitorLogEntry, KpiHistoryEntry } from "@/types";
 
-// In a real app, these hooks would use onSnapshot from Firestore for real-time updates.
-
-const ROUND_DURATION_SECONDS = 300; // 5 minutes
-
 export function useGameState() {
   const [gameState, setGameState] = useState<GameState>(INITIAL_GAME_STATE);
-  const [roundTimeLeft, setRoundTimeLeft] = useState(ROUND_DURATION_SECONDS);
+  const [roundDuration, setRoundDuration] = useState(1200); // 20 minutes
+  const [breakDuration, setBreakDuration] = useState(300); // 5 minutes
+  const [isBreakEnabled, setIsBreakEnabled] = useState(true);
+  const [isBreakActive, setIsBreakActive] = useState(false);
+  const [timeLeft, setTimeLeft] = useState(roundDuration);
   const [isPaused, setIsPaused] = useState(false);
 
   const advanceRound = useCallback(() => {
+    setIsBreakActive(false);
     setGameState(prevGameState => {
         const lastRound = prevGameState.kpiHistory[prevGameState.kpiHistory.length - 1];
         const change = (Math.random() - 0.5) * 100000;
@@ -39,35 +41,59 @@ export function useGameState() {
             kpiHistory: newKpiHistory.slice(-10)
         }
     });
-    setRoundTimeLeft(ROUND_DURATION_SECONDS);
-  }, []);
+    setTimeLeft(roundDuration);
+  }, [roundDuration]);
+
+  const startBreak = useCallback(() => {
+    setIsBreakActive(true);
+    setTimeLeft(breakDuration);
+  }, [breakDuration]);
 
   useEffect(() => {
     if (isPaused) return;
 
     const timerInterval = setInterval(() => {
-      setRoundTimeLeft(prev => {
+      setTimeLeft(prev => {
         if (prev <= 1) {
-          advanceRound();
-          return ROUND_DURATION_SECONDS;
+          if (isBreakActive) {
+            advanceRound();
+          } else if (isBreakEnabled) {
+            startBreak();
+          } else {
+            advanceRound();
+          }
+          return 0; 
         }
         return prev - 1;
       });
     }, 1000);
 
     return () => clearInterval(timerInterval);
-  }, [isPaused, advanceRound]);
+  }, [isPaused, isBreakActive, isBreakEnabled, advanceRound, startBreak]);
+  
+  useEffect(() => {
+    if (!isBreakActive) {
+      setTimeLeft(roundDuration);
+    }
+  }, [roundDuration, isBreakActive]);
+  
+  useEffect(() => {
+    if (isBreakActive) {
+      setTimeLeft(breakDuration);
+    }
+  }, [breakDuration, isBreakActive]);
 
   const togglePause = () => {
     setIsPaused(prev => !prev);
   };
 
   const resetTimer = () => {
-    setRoundTimeLeft(ROUND_DURATION_SECONDS);
+    setTimeLeft(isBreakActive ? breakDuration : roundDuration);
   };
   
   const setRound = (newRound: number) => {
     if (newRound < 1) return;
+    setIsBreakActive(false); // Exit break if manually changing round
 
     setGameState(prevGameState => {
         let newKpiHistory = [...prevGameState.kpiHistory];
@@ -106,11 +132,25 @@ export function useGameState() {
             kpiHistory: newKpiHistory.slice(-10),
         };
     });
-     resetTimer();
+     setTimeLeft(roundDuration); // Always reset to round duration
   }
 
 
-  return { gameState, roundTimeLeft, isPaused, togglePause, resetTimer, setRound };
+  return { 
+    gameState,
+    timeLeft,
+    isPaused,
+    isBreakActive,
+    isBreakEnabled,
+    roundDuration,
+    breakDuration,
+    togglePause,
+    resetTimer,
+    setRound,
+    setRoundDuration,
+    setBreakDuration,
+    setIsBreakEnabled,
+   };
 }
 
 export function useActionItems() {

@@ -15,12 +15,14 @@ interface UserProfilesContextType {
 const UserProfilesContext = createContext<UserProfilesContextType | undefined>(undefined);
 
 export const UserProfilesProvider = ({ children }: { children: ReactNode }) => {
-  const auth = useFirebaseAuth();
+  const auth = useFirebaseAuth(); // Use the base firebase auth hook
   const firestore = useFirestore();
   const [profiles, setProfiles] = useState<UserProfile[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    // The user object is not available here directly, but the auth instance is.
+    // The onSnapshot will trigger based on the firestore instance being ready.
     if (!auth || !firestore) {
       setProfiles(USER_PROFILES);
       setLoading(false);
@@ -36,15 +38,16 @@ export const UserProfilesProvider = ({ children }: { children: ReactNode }) => {
 
         const missingProfiles = USER_PROFILES.filter(mockProfile => !firestoreProfileIds.has(mockProfile.id));
 
-        if (missingProfiles.length > 0) {
+        if (missingProfiles.length > 0 && querySnapshot.docs.length < USER_PROFILES.length) {
             const batch = writeBatch(firestore);
             missingProfiles.forEach(profile => {
                 const profileDocRef = doc(firestore, "users", profile.id);
                 batch.set(profileDocRef, profile);
             });
             await batch.commit();
+            // onSnapshot will re-run with the new data.
         } else {
-            setProfiles(firestoreProfiles);
+            setProfiles(firestoreProfiles.length > 0 ? firestoreProfiles : USER_PROFILES);
             setLoading(false);
         }
     },

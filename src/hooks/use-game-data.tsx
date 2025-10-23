@@ -72,7 +72,6 @@ export const GameStateProvider = ({ children }: { children: ReactNode }) => {
           path: gameDocRef.path,
           operation: 'get',
         });
-        console.error("Permission error in useGameState:", contextualError.message);
         errorEmitter.emit('permission-error', contextualError);
         setIsLoading(false);
     });

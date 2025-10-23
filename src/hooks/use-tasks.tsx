@@ -54,7 +54,6 @@ export const TasksProvider = ({ children }: { children: ReactNode }) => {
             path: 'tasks',
             operation: 'list',
         });
-        console.error("Permission error in useTasks:", contextualError.message);
         errorEmitter.emit('permission-error', contextualError);
         setIsLoading(false);
     });

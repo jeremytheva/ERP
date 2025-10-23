@@ -37,7 +37,6 @@ export const TeamSettingsProvider = ({ children }: { children: ReactNode }) => {
             path: settingsDocRef.path,
             operation: 'get',
         });
-        console.error("Permission error in useTeamSettings:", contextualError.message);
         errorEmitter.emit('permission-error', contextualError);
     });
 

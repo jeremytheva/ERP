@@ -37,7 +37,6 @@ export const CompetitorLogProvider = ({ children }: { children: ReactNode }) => 
             path: 'competitor_log',
             operation: 'list',
         });
-        console.error("Permission error in useCompetitorLog:", contextualError.message);
         errorEmitter.emit('permission-error', contextualError);
     });
 

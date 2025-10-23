@@ -19,35 +19,60 @@ import { useTeamSettings } from "@/hooks/use-team-settings";
 import { useMemo } from "react";
 import type { Role } from "@/types";
 
-const allMenuItems = [
-  { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard, roles: ["Sales", "Procurement", "Production", "Logistics", "Team Leader"] },
-  { href: "/action-items", label: "Action Items", icon: ListTodo, roles: ["Sales", "Procurement", "Production", "Logistics", "Team Leader"] },
-  { href: "/competitor-log", label: "Competitor Log", icon: Users, roles: ["Sales", "Procurement", "Production", "Logistics", "Team Leader"] },
-  { href: "/scenario-planning", label: "Scenario Planning", icon: Boxes, roles: ["Sales", "Team Leader"] },
-  { href: "/strategic-advisor", label: "Strategic Advisor", icon: Lightbulb, roles: ["Sales", "Team Leader"] },
-  { href: "/debriefing", label: "Round Debriefing", icon: BookText, roles: ["Team Leader"] },
-  { href: "/settings", label: "Settings", icon: Settings, roles: ["Team Leader"] },
+const baseMenuItems = [
+  { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
+  { href: "/action-items", label: "Action Items", icon: ListTodo },
+  { href: "/competitor-log", label: "Competitor Log", icon: Users },
 ];
+
+const salesMenuItems = [
+  ...baseMenuItems,
+  { href: "/scenario-planning", label: "Scenario Planning", icon: Boxes },
+  { href: "/strategic-advisor", label: "Strategic Advisor", icon: Lightbulb },
+];
+
+const procurementMenuItems = [...baseMenuItems];
+const productionMenuItems = [...baseMenuItems];
+const logisticsMenuItems = [...baseMenuItems];
+
+const teamLeaderMenuItems = [
+  { href: "/scenario-planning", label: "Scenario Planning", icon: Boxes },
+  { href: "/strategic-advisor", label: "Strategic Advisor", icon: Lightbulb },
+  { href: "/debriefing", label: "Round Debriefing", icon: BookText },
+  { href: "/settings", label: "Settings", icon: Settings },
+];
+
+const roleMenus: Record<Role, typeof baseMenuItems> = {
+    "Sales": salesMenuItems,
+    "Procurement": procurementMenuItems,
+    "Production": productionMenuItems,
+    "Logistics": logisticsMenuItems,
+    "Team Leader": teamLeaderMenuItems, // Team leader base is different
+};
 
 export function MainSidebar() {
   const pathname = usePathname();
   const { profile } = useAuth();
   const { teamLeader } = useTeamSettings();
 
-  const userRoles = useMemo(() => {
-    if (!profile) return [];
-    const roles: Role[] = [profile.id as Role];
-    if (profile.id === teamLeader) {
-      roles.push("Team Leader");
-    }
-    return roles;
-  }, [profile, teamLeader]);
-
   const visibleMenuItems = useMemo(() => {
-    return allMenuItems.filter(item => 
-      item.roles.some(role => userRoles.includes(role))
-    );
-  }, [userRoles]);
+    if (!profile) return [];
+    
+    let menu = roleMenus[profile.id as Role] || baseMenuItems;
+
+    if (profile.id === teamLeader) {
+      const combined = [...menu, ...teamLeaderMenuItems];
+      // Remove duplicates by href, ensuring Team Leader items take precedence if defined in both
+      const uniqueMenuItems = Array.from(new Map(combined.map(item => [item.href, item])).values());
+      menu = uniqueMenuItems;
+    }
+    
+    // Sort menu items to a consistent order
+    const desiredOrder = ["/dashboard", "/action-items", "/competitor-log", "/scenario-planning", "/strategic-advisor", "/debriefing", "/settings"];
+    menu.sort((a, b) => desiredOrder.indexOf(a.href) - desiredOrder.indexOf(b.href));
+
+    return menu;
+  }, [profile, teamLeader]);
 
 
   return (

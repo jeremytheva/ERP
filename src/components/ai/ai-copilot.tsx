@@ -7,7 +7,6 @@ import {
   SheetDescription,
   SheetHeader,
   SheetTitle,
-  SheetTrigger,
   SheetFooter,
 } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
@@ -76,11 +75,9 @@ export function AiCopilot() {
   return (
     <div className="fixed bottom-4 right-4 z-50">
       <Sheet open={isOpen} onOpenChange={setIsOpen}>
-        <SheetTrigger asChild>
-          <Button size="icon" className="rounded-full w-14 h-14 shadow-lg bg-accent hover:bg-accent/90 text-accent-foreground">
+        <Button size="icon" className="rounded-full w-14 h-14 shadow-lg bg-accent hover:bg-accent/90 text-accent-foreground" onClick={() => setIsOpen(true)}>
             <Sparkles className="h-6 w-6" />
-          </Button>
-        </SheetTrigger>
+        </Button>
         <SheetContent className="flex flex-col">
           <SheetHeader>
             <SheetTitle className="flex items-center gap-2 font-headline">

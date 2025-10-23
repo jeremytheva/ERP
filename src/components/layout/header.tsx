@@ -11,9 +11,10 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { ChevronsUpDown, LogOut } from "lucide-react";
+import { ChevronsUpDown, LogOut, Clock } from "lucide-react";
 import { usePathname } from "next/navigation";
 import { SidebarTrigger } from "../ui/sidebar";
+import { useGameState } from "@/hooks/use-game-data";
 
 const getPageTitle = (pathname: string): string => {
     const segment = pathname.split("/").pop() || "dashboard";
@@ -35,10 +36,18 @@ const getPageTitle = (pathname: string): string => {
     }
   };
 
+  const formatTime = (seconds: number): string => {
+    const minutes = Math.floor(seconds / 60);
+    const remainingSeconds = seconds % 60;
+    return `${minutes.toString().padStart(2, "0")}:${remainingSeconds.toString().padStart(2, "0")}`;
+  }
+
 export function Header() {
   const { profile, logout } = useAuth();
+  const { gameState, roundTimeLeft } = useGameState();
   const pathname = usePathname();
   const pageTitle = getPageTitle(pathname);
+  const currentRound = gameState.kpiHistory[gameState.kpiHistory.length - 1]?.round || 1;
 
   return (
     <header className="sticky top-0 z-10 flex h-16 items-center gap-4 border-b bg-background/80 backdrop-blur-sm px-4 md:px-6">
@@ -46,7 +55,14 @@ export function Header() {
           <SidebarTrigger />
         </div>
       <h1 className="text-xl font-semibold md:text-2xl font-headline hidden md:block">{pageTitle}</h1>
-      <div className="ml-auto">
+
+      <div className="flex items-center gap-4 ml-auto">
+        <div className="flex items-center gap-2 rounded-md bg-muted px-3 py-1.5 text-sm font-medium">
+            <span className="font-semibold">Round {currentRound}</span>
+            <span className="text-muted-foreground">|</span>
+            <Clock className="h-4 w-4 text-muted-foreground" />
+            <span>{formatTime(roundTimeLeft)}</span>
+        </div>
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <Button variant="ghost" className="flex items-center gap-3">

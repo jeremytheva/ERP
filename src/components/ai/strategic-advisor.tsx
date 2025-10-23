@@ -21,6 +21,11 @@ export function StrategicAdvisor() {
     const result = await getStrategicRecommendationsAction({
       gameState: JSON.stringify(gameState),
       teamStrategy: gameState.teamStrategy,
+      companyValuation: gameState.companyValuation,
+      netIncome: gameState.netIncome,
+      inventoryValue: gameState.inventoryValue,
+      totalEmissions: gameState.totalEmissions,
+      competitorAnalysisLog: "[]", // No log available here for now
     });
     setIsLoading(false);
 

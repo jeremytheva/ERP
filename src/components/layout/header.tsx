@@ -1,5 +1,4 @@
 
-
 "use client";
 
 import { useAuth } from "@/hooks/use-auth";
@@ -9,7 +8,6 @@ import {
   DropdownMenuItem,
   DropdownMenuLabel,
   DropdownMenuSeparator,
-  DropdownMenuTrigger,
   DropdownMenuRadioGroup,
   DropdownMenuRadioItem,
 } from "@/components/ui/dropdown-menu";
@@ -29,14 +27,16 @@ const getPageTitle = (pathname: string): string => {
     switch (segment) {
       case "dashboard":
         return "Dashboard";
-      case "scenario-planning":
-        return "Scenario Planning";
-      case "strategic-advisor":
-        return "Strategic Advisor";
-      case "debriefing":
-        return "End-of-Round Debriefing";
+      case "key-metrics":
+        return "Key Metrics";
+      case "master-data":
+        return "Reference & Master Data";
+      case "live-inventory":
+        return "Live Inventory Tracker (LIT)";
       case "action-items":
-        return "Action Items";
+        return "Roles & Responsibilities";
+      case "roles":
+        return "Role Views";
       case "competitor-log":
         return "Competitor Log";
       case "settings":

@@ -1,108 +1,29 @@
 /**
  * @file Firestore Security Rules
- * @description This ruleset enforces a public read policy with owner-only writes for most collections.
- * All data is stored in top-level collections: /games/{gameId}, /tasks/{taskId}, /settings/{settingsId}, /competitor_log/{logId}, and /users/{userId}.
+ * @description This ruleset enforces a basic security model that grants all authenticated users full access to all data. This is for rapid prototyping only and is NOT suitable for production use.
+ *
+ * Data Structure:
+ * - Top-level collections: /games/{gameId}, /tasks/{taskId}, /settings/{settingsId}, /competitor_log/{logId}, /users/{userId}.
+ * - No subcollections are explicitly defined.
  *
  * Key Security Decisions:
- * - Public read access is allowed for all collections to facilitate open access and data discovery.
- * - Write access (create, update, delete) is restricted to document ownership, based on an 'author' or 'owner' field within each document.
- * - The /users collection is an exception, allowing only signed-in users to create their profile. Listing users is disallowed.
+ * - All authenticated users can read and write all data.
+ * - This is a deliberately insecure configuration for prototyping purposes.
  *
- * Denormalization for Authorization:
- * - The rules assume that documents contain an explicit 'author' or 'owner' field that matches the user's UID. This avoids expensive `get()` operations in the rules.
- *
- * Structural Segregation:
- * - Public and private data are stored within the same collections, relying on the ownership field to control access.
+ * WARNING: This ruleset is extremely permissive. Before deploying to production, you MUST implement more granular access control based on user roles, ownership, or other relevant criteria.
  */
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
-
     /**
-     * @description Allows public read access to game states and restricts writes to owners.
-     * @path /databases/{database}/documents/games/{gameId}
-     * @allow (get, list)
-     * @allow (create) User with auth.uid sets the 'author' field to their uid.
-     * @allow (update, delete) User with auth.uid matches the 'author' field in the existing document.
-     * @deny (create) User attempts to set the 'author' field to a different uid.
-     * @principle Allows public reads but restricts writes to the document owner.
+     * @description Grants read and write access to all authenticated users for all documents in the database.
+     * @path /databases/{database}/documents/{document=**}
+     * @allow (read, write): Any authenticated user can read and write any document.
+     * @deny (read, write): None. All authenticated users are allowed.
+     * @principle Grants full access to all authenticated users.
      */
-    match /games/{gameId} {
-      allow get: if true;
-      allow list: if true;
-      allow create: if isSignedIn();
-      allow update: if isSignedIn();
-      allow delete: if isSignedIn();
-    }
-
-    /**
-     * @description Allows public read access to tasks and restricts writes to owners.
-     * @path /databases/{database}/documents/tasks/{taskId}
-     * @allow (get, list)
-     * @allow (create) User with auth.uid sets the 'author' field to their uid.
-     * @allow (update, delete) User with auth.uid matches the 'author' field in the existing document.
-     * @deny (create) User attempts to set the 'author' field to a different uid.
-     * @principle Allows public reads but restricts writes to the document owner.
-     */
-    match /tasks/{taskId} {
-      allow get: if true;
-      allow list: if true;
-      allow create: if isSignedIn();
-      allow update: if isSignedIn();
-      allow delete: if isSignedIn();
-    }
-
-    /**
-     * @description Allows public read access to team settings and restricts writes to owners.
-     * @path /databases/{database}/documents/settings/{settingsId}
-     * @allow (get, list)
-     * @allow (create) User with auth.uid sets the 'author' field to their uid.
-     * @allow (update, delete) User with auth.uid matches the 'author' field in the existing document.
-     * @deny (create) User attempts to set the 'author' field to a different uid.
-     * @principle Allows public reads but restricts writes to the document owner.
-     */
-    match /settings/{settingsId} {
-      allow get: if true;
-      allow list: if true;
-      allow create: if isSignedIn();
-      allow update: if isSignedIn();
-      allow delete: if isSignedIn();
-    }
-
-    /**
-     * @description Allows public read access to competitor logs and restricts writes to owners.
-     * @path /databases/{database}/documents/competitor_log/{logId}
-     * @allow (get, list)
-     * @allow (create) User with auth.uid sets the 'author' field to their uid.
-     * @allow (update, delete) User with auth.uid matches the 'author' field in the existing document.
-     * @deny (create) User attempts to set the 'author' field to a different uid.
-     * @principle Allows public reads but restricts writes to the document owner.
-     */
-    match /competitor_log/{logId} {
-      allow get: if true;
-      allow list: if true;
-      allow create: if isSignedIn();
-      allow update: if isSignedIn();
-      allow delete: if isSignedIn();
-    }
-
-    /**
-     * @description Allows a user to create their own profile, and restricts all other access.
-     * @path /databases/{database}/documents/users/{userId}
-     * @allow (create) User's auth.uid matches the userId.
-     * @deny (get, list, update, delete) All other operations are denied.
-     * @principle Enforces strict user-ownership for profile creation and prohibits unauthorized access.
-     */
-    match /users/{userId} {
-      allow get: if false;
-      allow list: if false;
-      allow create: if isSignedIn();
-      allow update: if isSignedIn();
-      allow delete: if isSignedIn();
-    }
-
-    function isSignedIn() {
-      return request.auth != null;
+    match /{document=**} {
+      allow read, write: if request.auth != null;
     }
   }
 }

@@ -1,7 +1,7 @@
 
 "use client";
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { useForm, Controller, useFieldArray } from 'react-hook-form';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -36,10 +36,14 @@ type ProcurementFormData = {
     sustainabilityInvestment: number;
 };
 
-export function ProcurementManagerView() {
+export default function ProcurementPage() {
     const searchParams = useSearchParams();
     const defaultSection = searchParams.get('section') || 'inventory-check';
     const [activeSectionTab, setActiveSectionTab] = useState(defaultSection);
+
+    useEffect(() => {
+        setActiveSectionTab(defaultSection);
+    }, [defaultSection]);
 
     const { register, control, watch } = useForm<ProcurementFormData>({
         defaultValues: {
@@ -234,5 +238,3 @@ export function ProcurementManagerView() {
         </Card>
     );
 }
-
-    

@@ -1,10 +1,10 @@
 
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { useSearchParams } from 'next/navigation';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
 import { BarChart, FileSignature, CircleDollarSign, Megaphone, Info, TrendingUp, AlertTriangle } from "lucide-react";
 import { useForm, useFieldArray, Controller } from "react-hook-form";
 import { Button } from "@/components/ui/button";
@@ -34,10 +34,14 @@ type SalesFormData = {
     marketingBudget: { dc: string; budget: number; }[];
 };
 
-export function SalesManagerView() {
+export default function SalesPage() {
     const searchParams = useSearchParams()
     const defaultSection = searchParams.get('section') || 'market-analysis';
     const [activeSectionTab, setActiveSectionTab] = useState(defaultSection);
+
+     useEffect(() => {
+        setActiveSectionTab(defaultSection);
+    }, [defaultSection]);
 
     const { register, control, watch, setValue } = useForm<SalesFormData>({
         defaultValues: {

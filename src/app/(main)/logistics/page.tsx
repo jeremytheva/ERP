@@ -1,7 +1,7 @@
 
 "use client";
 
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { useForm, Controller, useFieldArray } from 'react-hook-form';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -24,10 +24,14 @@ type LogisticsFormData = {
     onTimeDeliveryRate: number;
 };
 
-export function LogisticsManagerView() {
+export default function LogisticsPage() {
     const searchParams = useSearchParams();
     const defaultSection = searchParams.get('section') || 'liquidity-check';
     const [activeSectionTab, setActiveSectionTab] = useState(defaultSection);
+
+    useEffect(() => {
+        setActiveSectionTab(defaultSection);
+    }, [defaultSection]);
 
     const cashBalance = 85000; // Mock data from Key Metrics
     const isCashAlertActive = cashBalance < 100000;

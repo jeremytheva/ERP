@@ -1,9 +1,9 @@
 
 "use client";
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useSearchParams } from 'next/navigation';
-import { useForm } from 'react-hook-form';
+import { useForm, Controller } from 'react-hook-form';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { FileBox, Wrench, PackageCheck, FileSignature, AlertTriangle } from "lucide-react";
@@ -22,12 +22,16 @@ type ProductionFormData = {
     bomChangeStatus: 'Applied' | 'Pending' | 'N/A';
 };
 
-export function ProductionManagerView() {
+export default function ProductionPage() {
     const searchParams = useSearchParams();
     const defaultSection = searchParams.get('section') || 'planning-capacity';
     const [activeSectionTab, setActiveSectionTab] = useState(defaultSection);
 
-    const { register, watch } = useForm<ProductionFormData>({
+    useEffect(() => {
+        setActiveSectionTab(defaultSection);
+    }, [defaultSection]);
+
+    const { register, control, watch } = useForm<ProductionFormData>({
         defaultValues: {
             lotSize: 48000,
             mrpRun: false,
@@ -41,7 +45,6 @@ export function ProductionManagerView() {
     const capacityUtilization = (salesForecast / (CAPACITY_PER_DAY * 5)) * 100;
     const watchedLotSize = watch('lotSize');
     const efficiencyAlert = watchedLotSize < 48000;
-
 
     return (
         <Card>

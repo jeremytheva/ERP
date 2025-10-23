@@ -56,9 +56,9 @@ export const ALL_TASKS: Task[] = [
   {
     id: "T0.1",
     title: "Confirm Initial Finished Goods Stock",
-    description: "Verify and adjust the starting inventory levels for all finished products. This is a one-time setup for Round 1.",
+    description: "Verify and adjust the starting inventory levels for all finished products. This is a one-time setup for Round 1. Use transaction ZMB52 to check current stock.",
     role: "Logistics",
-    transactionCode: "ZMB52",
+    transactionCode: "ZMB1B (for changes)",
     priority: "Critical",
     estimatedTime: 5,
     roundRecurrence: "Once",
@@ -68,16 +68,26 @@ export const ALL_TASKS: Task[] = [
     completionType: "Data-Confirmed",
     taskType: "ERPsim Input Data",
     dataFields: [
-      { fieldName: "Yogurt_Initial_Stock", dataType: "Integer", suggestedValue: 50000 },
-      { fieldName: "Muesli_Initial_Stock", dataType: "Integer", suggestedValue: 50000 },
+      { fieldName: "Nut_Muesli_500g_Initial_Stock", dataType: "Integer", suggestedValue: 20000 },
+      { fieldName: "Blueberry_Muesli_500g_Initial_Stock", dataType: "Integer", suggestedValue: 20000 },
+      { fieldName: "Strawberry_Muesli_500g_Initial_Stock", dataType: "Integer", suggestedValue: 20000 },
+      { fieldName: "Raisin_Muesli_500g_Initial_Stock", dataType: "Integer", suggestedValue: 20000 },
+      { fieldName: "Original_Muesli_500g_Initial_Stock", dataType: "Integer", suggestedValue: 20000 },
+      { fieldName: "Mixed_Muesli_500g_Initial_Stock", dataType: "Integer", suggestedValue: 20000 },
+      { fieldName: "Nut_Muesli_1kg_Initial_Stock", dataType: "Integer", suggestedValue: 15000 },
+      { fieldName: "Blueberry_Muesli_1kg_Initial_Stock", dataType: "Integer", suggestedValue: 15000 },
+      { fieldName: "Strawberry_Muesli_1kg_Initial_Stock", dataType: "Integer", suggestedValue: 15000 },
+      { fieldName: "Raisin_Muesli_1kg_Initial_Stock", dataType: "Integer", suggestedValue: 15000 },
+      { fieldName: "Original_Muesli_1kg_Initial_Stock", dataType: "Integer", suggestedValue: 15000 },
+      { fieldName: "Mixed_Muesli_1kg_Initial_Stock", dataType: "Integer", suggestedValue: 15000 },
     ]
   },
   {
     id: "T0.2",
     title: "Confirm Initial Raw Material Stock",
-    description: "Verify and adjust the starting inventory for all raw materials. This is a one-time setup for Round 1.",
+    description: "Verify and adjust the starting inventory for all raw materials. This is a one-time setup for Round 1. Use transaction ZMB52 to check current stock.",
     role: "Procurement",
-    transactionCode: "ZMB52",
+    transactionCode: "ZME21N (for changes)",
     priority: "Critical",
     estimatedTime: 5,
     roundRecurrence: "Once",
@@ -87,16 +97,24 @@ export const ALL_TASKS: Task[] = [
     completionType: "Data-Confirmed",
     taskType: "ERPsim Input Data",
     dataFields: [
-      { fieldName: "Milk_Initial_Stock", dataType: "Integer", suggestedValue: 60000 },
-      { fieldName: "Packaging_Initial_Stock", dataType: "Integer", suggestedValue: 100000 },
+      { fieldName: "Wheat_Initial_Stock_kg", dataType: "Integer", suggestedValue: 20000 },
+      { fieldName: "Oats_Initial_Stock_kg", dataType: "Integer", suggestedValue: 30000 },
+      { fieldName: "Nuts_Initial_Stock_kg", dataType: "Integer", suggestedValue: 5000 },
+      { fieldName: "Blueberries_Initial_Stock_kg", dataType: "Integer", suggestedValue: 5000 },
+      { fieldName: "Strawberries_Initial_Stock_kg", dataType: "Integer", suggestedValue: 5000 },
+      { fieldName: "Raisins_Initial_Stock_kg", dataType: "Integer", suggestedValue: 5000 },
+      { fieldName: "Small_Bag_Initial_Stock_units", dataType: "Integer", suggestedValue: 150000 },
+      { fieldName: "Large_Bag_Initial_Stock_units", dataType: "Integer", suggestedValue: 100000 },
+      { fieldName: "Small_Box_Initial_Stock_units", dataType: "Integer", suggestedValue: 150000 },
+      { fieldName: "Large_Box_Initial_Stock_units", dataType: "Integer", suggestedValue: 100000 },
     ]
   },
   {
     id: "T0.3",
     title: "Validate & Confirm Bill of Materials (BOM)",
-    description: "Check the recipes for all products to ensure they are correct before starting production. This is a one-time setup for Round 1.",
+    description: "Check the recipes (BOM) for all products to ensure they are correct before starting production. Use ZCS02 to make changes if needed. This is a one-time setup for Round 1.",
     role: "Production",
-    transactionCode: "CS03",
+    transactionCode: "CS03 (View), ZCS02 (Change)",
     priority: "Critical",
     estimatedTime: 10,
     roundRecurrence: "Once",
@@ -105,6 +123,27 @@ export const ALL_TASKS: Task[] = [
     dependencyIDs: [],
     completionType: "Manual-Tick",
     taskType: "Standard"
+  },
+  {
+    id: "T0.4",
+    title: "Set Initial Prices",
+    description: "Set the initial selling price for all products in all distribution channels (DC). This is a critical one-time setup for Round 1.",
+    role: "Sales",
+    transactionCode: "VK32",
+    priority: "Critical",
+    estimatedTime: 10,
+    roundRecurrence: "Once",
+    startRound: 1,
+    timeframeConstraint: "StartPhase",
+    dependencyIDs: [],
+    completionType: "Data-Confirmed",
+    taskType: "ERPsim Input Data",
+    dataFields: [
+      { fieldName: "Nut_Muesli_500g_Price", dataType: "Currency", suggestedValue: 3.90 },
+      { fieldName: "Blueberry_Muesli_500g_Price", dataType: "Currency", suggestedValue: 4.23 },
+      { fieldName: "Nut_Muesli_1kg_Price", dataType: "Currency", suggestedValue: 4.61 },
+      { fieldName: "Blueberry_Muesli_1kg_Price", dataType: "Currency", suggestedValue: 5.26 },
+    ]
   },
   // --- REGULAR TASKS ---
   {
@@ -121,8 +160,7 @@ export const ALL_TASKS: Task[] = [
     completionType: "Data-Confirmed",
     taskType: "ERPsim Input Data",
     dataFields: [
-      { fieldName: "Yogurt_Forecast", dataType: "Integer", suggestedValue: 120000 },
-      { fieldName: "Muesli_Forecast", dataType: "Integer", suggestedValue: 250000 },
+      { fieldName: "Total_Units_Forecasted", dataType: "Integer", suggestedValue: 370000 },
     ]
   },
   {
@@ -178,7 +216,7 @@ export const ALL_TASKS: Task[] = [
     roundRecurrence: "Continuous",
     timeframeConstraint: "None",
     dependencyIDs: [],
-    completionType: "Manual-Tick",
+    completionType: "ERPsim Gather Data",
     taskType: "ERPsim Gather Data",
     dataFields: [{ fieldName: "Competitor_Avg_Price", dataType: "Currency" }]
   },
@@ -197,9 +235,9 @@ export const ALL_TASKS: Task[] = [
     taskType: "ERPsim Input Data",
     dataFields: [
       {
-        fieldName: "Yogurt_Selling_Price",
+        fieldName: "Blueberry_Muesli_1kg_Price",
         dataType: "Currency",
-        suggestedValue: 3.85,
+        suggestedValue: 5.26,
         aiRationale: "Suggested by Strategic Advisor based on competitor's historical low margin of 15%."
       }
     ]

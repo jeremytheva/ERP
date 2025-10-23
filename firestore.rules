@@ -1,77 +1,102 @@
 /**
- * @file Firestore Security Rules
- * @description This ruleset enforces a strict user-ownership model for both user profiles and game sessions.
+ * @fileoverview Firestore Security Rules for the ERPsim Dashboard application.
+ *
+ * Core Philosophy:
+ * This ruleset enforces a strict user-ownership model for user-specific data
+ * (action items, competitor analysis logs) and allows public read access to KPI data.
  *
  * Data Structure:
- * - All user data and game sessions are nested under `/users/{userId}`.
- * - User profiles are stored directly at `/users/{userId}`.
- * - Game sessions are stored in a subcollection at `/users/{userId}/gameSessions/{gameSessionId}`.
+ * - /userProfiles/{userId}: Stores individual user profiles, secured by owner-only access.
+ * - /kpiData/{kpiId}: Stores global KPI data, publicly readable.
+ * - /userProfiles/{userId}/actionItems/{actionItemId}: Stores action items, secured by owner-only access.
+ * - /userProfiles/{userId}/competitorAnalysisLogs/{logId}: Stores competitor analysis logs, secured by owner-only access.
  *
  * Key Security Decisions:
- * - Users can only access their own profiles and game sessions.
- * - Listing of users is disallowed.
- * - GameSessions have a userId property that is used for validation that the user owns the game session
+ * - User listing is implicitly denied.
+ * - KPI data is publicly readable.
+ * - Missing ownership fields will result in `// TODO` rules.
  *
  * Denormalization for Authorization:
- * - The `GameSession` document contains a `userId` field, enabling direct authorization checks
- *   without requiring additional reads.
+ *  - Authorization relies on the path (`userId`) to determine ownership, avoiding the need for `get()` calls.
  */
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
     /**
-     * @description Secure user profiles by enforcing ownership. Only the user can read or write their own profile.
-     * @path /users/{userId}
-     * @allow (create) - User with ID 'user123' can create their profile if request.auth.uid == 'user123'.
-     * @allow (get, update, delete) - User with ID 'user123' can read, update, or delete their profile if request.auth.uid == 'user123'.
-     * @deny (create) - User with ID 'user123' cannot create a profile with a different ID (e.g., 'user456').
-     * @deny (get, update, delete) - User with ID 'user123' cannot read, update, or delete profile with ID 'user456'.
-     * @principle Enforces document ownership for all operations on user profiles.
+     * @description Manages user profile data, ensuring only the owning user can read or write their profile.
+     * @path /userProfiles/{userId}
+     * @allow (create) User with UID 'user_abc' can create a profile at /userProfiles/user_abc.
+     * @deny (create) User with UID 'user_xyz' cannot create a profile at /userProfiles/user_abc.
+     * @allow (get, update, delete) User with UID 'user_abc' can read, update, or delete their profile at /userProfiles/user_abc.
+     * @deny (get, update, delete) User with UID 'user_xyz' cannot read, update, or delete profile at /userProfiles/user_abc.
+     * @principle Enforces document ownership for all operations.
      */
-    match /users/{userId} {
-      //Function to check if the request is from the signed in user
-      function isSignedIn() {
-        return request.auth != null;
-      }
-
-      //Function to check if the request is for a specific user id
-      function isOwner(userId) {
-        return request.auth.uid == userId;
-      }
-
-      allow get: if isSignedIn() && isOwner(userId);
+    match /userProfiles/{userId} {
+      allow get: if isOwner(userId);
       allow list: if false;
-      allow create: if isSignedIn() && isOwner(userId);
-      allow update: if isSignedIn() && isOwner(userId);
-      allow delete: if isSignedIn() && isOwner(userId);
+      allow create: if isOwner(userId) && request.resource.data.id == userId;
+      allow update: if isExistingOwner(userId) && request.resource.data.id == resource.data.id;
+      allow delete: if isExistingOwner(userId);
     }
 
     /**
-     * @description Secure game sessions by enforcing ownership. Only the user can read or write their own game sessions.
-     * @path /users/{userId}/gameSessions/{gameSessionId}
-     * @allow (create) - User 'user123' can create a game session under their profile.
-     * @allow (get, update, delete) - User 'user123' can read, update, or delete their game sessions.
-     * @deny (create) - User 'user123' cannot create a game session under another user's profile ('user456').
-     * @deny (get, update, delete) - User 'user123' cannot read, update, or delete game sessions under user 'user456's profile.
-     * @principle Enforces document ownership for all operations on game sessions, validating the userId.
+     * @description Manages Key Performance Indicator (KPI) data, allowing public read access but restricting writes.
+     * @path /kpiData/{kpiId}
+     * @allow (get, list) Any user can read KPI data.
+     * @deny (create, update, delete) No user can create, update, or delete KPI data without custom logic.
+     * @principle Allows public read access to global data while restricting write access.
      */
-    match /users/{userId}/gameSessions/{gameSessionId} {
-       //Function to check if the request is from the signed in user
-      function isSignedIn() {
-        return request.auth != null;
-      }
-
-      //Function to check if the request is for a specific user id
-      function isOwner(userId) {
-        return request.auth.uid == userId;
-      }
-
-      allow get: if isSignedIn() && isOwner(userId);
-      allow list: if false;
-      allow create: if isSignedIn() && isOwner(userId);
-      allow update: if isSignedIn() && isOwner(userId);
-      allow delete: if isSignedIn() && isOwner(userId);
+    match /kpiData/{kpiId} {
+      allow get, list: if true;
+      allow create, update, delete: if false;
     }
+
+    /**
+     * @description Manages action items for a specific user, ensuring only the owning user can manage them.
+     * @path /userProfiles/{userId}/actionItems/{actionItemId}
+     * @allow (create) User with UID 'user_abc' can create an action item at /userProfiles/user_abc/actionItems/item_1.
+     * @deny (create) User with UID 'user_xyz' cannot create an action item at /userProfiles/user_abc/actionItems/item_1.
+     * @allow (get, update, delete) User with UID 'user_abc' can read, update, or delete their action item at /userProfiles/user_abc/actionItems/item_1.
+     * @deny (get, update, delete) User with UID 'user_xyz' cannot read, update, or delete action item at /userProfiles/user_abc/actionItems/item_1.
+     * @principle Enforces document ownership and relational integrity for user-specific data.
+     */
+    match /userProfiles/{userId}/actionItems/{actionItemId} {
+      allow get: if isOwner(userId);
+      allow list: if isOwner(userId);
+      allow create: if isOwner(userId) && request.resource.data.userId == userId;
+      allow update: if isExistingOwner(userId) && request.resource.data.userId == resource.data.userId;
+      allow delete: if isExistingOwner(userId);
+    }
+
+    /**
+     * @description Manages competitor analysis logs for a specific user, ensuring only the owning user can manage them.
+     * @path /userProfiles/{userId}/competitorAnalysisLogs/{logId}
+     * @allow (create) User with UID 'user_abc' can create a log entry at /userProfiles/user_abc/competitorAnalysisLogs/log_1.
+     * @deny (create) User with UID 'user_xyz' cannot create a log entry at /userProfiles/user_abc/competitorAnalysisLogs/log_1.
+     * @allow (get, update, delete) User with UID 'user_abc' can read, update, or delete their log entry at /userProfiles/user_abc/competitorAnalysisLogs/log_1.
+     * @deny (get, update, delete) User with UID 'user_xyz' cannot read, update, or delete log entry at /userProfiles/user_abc/competitorAnalysisLogs/log_1.
+     * @principle Enforces document ownership and relational integrity for user-specific data.
+     */
+    match /userProfiles/{userId}/competitorAnalysisLogs/{logId} {
+      allow get: if isOwner(userId);
+      allow list: if isOwner(userId);
+      allow create: if isOwner(userId) && request.resource.data.authorId == userId;
+      allow update: if isExistingOwner(userId) && request.resource.data.authorId == resource.data.authorId;
+      allow delete: if isExistingOwner(userId);
+    }
+  }
+
+  // Helper functions
+  function isSignedIn() {
+    return request.auth != null;
+  }
+
+  function isOwner(userId) {
+    return isSignedIn() && request.auth.uid == userId;
+  }
+
+  function isExistingOwner(userId) {
+    return isOwner(userId) && resource != null;
   }
 }

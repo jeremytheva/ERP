@@ -11,57 +11,39 @@ import {
   SidebarMenuButton,
   SidebarFooter,
   SidebarTrigger,
+  SidebarSeparator,
+  SidebarGroup,
+  SidebarGroupLabel,
 } from "@/components/ui/sidebar";
 import { Button } from "@/components/ui/button";
-import { Bot, LayoutDashboard, Boxes, Lightbulb, BookText, ListTodo, Users, Settings } from "lucide-react";
+import { Bot, LayoutDashboard, Database, FileText, ListTodo, Users, Settings, Briefcase, ShoppingCart, Factory, Truck, BarChart2 } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
 import { useTeamSettings } from "@/hooks/use-team-settings";
 import { useMemo } from "react";
 import type { Role } from "@/types";
 
-const baseMenuItems = [
+const generalMenuItems = [
   { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
-  { href: "/action-items", label: "Action Items", icon: ListTodo },
-  { href: "/settings", label: "Settings", icon: Settings },
+  { href: "/key-metrics", label: "Key Metrics", icon: BarChart2 },
+  { href: "/master-data", label: "Master Data", icon: Database },
+  { href: "/live-inventory", label: "Live Inventory (LIT)", icon: FileText },
+  { href: "/roles-responsibilities", label: "Roles & Responsibilities", icon: ListTodo },
 ];
 
-const salesMenuItems = [
-  { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
-  { href: "/action-items", label: "Action Items", icon: ListTodo },
-  { href: "/scenario-planning", label: "Scenario Planning", icon: Boxes },
-  { href: "/strategic-advisor", label: "Strategic Advisor", icon: Lightbulb },
-  { href: "/settings", label: "Settings", icon: Settings },
-];
-
-const procurementMenuItems = [
-    { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
-    { href: "/action-items", label: "Action Items", icon: ListTodo },
-    { href: "/settings", label: "Settings", icon: Settings },
-];
-const productionMenuItems = [
-    { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
-    { href: "/action-items", label: "Action Items", icon: ListTodo },
-    { href: "/settings", label: "Settings", icon: Settings },
-];
-const logisticsMenuItems = [
-    { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
-    { href: "/action-items", label: "Action Items", icon: ListTodo },
-    { href: "/settings", label: "Settings", icon: Settings },
-];
-
-const teamLeaderMenuItems = [
-  { href: "/scenario-planning", label: "Scenario Planning", icon: Boxes },
-  { href: "/strategic-advisor", label: "Strategic Advisor", icon: Lightbulb },
-  { href: "/debriefing", label: "Round Debriefing", icon: BookText },
-  { href: "/settings", label: "Settings", icon: Settings },
-];
-
-const roleMenus: Record<Role, typeof baseMenuItems> = {
-    "Sales": salesMenuItems,
-    "Procurement": procurementMenuItems,
-    "Production": productionMenuItems,
-    "Logistics": logisticsMenuItems,
-    "Team Leader": teamLeaderMenuItems, // Team leader base is different
+const roleSpecificMenus: Record<string, { href: string; label: string; icon: any }[]> = {
+  "Sales": [
+    { href: "/sales", label: "Sales", icon: Briefcase },
+  ],
+  "Production": [
+    { href: "/production", label: "Production", icon: Factory },
+  ],
+  "Procurement": [
+     { href: "/procurement", label: "Procurement", icon: ShoppingCart },
+  ],
+  "Logistics": [
+    { href: "/logistics", label: "Logistics", icon: Truck },
+  ],
+  "Team Leader": [], // Team leader gets all role-specific tabs
 };
 
 export function MainSidebar() {
@@ -69,25 +51,16 @@ export function MainSidebar() {
   const { profile } = useAuth();
   const { teamLeader } = useTeamSettings();
 
-  const visibleMenuItems = useMemo(() => {
+  const isTeamLeader = profile?.id === teamLeader;
+
+  const roleSpecificItems = useMemo(() => {
     if (!profile) return [];
-    
-    let menu = roleMenus[profile.id as Role] || baseMenuItems;
-
-    if (profile.id === teamLeader) {
-      const combined = [...menu, ...teamLeaderMenuItems];
-      // Remove duplicates by href, ensuring Team Leader items take precedence if defined in both
-      const uniqueMenuItems = Array.from(new Map(combined.map(item => [item.href, item])).values());
-      menu = uniqueMenuItems;
+    if (isTeamLeader) {
+      // Team leader sees all role-specific tabs
+      return Object.values(roleSpecificMenus).flat();
     }
-    
-    // Sort menu items to a consistent order
-    const desiredOrder = ["/dashboard", "/action-items", "/scenario-planning", "/strategic-advisor", "/debriefing", "/settings"];
-    menu.sort((a, b) => desiredOrder.indexOf(a.href) - desiredOrder.indexOf(b.href));
-
-    return menu;
-  }, [profile, teamLeader]);
-
+    return roleSpecificMenus[profile.name] || [];
+  }, [profile, isTeamLeader]);
 
   return (
     <Sidebar collapsible="icon" className="border-r">
@@ -103,21 +76,62 @@ export function MainSidebar() {
         <SidebarTrigger className="hidden md:flex" />
       </SidebarHeader>
       <SidebarMenu className="flex-1 p-2">
-        {visibleMenuItems.map(({ href, label, icon: Icon }) => (
-          <SidebarMenuItem key={href}>
-            <Link href={href} passHref>
-              <SidebarMenuButton
+        <SidebarGroup>
+            <SidebarGroupLabel>General</SidebarGroupLabel>
+            {generalMenuItems.map(({ href, label, icon: Icon }) => (
+            <SidebarMenuItem key={href}>
+                <Link href={href} passHref>
+                <SidebarMenuButton
+                    as="a"
+                    isActive={pathname.startsWith(href)}
+                    tooltip={{ children: label, side: "right", align:"center" }}
+                    className="justify-start"
+                >
+                    <Icon />
+                    <span>{label}</span>
+                </SidebarMenuButton>
+                </Link>
+            </SidebarMenuItem>
+            ))}
+        </SidebarGroup>
+
+        <SidebarSeparator />
+
+        <SidebarGroup>
+            <SidebarGroupLabel>Role Specific</SidebarGroupLabel>
+            {roleSpecificItems.map(({ href, label, icon: Icon }) => (
+                <SidebarMenuItem key={href}>
+                    <Link href={href} passHref>
+                    <SidebarMenuButton
+                        as="a"
+                        isActive={pathname.startsWith(href)}
+                        tooltip={{ children: label, side: "right", align:"center" }}
+                        className="justify-start"
+                    >
+                        <Icon />
+                        <span>{label}</span>
+                    </SidebarMenuButton>
+                    </Link>
+                </SidebarMenuItem>
+            ))}
+        </SidebarGroup>
+        
+        <SidebarSeparator />
+        
+        <SidebarMenuItem>
+            <Link href="/settings" passHref>
+                <SidebarMenuButton
                 as="a"
-                isActive={pathname.startsWith(href)}
-                tooltip={{ children: label, side: "right", align:"center" }}
+                isActive={pathname.startsWith("/settings")}
+                tooltip={{ children: "Settings", side: "right", align:"center" }}
                 className="justify-start"
-              >
-                <Icon />
-                <span>{label}</span>
-              </SidebarMenuButton>
+                >
+                <Settings />
+                <span>Settings</span>
+                </SidebarMenuButton>
             </Link>
-          </SidebarMenuItem>
-        ))}
+        </SidebarMenuItem>
+        
       </SidebarMenu>
       <SidebarFooter className="p-2">
       </SidebarFooter>

@@ -25,8 +25,10 @@ export const TeamSettingsProvider = ({ children }: { children: ReactNode }) => {
     setTeamLeaderState(roleId);
   };
 
+  const value = { teamLeader, setTeamLeader };
+
   return (
-    <TeamSettingsContext.Provider value={{ teamLeader, setTeamLeader }}>
+    <TeamSettingsContext.Provider value={value}>
       {children}
     </TeamSettingsContext.Provider>
   );

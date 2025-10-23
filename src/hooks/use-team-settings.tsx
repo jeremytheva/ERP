@@ -1,9 +1,10 @@
+
 "use client";
 
 import { useState, useEffect, createContext, useContext, ReactNode } from "react";
 import { doc, onSnapshot, setDoc } from "firebase/firestore";
-import { db } from "@/lib/firebase";
 import { useAuth } from "./use-auth";
+import { useFirestore } from "@/firebase";
 
 const SETTINGS_ID = "default_settings";
 
@@ -16,11 +17,12 @@ const TeamSettingsContext = createContext<TeamSettingsContextType | undefined>(u
 
 export const TeamSettingsProvider = ({ children }: { children: ReactNode }) => {
   const { user } = useAuth();
+  const firestore = useFirestore();
   const [teamLeader, setTeamLeaderState] = useState<string | null>(null);
 
   useEffect(() => {
-    if (!user) return;
-    const settingsDocRef = doc(db, "settings", SETTINGS_ID);
+    if (!user || !firestore) return;
+    const settingsDocRef = doc(firestore, "settings", SETTINGS_ID);
 
     const unsubscribe = onSnapshot(settingsDocRef, (docSnap) => {
       if (docSnap.exists()) {
@@ -31,11 +33,11 @@ export const TeamSettingsProvider = ({ children }: { children: ReactNode }) => {
     });
 
     return () => unsubscribe();
-  }, [user]);
+  }, [user, firestore]);
 
   const setTeamLeader = (roleId: string) => {
-    if (!user) return;
-    const settingsDocRef = doc(db, "settings", SETTINGS_ID);
+    if (!user || !firestore) return;
+    const settingsDocRef = doc(firestore, "settings", SETTINGS_ID);
     setDoc(settingsDocRef, { teamLeader: roleId }, { merge: true });
   };
 

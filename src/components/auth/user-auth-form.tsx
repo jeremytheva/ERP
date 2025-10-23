@@ -1,3 +1,4 @@
+
 "use client";
 
 import * as React from "react";
@@ -7,17 +8,26 @@ import { Loader2 } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
 import { USER_PROFILES } from "@/lib/mock-data";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { initiateAnonymousSignIn } from "@/firebase";
+import { useAuth as useFirebaseAuth } from "@/firebase";
+
 
 interface UserAuthFormProps extends React.HTMLAttributes<HTMLDivElement> {}
 
 export function UserAuthForm({ className, ...props }: UserAuthFormProps) {
   const [isLoading, setIsLoading] = React.useState<boolean>(false);
   const [selectedProfile, setSelectedProfile] = React.useState<string>(USER_PROFILES[0]?.id || "");
-  const { login } = useAuth();
+  const { user, login } = useAuth();
+  const auth = useFirebaseAuth();
+
 
   const handleLogin = async (event: React.SyntheticEvent) => {
     event.preventDefault();
+    if (!auth) return;
     setIsLoading(true);
+    if (!user) {
+        initiateAnonymousSignIn(auth);
+    }
     await login(selectedProfile);
     setIsLoading(false);
   };

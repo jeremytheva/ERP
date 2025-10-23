@@ -21,7 +21,7 @@ import { Loader2, FileText, PlusCircle } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "../ui/separator";
 import Markdown from 'react-markdown';
-import { useActionItems } from "@/hooks/use-game-data";
+import { useTasks } from "@/hooks/use-tasks";
 
 const formSchema = z.object({
   performanceData: z.string().min(10, { message: "Please provide some performance data." }),
@@ -33,7 +33,8 @@ export function DebriefingForm() {
   const [isLoading, setIsLoading] = useState(false);
   const [report, setReport] = useState<string>("");
   const { toast } = useToast();
-  const { addActionItem } = useActionItems();
+  // This is a placeholder, a real implementation would need a more robust way to create tasks
+  const { addTask } = useTasks();
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -62,10 +63,26 @@ export function DebriefingForm() {
   };
 
   const handleAddActionItem = (itemText: string) => {
-    addActionItem(itemText);
+    // This is a simplified placeholder action
+    const newTask = {
+        id: `T${new Date().getTime()}`,
+        title: itemText,
+        description: "Generated from debriefing report.",
+        role: "Team Leader",
+        transactionCode: "N/A",
+        priority: "Medium",
+        estimatedTime: 5,
+        roundRecurrence: "Once",
+        dependencyIDs: [],
+        completionType: "Manual-Tick",
+        taskType: "Standard",
+        completed: false,
+      };
+      addTask(newTask);
+
     toast({
         title: "Action Item Added",
-        description: `"${itemText}" has been added to your list.`,
+        description: `Task "${itemText}" has been added.`,
       });
   }
 

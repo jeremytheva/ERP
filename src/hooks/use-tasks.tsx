@@ -1,8 +1,9 @@
+
 "use client";
 
 import { useState, useEffect, createContext, useContext, ReactNode } from "react";
-import { collection, doc, onSnapshot, writeBatch, getDocs, getDoc } from "firebase/firestore";
-import { db } from "@/lib/firebase";
+import { collection, doc, onSnapshot, writeBatch } from "firebase/firestore";
+import { useFirestore } from "@/firebase";
 import { useAuth } from "./use-auth";
 import type { Task } from "@/types";
 import { ALL_TASKS } from "@/lib/mock-data";
@@ -18,21 +19,22 @@ const TasksContext = createContext<TasksContextType | undefined>(undefined);
 
 export const TasksProvider = ({ children }: { children: ReactNode }) => {
   const { user } = useAuth();
+  const firestore = useFirestore();
   const [tasks, setTasks] = useState<Task[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    if (!user) return;
+    if (!user || !firestore) return;
     setIsLoading(true);
     
-    const tasksColRef = collection(db, "tasks");
+    const tasksColRef = collection(firestore, "tasks");
 
     const unsubscribe = onSnapshot(tasksColRef, async (querySnapshot) => {
       if (querySnapshot.empty) {
         // Initialize tasks if collection doesn't exist or is empty
-        const batch = writeBatch(db);
+        const batch = writeBatch(firestore);
         ALL_TASKS.forEach(task => {
-          const taskDocRef = doc(db, "tasks", task.id);
+          const taskDocRef = doc(firestore, "tasks", task.id);
           batch.set(taskDocRef, task);
         });
         await batch.commit();
@@ -45,28 +47,28 @@ export const TasksProvider = ({ children }: { children: ReactNode }) => {
     });
 
     return () => unsubscribe();
-  }, [user]);
+  }, [user, firestore]);
 
   const addTask = async (task: Task) => {
-    if (!user) return;
-    const taskDocRef = doc(db, "tasks", task.id);
-    const batch = writeBatch(db);
+    if (!user || !firestore) return;
+    const taskDocRef = doc(firestore, "tasks", task.id);
+    const batch = writeBatch(firestore);
     batch.set(taskDocRef, task);
     await batch.commit();
   };
 
   const updateTask = async (updatedTask: Task) => {
-    if (!user) return;
-    const taskDocRef = doc(db, "tasks", updatedTask.id);
-    const batch = writeBatch(db);
+    if (!user || !firestore) return;
+    const taskDocRef = doc(firestore, "tasks", updatedTask.id);
+    const batch = writeBatch(firestore);
     batch.update(taskDocRef, { ...updatedTask });
     await batch.commit();
   };
 
   const deleteTask = async (taskId: string) => {
-    if (!user) return;
-    const taskDocRef = doc(db, "tasks", taskId);
-    const batch = writeBatch(db);
+    if (!user || !firestore) return;
+    const taskDocRef = doc(firestore, "tasks", taskId);
+    const batch = writeBatch(firestore);
     batch.delete(taskDocRef);
     await batch.commit();
   };

@@ -1,12 +1,14 @@
+
 "use client";
 
 import React, { createContext, useState, useEffect, ReactNode } from "react";
-import { User, onAuthStateChanged, signInAnonymously } from "firebase/auth";
-import { auth } from "@/lib/firebase";
+import { User, onAuthStateChanged } from "firebase/auth";
 import type { UserProfile } from "@/types";
 import { USER_PROFILES } from "@/lib/mock-data";
 import { usePathname, useRouter } from "next/navigation";
 import { Skeleton } from "@/components/ui/skeleton";
+import { useAuth as useFirebaseAuth } from "@/firebase";
+
 
 interface AuthContextType {
   user: User | null;
@@ -19,6 +21,7 @@ interface AuthContextType {
 export const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
+  const auth = useFirebaseAuth();
   const [user, setUser] = useState<User | null>(null);
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [loading, setLoading] = useState(true);
@@ -26,6 +29,10 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const pathname = usePathname();
 
   useEffect(() => {
+    if (!auth) {
+        setLoading(false); // Firebase not initialized yet
+        return;
+    }
     const unsubscribe = onAuthStateChanged(auth, (firebaseUser) => {
       if (firebaseUser) {
         setUser(firebaseUser);
@@ -54,13 +61,13 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     });
 
     return () => unsubscribe();
-  }, [router, pathname]);
+  }, [router, pathname, auth]);
 
   const login = async (profileId: string) => {
     setLoading(true);
     try {
         if (!user) {
-            await signInAnonymously(auth);
+            // This will be handled by the onAuthStateChanged listener
         }
         const userProfile = USER_PROFILES.find(p => p.id === profileId) || null;
         setProfile(userProfile);
@@ -72,14 +79,16 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         if(pathname === '/') {
             router.push("/dashboard");
         }
-    } catch (error) {
-        console.error("Anonymous sign-in/profile switch failed:", error);
+    } catch (error)
+    {
+        console.error("Profile switch failed:", error);
     } finally {
         setLoading(false);
     }
   };
 
   const logout = async () => {
+    if (!auth) return;
     setLoading(true);
     await auth.signOut();
     setUser(null);
@@ -110,5 +119,3 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     </AuthContext.Provider>
   );
 };
-
-    

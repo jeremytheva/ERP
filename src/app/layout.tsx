@@ -8,6 +8,7 @@ import { TeamSettingsProvider } from "@/hooks/use-team-settings";
 import { TasksProvider } from "@/hooks/use-tasks";
 import { GameStateProvider } from "@/hooks/use-game-data";
 import { CompetitorLogProvider } from "@/hooks/use-competitor-log";
+import { FirebaseClientProvider } from "@/firebase";
 
 export const metadata: Metadata = {
   title: "ERPsim Dashboard",
@@ -38,18 +39,20 @@ export default function RootLayout({
         <link href="https://fonts.googleapis.com/css2?family=Source+Code+Pro&display=swap" rel="stylesheet" />
       </head>
       <body className={`${inter.variable} ${sourceCodePro.variable} font-body antialiased`} suppressHydrationWarning>
-        <AuthProvider>
-          <TeamSettingsProvider>
-            <GameStateProvider>
-              <TasksProvider>
-                <CompetitorLogProvider>
-                  {children}
-                  <Toaster />
-                </CompetitorLogProvider>
-              </TasksProvider>
-            </GameStateProvider>
-          </TeamSettingsProvider>
-        </AuthProvider>
+        <FirebaseClientProvider>
+          <AuthProvider>
+            <TeamSettingsProvider>
+              <GameStateProvider>
+                <TasksProvider>
+                  <CompetitorLogProvider>
+                    {children}
+                    <Toaster />
+                  </CompetitorLogProvider>
+                </TasksProvider>
+              </GameStateProvider>
+            </TeamSettingsProvider>
+          </AuthProvider>
+        </FirebaseClientProvider>
       </body>
     </html>
   );

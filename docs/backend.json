@@ -1,123 +1,120 @@
 {
   "entities": {
-    "GameSession": {
-      "$schema": "http://json-schema.org/draft-07/schema#",
-      "title": "GameSession",
+    "GameState": {
+      "title": "GameState",
       "type": "object",
-      "description": "Represents a single game session, allowing users to resume their simulation from where they left off.",
+      "description": "Represents the shared state of a single game simulation.",
       "properties": {
-        "id": {
-          "type": "string",
-          "description": "Unique identifier for the Game Session."
+        "companyValuation": { "type": "number" },
+        "netIncome": { "type": "number" },
+        "inventoryValue": { "type": "number" },
+        "totalEmissions": { "type": "number" },
+        "teamStrategy": { "type": "string" },
+        "kpiHistory": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "round": { "type": "number" },
+              "companyValuation": { "type": "number" },
+              "netIncome": { "type": "number" },
+              "inventoryValue": { "type": "number" },
+              "totalEmissions": { "type": "number" }
+            },
+            "required": ["round", "companyValuation", "netIncome", "inventoryValue", "totalEmissions"]
+          }
         },
-        "userId": {
-          "type": "string",
-          "description": "Reference to the User who initiated this game session. (Relationship: User 1:N GameSession)"
-        },
-        "startTime": {
-          "type": "string",
-          "description": "Timestamp indicating when the game session started.",
-          "format": "date-time"
-        },
-        "endTime": {
-          "type": "string",
-          "description": "Timestamp indicating when the game session ended. Can be null if the session is still active.",
-          "format": "date-time"
-        },
-        "gameState": {
-          "type": "string",
-          "description": "A serialized representation of the game's state at the end of the session. This will allow the simulation to be continued."
-        },
-        "companyValuation": {
-          "type": "number",
-          "description": "Company Valuation KPI at end of GameSession."
-        },
-        "netIncome": {
-          "type": "number",
-          "description": "Net Income KPI at end of GameSession."
-        },
-        "inventoryValue": {
-          "type": "number",
-          "description": "Inventory Value KPI at end of GameSession."
-        },
-        "totalEmissions": {
-          "type": "number",
-          "description": "Total Emissions KPI at end of GameSession."
+        "timerState": {
+          "type": "object",
+          "properties": {
+            "timeLeft": { "type": "number" },
+            "isPaused": { "type": "boolean" },
+            "isBreakActive": { "type": "boolean" },
+            "isBreakEnabled": { "type": "boolean" },
+            "roundDuration": { "type": "number" },
+            "breakDuration": { "type": "number" }
+          },
+          "required": ["timeLeft", "isPaused", "isBreakActive", "isBreakEnabled", "roundDuration", "breakDuration"]
         }
       },
-      "required": [
-        "id",
-        "userId",
-        "startTime",
-        "gameState"
-      ]
+      "required": ["companyValuation", "netIncome", "inventoryValue", "totalEmissions", "kpiHistory", "timerState"]
     },
-    "User": {
-      "$schema": "http://json-schema.org/draft-07/schema#",
-      "title": "User",
+    "Task": {
+      "title": "Task",
       "type": "object",
-      "description": "Represents a user profile within the ERPsim Dashboard.",
+      "description": "Represents a single actionable task for a user role.",
       "properties": {
-        "id": {
-          "type": "string",
-          "description": "Unique identifier for the User."
-        },
-        "username": {
-          "type": "string",
-          "description": "The username of the user."
+        "id": { "type": "string" },
+        "title": { "type": "string" },
+        "description": { "type": "string" },
+        "role": { "type": "string", "enum": ["Procurement", "Production", "Logistics", "Sales", "Team Leader"] },
+        "transactionCode": { "type": "string" },
+        "priority": { "type": "string", "enum": ["Critical", "High", "Medium", "Low"] },
+        "estimatedTime": { "type": "number" },
+        "roundRecurrence": { "type": "string", "enum": ["Once", "RoundStart", "Continuous"] },
+        "startRound": { "type": "number" },
+        "dependencyIDs": { "type": "array", "items": { "type": "string" } },
+        "completionType": { "type": "string", "enum": ["Manual-Tick", "Data-Confirmed", "System-Validated"] },
+        "taskType": { "type": "string", "enum": ["ERPsim Input Data", "ERPsim Gather Data", "Standard"] },
+        "completed": { "type": "boolean" },
+        "dataFields": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "fieldName": { "type": "string" },
+              "dataType": { "type": "string", "enum": ["Currency", "Integer", "String"] },
+              "value": { "type": ["number", "string", "null"] },
+              "suggestedValue": { "type": ["number", "string", "null"] },
+              "aiRationale": { "type": "string" }
+            },
+            "required": ["fieldName", "dataType"]
+          }
         }
       },
-      "required": [
-        "id",
-        "username"
-      ]
+      "required": ["id", "title", "description", "role", "transactionCode", "priority", "estimatedTime", "roundRecurrence", "dependencyIDs", "completionType", "taskType", "completed"]
+    },
+    "TeamSettings": {
+      "title": "TeamSettings",
+      "type": "object",
+      "description": "Stores settings for the team, like the designated team leader.",
+      "properties": {
+        "teamLeader": { "type": "string", "description": "The ID of the user profile designated as the team leader." }
+      }
+    },
+    "CompetitorLogEntry": {
+      "title": "CompetitorLogEntry",
+      "type": "object",
+      "description": "A single entry in the competitor log.",
+      "properties": {
+        "text": { "type": "string" },
+        "author": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["text", "author", "createdAt"]
     }
   },
   "auth": {
     "providers": [
-      "password",
       "anonymous"
     ]
   },
   "firestore": {
-    "structure": [
-      {
-        "path": "/users/{userId}",
-        "definition": {
-          "entityName": "User",
-          "schema": {
-            "$ref": "#/backend/entities/User"
-          },
-          "description": "Collection to store user profiles. The userId parameter identifies the user document.",
-          "params": [
-            {
-              "name": "userId",
-              "description": "The unique identifier of the user."
-            }
-          ]
-        }
-      },
-      {
-        "path": "/users/{userId}/gameSessions/{gameSessionId}",
-        "definition": {
-          "entityName": "GameSession",
-          "schema": {
-            "$ref": "#/backend/entities/GameSession"
-          },
-          "description": "Subcollection to store game sessions for each user. Includes denormalized 'userId' for authorization independence.",
-          "params": [
-            {
-              "name": "userId",
-              "description": "The unique identifier of the user."
-            },
-            {
-              "name": "gameSessionId",
-              "description": "The unique identifier of the game session."
-            }
-          ]
-        }
-      }
-    ],
-    "reasoning": "To support resuming game sessions, the data structure focuses on organizing game sessions under each user. This approach provides clear ownership and facilitates efficient querying and security rules. The `GameSession` documents are stored as subcollections of the `users` collection, enabling easy retrieval of a user's game sessions. The `userId` within the `GameSession` document allows for data integrity checks, while the denormalized `userId` on the game sessions allows path-based authorization. This structure supports the primary requirement of allowing users to pick up where they left off, since all game state information is stored in the GameSession entity."
+    "/games/{gameId}": {
+      "schema": { "$ref": "#/entities/GameState" },
+      "description": "Stores the state of a single game instance."
+    },
+    "/tasks/{taskId}": {
+      "schema": { "$ref": "#/entities/Task" },
+      "description": "Stores the master list of all possible tasks."
+    },
+    "/settings/{settingsId}": {
+      "schema": { "$ref": "#/entities/TeamSettings" },
+      "description": "Stores shared team settings."
+    },
+    "/competitor_log/{logId}": {
+      "schema": { "$ref": "#/entities/CompetitorLogEntry" },
+      "description": "Stores entries for the competitor analysis log."
+    }
   }
 }

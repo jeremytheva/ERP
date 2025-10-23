@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState } from "react";
@@ -12,7 +13,8 @@ import {
 import { Button } from "@/components/ui/button";
 import { Bot, Loader2, Send, Sparkles, User } from "lucide-react";
 import { Textarea } from "../ui/textarea";
-import { useGameState, useActionItems, useCompetitorLog } from "@/hooks/use-game-data";
+import { useGameState } from "@/hooks/use-game-data";
+import { useCompetitorLog } from "@/hooks/use-competitor-log";
 import { answerCopilotQuestionAction } from "@/lib/actions";
 import { useToast } from "@/hooks/use-toast";
 import { ScrollArea } from "../ui/scroll-area";
@@ -32,7 +34,6 @@ export function AiCopilot() {
   const [input, setInput] = useState("");
 
   const { gameState } = useGameState();
-  const { actionItems } = useActionItems();
   const { logEntries } = useCompetitorLog();
   const { toast } = useToast();
 

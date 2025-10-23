@@ -1,10 +1,11 @@
+
 "use client";
 
 import { useState, useEffect, createContext, useContext, ReactNode } from "react";
 import { collection, onSnapshot, addDoc, serverTimestamp, query, orderBy } from "firebase/firestore";
-import { db } from "@/lib/firebase";
 import { useAuth } from "./use-auth";
 import type { CompetitorLogEntry } from "@/types";
+import { useFirestore } from "@/firebase";
 
 interface CompetitorLogContextType {
   logEntries: CompetitorLogEntry[];
@@ -15,11 +16,12 @@ const CompetitorLogContext = createContext<CompetitorLogContextType | undefined>
 
 export const CompetitorLogProvider = ({ children }: { children: ReactNode }) => {
   const { user } = useAuth();
+  const firestore = useFirestore();
   const [logEntries, setLogEntries] = useState<CompetitorLogEntry[]>([]);
 
   useEffect(() => {
-    if (!user) return;
-    const logColRef = collection(db, "competitor_log");
+    if (!user || !firestore) return;
+    const logColRef = collection(firestore, "competitor_log");
     const q = query(logColRef, orderBy("createdAt", "desc"));
 
     const unsubscribe = onSnapshot(q, (querySnapshot) => {
@@ -32,11 +34,11 @@ export const CompetitorLogProvider = ({ children }: { children: ReactNode }) => 
     });
 
     return () => unsubscribe();
-  }, [user]);
+  }, [user, firestore]);
 
   const addLogEntry = async (text: string, author: string) => {
-    if (!user) return;
-    const logColRef = collection(db, "competitor_log");
+    if (!user || !firestore) return;
+    const logColRef = collection(firestore, "competitor_log");
     await addDoc(logColRef, {
       text,
       author,

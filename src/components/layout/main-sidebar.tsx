@@ -16,7 +16,7 @@ import {
   SidebarGroupLabel,
 } from "@/components/ui/sidebar";
 import { Button } from "@/components/ui/button";
-import { Bot, LayoutDashboard, Database, FileText, ListTodo, Users, Settings, Briefcase, ShoppingCart, Factory, Truck, BarChart2, Crown, Package, Leaf } from "lucide-react";
+import { Bot, LayoutDashboard, Database, FileText, ListTodo, Users, Settings, Briefcase, ShoppingCart, Factory, Truck, BarChart2, Crown, Package, Leaf, Lightbulb } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
 import { useTeamSettings } from "@/hooks/use-team-settings";
 import { useMemo } from "react";
@@ -28,21 +28,22 @@ const generalMenuItems = [
 ];
 
 const salesMenuItems = [
-  ...generalMenuItems,
+  { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
+  { href: "/key-metrics", label: "Key Metrics", icon: BarChart2 },
   { href: "/live-inventory", label: "Inventory/Stock Status (LIT)", icon: FileText },
-  { href: "/roles", label: "Market Analysis (ZMARKET)", icon: BarChart2, pageAnchor: "sales", subAnchor: "market-analysis" },
-  { href: "/roles", label: "Forecasting (MD61)", icon: FileText, pageAnchor: "sales", subAnchor: "forecasting" },
-  { href: "/roles", label: "Pricing (VK32)", icon: BarChart2, pageAnchor: "sales", subAnchor: "pricing" },
-  { href: "/roles", label: "Marketing (ZADS)", icon: Factory, pageAnchor: "sales", subAnchor: "marketing" },
+  { href: "/roles?tab=sales&section=market-analysis", label: "Market Analysis (ZMARKET)", icon: BarChart2 },
+  { href: "/roles?tab=sales&section=forecasting", label: "Forecasting (MD61)", icon: FileText },
+  { href: "/roles?tab=sales&section=pricing", label: "Pricing (VK32)", icon: BarChart2 },
+  { href: "/roles?tab=sales&section=marketing", label: "Marketing (ZADS)", icon: Factory },
   { href: "/master-data", label: "Master Data", icon: Database },
 ];
 
 const productionMenuItems = [
   ...generalMenuItems,
-  { href: "/roles", label: "Planning & Capacity", icon: Factory, pageAnchor: "production", subAnchor: "planning-capacity" },
-  { href: "/roles", label: "MRP (MD01)", icon: Truck, pageAnchor: "production", subAnchor: "mrp" },
-  { href: "/roles", label: "Production Release (CO41)", icon: Briefcase, pageAnchor: "production", subAnchor: "production-release" },
-  { href: "/roles", label: "BOM Review (ZCS02)", icon: ShoppingCart, pageAnchor: "production", subAnchor: "bom-review" },
+  { href: "/roles?tab=production&section=planning-capacity", label: "Planning & Capacity", icon: Factory },
+  { href: "/roles?tab=production&section=mrp", label: "MRP (MD01)", icon: Truck },
+  { href: "/roles?tab=production&section=production-release", label: "Production Release (CO41)", icon: Briefcase },
+  { href: "/roles?tab=production&section=bom-review", label: "BOM Review (ZCS02)", icon: ShoppingCart },
   { href: "/live-inventory", label: "RM Stock Status (LIT)", icon: FileText },
   { href: "/master-data", label: "Master Data", icon: Database },
 ];
@@ -50,17 +51,17 @@ const productionMenuItems = [
 const procurementMenuItems = [
     ...generalMenuItems,
     { href: "/live-inventory", label: "RM Stock Status (LIT)", icon: FileText },
-    { href: "/roles", label: "Sourcing (ZME12)", icon: Users, pageAnchor: "procurement", subAnchor: "sourcing" },
-    { href: "/roles", label: "Order Calculation (ME59N)", icon: BarChart2, pageAnchor: "procurement", subAnchor: "order-calculation" },
-    { href: "/roles", label: "Sustainability (ZFB50)", icon: Leaf, pageAnchor: "procurement", subAnchor: "sustainability" },
+    { href: "/roles?tab=procurement&section=sourcing", label: "Sourcing (ZME12)", icon: Users },
+    { href: "/roles?tab=procurement&section=order-calculation", label: "Order Calculation (ME59N)", icon: BarChart2 },
+    { href: "/roles?tab=procurement&section=sustainability", label: "Sustainability (ZFB50)", icon: Leaf },
     { href: "/master-data", label: "Master Data", icon: Database },
 ];
 
 const logisticsMenuItems = [
     ...generalMenuItems,
-    { href: "/roles", label: "Liquidity Check (ZFF7B)", icon: BarChart2, pageAnchor: "logistics", subAnchor: "liquidity-check" },
-    { href: "/roles", label: "Stock Transfer (ZMB1B)", icon: Truck, pageAnchor: "logistics", subAnchor: "stock-transfer" },
-    { href: "/roles", label: "Delivery Monitoring (ZME2N)", icon: Briefcase, pageAnchor: "logistics", subAnchor: "delivery-monitoring" },
+    { href: "/roles?tab=logistics&section=liquidity-check", label: "Liquidity Check (ZFF7B)", icon: BarChart2 },
+    { href: "/roles?tab=logistics&section=stock-transfer", label: "Stock Transfer (ZMB1B)", icon: Truck },
+    { href: "/roles?tab=logistics&section=delivery-monitoring", label: "Delivery Monitoring (ZME2N)", icon: Briefcase },
     { href: "/master-data", label: "Master Data", icon: Database },
 ];
 
@@ -108,14 +109,14 @@ export function MainSidebar() {
       <SidebarMenu className="flex-1 p-2">
         <SidebarGroup>
             <SidebarGroupLabel>Menu</SidebarGroupLabel>
-            {menuItems.map(({ href, label, icon: Icon, pageAnchor, subAnchor }) => {
-              const finalHref = pageAnchor ? `${href}?tab=${pageAnchor}${subAnchor ? `&section=${subAnchor}` : ''}` : href;
+            {menuItems.map(({ href, label, icon: Icon }) => {
+              const finalHref = href;
               return (
                 <SidebarMenuItem key={finalHref}>
                     <Link href={finalHref} passHref>
                     <SidebarMenuButton
                         as="a"
-                        isActive={pathname === href}
+                        isActive={pathname === href.split('?')[0]}
                         tooltip={{ children: label, side: "right", align:"center" }}
                         className="justify-start"
                     >
@@ -150,3 +151,4 @@ export function MainSidebar() {
     </Sidebar>
   );
 }
+

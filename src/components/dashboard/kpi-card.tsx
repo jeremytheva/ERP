@@ -1,4 +1,6 @@
+
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { TooltipProvider, Tooltip, TooltipTrigger, TooltipContent } from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
 import { type LucideIcon } from "lucide-react";
 
@@ -6,14 +8,15 @@ interface KpiCardProps {
   title: string;
   value: number;
   icon: LucideIcon;
-  format?: "currency" | "number";
+  format?: "currency" | "number" | "percent";
   unit?: string;
   className?: string;
+  tooltip?: string;
 }
 
 const formatValue = (
   value: number,
-  format: "currency" | "number" = "number"
+  format: "currency" | "number" | "percent" = "number"
 ) => {
   if (format === "currency") {
     return new Intl.NumberFormat("en-US", {
@@ -21,6 +24,13 @@ const formatValue = (
       currency: "USD",
       notation: "compact",
       compactDisplay: "short",
+    }).format(value);
+  }
+   if (format === "percent") {
+    return new Intl.NumberFormat("en-US", {
+      style: "percent",
+      minimumFractionDigits: 0,
+      maximumFractionDigits: 0,
     }).format(value);
   }
   return new Intl.NumberFormat("en-US", {
@@ -36,9 +46,10 @@ export function KpiCard({
   format,
   unit,
   className,
+  tooltip,
 }: KpiCardProps) {
-  return (
-    <Card className={cn("shadow-sm hover:shadow-md transition-shadow", className)}>
+  const cardContent = (
+     <Card className={cn("shadow-sm hover:shadow-md transition-shadow", className)}>
       <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
         <CardTitle className="text-sm font-medium">{title}</CardTitle>
         <Icon className="h-4 w-4 text-muted-foreground" />
@@ -50,5 +61,20 @@ export function KpiCard({
         </div>
       </CardContent>
     </Card>
-  );
+  )
+
+  if (tooltip) {
+    return (
+      <TooltipProvider>
+        <Tooltip>
+          <TooltipTrigger asChild>{cardContent}</TooltipTrigger>
+          <TooltipContent>
+            <p>{tooltip}</p>
+          </TooltipContent>
+        </Tooltip>
+      </TooltipProvider>
+    )
+  }
+
+  return cardContent;
 }

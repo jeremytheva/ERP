@@ -12,6 +12,12 @@ export type Kpi = {
   netIncome: number;
   inventoryValue: number;
   totalEmissions: number;
+  cashBalance: number;
+  grossMargin: number;
+  marketShare: number;
+  averageSellingPrice: number;
+  inventoryTurnover: number;
+  capacityUtilization: number;
 };
 
 export type KpiHistoryEntry = Kpi & { round: number };
@@ -24,7 +30,7 @@ export type TimerState = {
   isBreakEnabled: boolean;
   roundDuration: number;
   breakDuration: number;
-  confirmNextRound: boolean; // Add this line
+  confirmNextRound: boolean;
 }
 
 export type GameState = Kpi & {

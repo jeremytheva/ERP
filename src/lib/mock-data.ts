@@ -14,9 +14,15 @@ export const INITIAL_GAME_STATE: GameState = {
   netIncome: 2500000,
   inventoryValue: 750000,
   totalEmissions: 1200,
+  cashBalance: 500000,
+  grossMargin: 0.45,
+  marketShare: 0.25,
+  averageSellingPrice: 350,
+  inventoryTurnover: 8.5,
+  capacityUtilization: 0.8,
   teamStrategy: "Focus on high-margin products and expand market share in Europe.",
   kpiHistory: [
-    { round: 1, companyValuation: 45000000, netIncome: 1800000, inventoryValue: 600000, totalEmissions: 1100 },
+    { round: 1, companyValuation: 45000000, netIncome: 1800000, inventoryValue: 600000, totalEmissions: 1100, cashBalance: 450000, grossMargin: 0.42, marketShare: 0.22, averageSellingPrice: 340, inventoryTurnover: 8.2, capacityUtilization: 0.78 },
   ],
   timerState: {
     timeLeft: 1200,
@@ -34,7 +40,7 @@ export const ALL_TASKS: Task[] = [
   // --- PROCUREMENT TASKS ---
   {
     id: "P-1-1",
-    title: "Select Vendor & Check Stock (ZMB52)",
+    title: "Select Vendor & Check Stock",
     description: "Input: Select Vendor for each RM. CF: Stock Alert if RM Stock < 5,000kg.",
     role: "Procurement",
     transactionCode: "ZMB52",
@@ -49,7 +55,7 @@ export const ALL_TASKS: Task[] = [
   },
   {
     id: "P-1-2",
-    title: "Select Vendor & Check Stock (ZME12)",
+    title: "Select Vendor & Check Stock",
     description: "Input: Select Vendor for each RM. CF: Stock Alert if RM Stock < 5,000kg.",
     role: "Procurement",
     transactionCode: "ZME12",
@@ -125,7 +131,7 @@ export const ALL_TASKS: Task[] = [
       completed: false
     },
     {
-      id: `P-${round}-3A`,
+      id: `P-${round}-3`,
       title: "Create Purchase Order",
       description: "Create purchase orders based on MRP.",
       role: "Procurement" as Role,
@@ -139,8 +145,8 @@ export const ALL_TASKS: Task[] = [
       taskType: "Standard" as TaskType,
       completed: false
     },
-    {
-      id: `P-${round}-3B`,
+     {
+      id: `P-${round}-3A`,
       title: "Raw Material Stock Check & PO Req.",
       description: "Check stock levels and create purchase requisitions.",
       role: "Procurement" as Role,
@@ -253,7 +259,7 @@ export const ALL_TASKS: Task[] = [
     title: "Set Lot Size & Release Production",
     description: "Input: Production Lot Size. CF: Efficiency Alert if Lot Size < 48,000 units.",
     role: "Production",
-    transactionCode: "C041 (Production Release)",
+    transactionCode: "CO41 (Production Release)",
     priority: "High",
     estimatedTime: 2,
     roundRecurrence: "Once",
@@ -265,7 +271,7 @@ export const ALL_TASKS: Task[] = [
     dataFields: [{ fieldName: "Production_Lot_Size", dataType: "Integer" }]
   },
   ...Array.from({ length: 7 }, (_, i) => i + 2).flatMap(round => [
-      {
+    {
         id: `PM-${round}-1`,
         title: "Capacity, Efficiency, & Inventory Check",
         description: "Focus: Finished Goods Stock, Capacity Used, Defect Rate. CF: Check for Overstock if Finished Goods > 100,000 units. Prepares for Lot Size Decision.",
@@ -305,7 +311,7 @@ export const ALL_TASKS: Task[] = [
         estimatedTime: 3,
         roundRecurrence: "RoundStart" as RoundRecurrence,
         startRound: round,
-        dependencyIDs: [`P-${round}-3A`],
+        dependencyIDs: [`P-${round}-3`],
         completionType: "Manual-Tick" as CompletionType,
         taskType: "Standard" as TaskType,
         completed: false
@@ -333,7 +339,7 @@ export const ALL_TASKS: Task[] = [
         transactionCode: "CO41",
         priority: "Low" as TaskPriority,
         estimatedTime: 2,
-        roundRecurrence: "RoundStart" as RoundRecurrence,
+        roundRecurrence: "Continuous" as RoundRecurrence,
         startRound: round,
         dependencyIDs: [],
         completionType: "Manual-Tick" as CompletionType,

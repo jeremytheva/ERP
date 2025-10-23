@@ -1,8 +1,8 @@
 import type { UserProfile, GameState, ActionItem, CompetitorLogEntry, PeerData } from "@/types";
 
 export const USER_PROFILES: UserProfile[] = [
-  { id: 'jeremy', name: 'Jeremy', avatarUrl: 'https://picsum.photos/seed/jeremy/100/100' },
-  { id: 'nawrin', name: 'Nawrin', avatarUrl: 'https://picsum.photos/seed/nawrin/100/100' },
+  { id: 'ceo', name: 'CEO', avatarUrl: 'https://picsum.photos/seed/ceo/100/100' },
+  { id: 'cfo', name: 'CFO', avatarUrl: 'https://picsum.photos/seed/cfo/100/100' },
 ];
 
 export const INITIAL_GAME_STATE: GameState = {
@@ -25,9 +25,9 @@ export const MOCK_ACTION_ITEMS: ActionItem[] = [
 ];
 
 export const MOCK_COMPETITOR_LOG: CompetitorLogEntry[] = [
-    { id: '1', text: 'Team Alpha is heavily investing in marketing in North America.', author: 'Jeremy', createdAt: new Date(Date.now() - 24 * 60 * 60 * 1000) },
-    { id: '2', text: 'Team Bravo seems to be struggling with their supply chain.', author: 'Nawrin', createdAt: new Date(Date.now() - 2 * 60 * 60 * 1000) },
-    { id: '3', text: 'Keep an eye on Team Charlie\'s new product launch.', author: 'Jeremy', createdAt: new Date(Date.now() - 15 * 60 * 1000) },
+    { id: '1', text: 'Team Alpha is heavily investing in marketing in North America.', author: 'CEO', createdAt: new Date(Date.now() - 24 * 60 * 60 * 1000) },
+    { id: '2', text: 'Team Bravo seems to be struggling with their supply chain.', author: 'CFO', createdAt: new Date(Date.now() - 2 * 60 * 60 * 1000) },
+    { id: '3', text: 'Keep an eye on Team Charlie\'s new product launch.', author: 'CEO', createdAt: new Date(Date.now() - 15 * 60 * 1000) },
 ];
 
 export const MOCK_PEER_DATA: PeerData[] = [

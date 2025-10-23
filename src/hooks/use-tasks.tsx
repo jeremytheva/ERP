@@ -42,19 +42,22 @@ export const TasksProvider = ({ children }: { children: ReactNode }) => {
           const taskDocRef = doc(firestore, "tasks", task.id);
           batch.set(taskDocRef, task);
         });
-        await batch.commit().catch(error => {
+        await batch.commit().then(() => {
+            setTasks(ALL_TASKS);
+            setIsLoading(false);
+        }).catch(error => {
           const contextualError = new FirestorePermissionError({
             path: 'tasks',
             operation: 'write',
           });
           errorEmitter.emit('permission-error', contextualError);
+          setIsLoading(false);
         });
-        // The snapshot listener will pick up the newly added tasks.
       } else {
         const dbTasks = querySnapshot.docs.map(doc => doc.data() as Task);
         setTasks(dbTasks);
+        setIsLoading(false);
       }
-      setIsLoading(false);
     },
     (error: FirestoreError) => {
         const contextualError = new FirestorePermissionError({

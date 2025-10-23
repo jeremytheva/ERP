@@ -46,11 +46,20 @@ export const CompetitorLogProvider = ({ children }: { children: ReactNode }) => 
   const addLogEntry = async (text: string, author: string) => {
     if (!user || !firestore) return;
     const logColRef = collection(firestore, "competitor_log");
-    await addDoc(logColRef, {
+    const data = {
       text,
       author,
       createdAt: serverTimestamp(),
-    });
+    };
+    addDoc(logColRef, data)
+        .catch(error => {
+            const contextualError = new FirestorePermissionError({
+                path: 'competitor_log',
+                operation: 'create',
+                requestResourceData: data,
+            });
+            errorEmitter.emit('permission-error', contextualError);
+        });
   };
   
   const value = { logEntries, addLogEntry };

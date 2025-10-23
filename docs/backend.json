@@ -1,0 +1,123 @@
+{
+  "entities": {
+    "GameSession": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "GameSession",
+      "type": "object",
+      "description": "Represents a single game session, allowing users to resume their simulation from where they left off.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the Game Session."
+        },
+        "userId": {
+          "type": "string",
+          "description": "Reference to the User who initiated this game session. (Relationship: User 1:N GameSession)"
+        },
+        "startTime": {
+          "type": "string",
+          "description": "Timestamp indicating when the game session started.",
+          "format": "date-time"
+        },
+        "endTime": {
+          "type": "string",
+          "description": "Timestamp indicating when the game session ended. Can be null if the session is still active.",
+          "format": "date-time"
+        },
+        "gameState": {
+          "type": "string",
+          "description": "A serialized representation of the game's state at the end of the session. This will allow the simulation to be continued."
+        },
+        "companyValuation": {
+          "type": "number",
+          "description": "Company Valuation KPI at end of GameSession."
+        },
+        "netIncome": {
+          "type": "number",
+          "description": "Net Income KPI at end of GameSession."
+        },
+        "inventoryValue": {
+          "type": "number",
+          "description": "Inventory Value KPI at end of GameSession."
+        },
+        "totalEmissions": {
+          "type": "number",
+          "description": "Total Emissions KPI at end of GameSession."
+        }
+      },
+      "required": [
+        "id",
+        "userId",
+        "startTime",
+        "gameState"
+      ]
+    },
+    "User": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "User",
+      "type": "object",
+      "description": "Represents a user profile within the ERPsim Dashboard.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the User."
+        },
+        "username": {
+          "type": "string",
+          "description": "The username of the user."
+        }
+      },
+      "required": [
+        "id",
+        "username"
+      ]
+    }
+  },
+  "auth": {
+    "providers": [
+      "password",
+      "anonymous"
+    ]
+  },
+  "firestore": {
+    "structure": [
+      {
+        "path": "/users/{userId}",
+        "definition": {
+          "entityName": "User",
+          "schema": {
+            "$ref": "#/backend/entities/User"
+          },
+          "description": "Collection to store user profiles. The userId parameter identifies the user document.",
+          "params": [
+            {
+              "name": "userId",
+              "description": "The unique identifier of the user."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/users/{userId}/gameSessions/{gameSessionId}",
+        "definition": {
+          "entityName": "GameSession",
+          "schema": {
+            "$ref": "#/backend/entities/GameSession"
+          },
+          "description": "Subcollection to store game sessions for each user. Includes denormalized 'userId' for authorization independence.",
+          "params": [
+            {
+              "name": "userId",
+              "description": "The unique identifier of the user."
+            },
+            {
+              "name": "gameSessionId",
+              "description": "The unique identifier of the game session."
+            }
+          ]
+        }
+      }
+    ],
+    "reasoning": "To support resuming game sessions, the data structure focuses on organizing game sessions under each user. This approach provides clear ownership and facilitates efficient querying and security rules. The `GameSession` documents are stored as subcollections of the `users` collection, enabling easy retrieval of a user's game sessions. The `userId` within the `GameSession` document allows for data integrity checks, while the denormalized `userId` on the game sessions allows path-based authorization. This structure supports the primary requirement of allowing users to pick up where they left off, since all game state information is stored in the GameSession entity."
+  }
+}

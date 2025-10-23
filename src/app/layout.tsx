@@ -6,6 +6,8 @@ import { AuthProvider } from "@/context/auth-context";
 import { Toaster } from "@/components/ui/toaster";
 import { TeamSettingsProvider } from "@/hooks/use-team-settings";
 import { TasksProvider } from "@/hooks/use-tasks";
+import { GameStateProvider } from "@/hooks/use-game-data";
+import { CompetitorLogProvider } from "@/hooks/use-competitor-log";
 
 export const metadata: Metadata = {
   title: "ERPsim Dashboard",
@@ -36,14 +38,18 @@ export default function RootLayout({
         <link href="https://fonts.googleapis.com/css2?family=Source+Code+Pro&display=swap" rel="stylesheet" />
       </head>
       <body className={`${inter.variable} ${sourceCodePro.variable} font-body antialiased`} suppressHydrationWarning>
-        <TasksProvider>
+        <AuthProvider>
           <TeamSettingsProvider>
-            <AuthProvider>
-              {children}
-              <Toaster />
-            </AuthProvider>
+            <GameStateProvider>
+              <TasksProvider>
+                <CompetitorLogProvider>
+                  {children}
+                  <Toaster />
+                </CompetitorLogProvider>
+              </TasksProvider>
+            </GameStateProvider>
           </TeamSettingsProvider>
-        </TasksProvider>
+        </AuthProvider>
       </body>
     </html>
   );

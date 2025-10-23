@@ -14,13 +14,11 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
-import { Checkbox } from "@/components/ui/checkbox";
 import { cn } from "@/lib/utils";
 import type { Task, TaskDataField, TaskPriority } from "@/types";
-import { Clock, Code, Link as LinkIcon, ChevronDown, CheckCircle, Circle, AlertTriangle, Info } from "lucide-react";
+import { Clock, Code, ChevronDown, CheckCircle, Circle, AlertTriangle, Info } from "lucide-react";
 import { Separator } from "../ui/separator";
-import { Card, CardContent } from "../ui/card";
-import { Label } from "../ui/label";
+import { Card } from "../ui/card";
 
 interface InteractiveTaskCardProps {
   task: Task;
@@ -38,10 +36,13 @@ const priorityVariant: { [key in TaskPriority]: "destructive" | "default" | "sec
 };
 
 const completionIcon = (task: Task) => {
-  if (task.completionType === "Data-Confirmed" && (!task.dataFields || task.dataFields.every(df => df.value === undefined))) {
-    return <Circle className="h-5 w-5 text-muted-foreground" />;
-  }
-  return task.completed ? <CheckCircle className="h-5 w-5 text-green-500" /> : <Circle className="h-5 w-5 text-muted-foreground" />;
+    if (task.completionType === "Data-Confirmed") {
+        const allFieldsFilled = task.dataFields?.every(df => 
+            df.value !== undefined && df.value !== null && df.value !== ''
+        );
+        return allFieldsFilled ? <CheckCircle className="h-5 w-5 text-green-500" /> : <Circle className="h-5 w-5 text-muted-foreground" />;
+    }
+    return task.completed ? <CheckCircle className="h-5 w-5 text-green-500" /> : <Circle className="h-5 w-5 text-muted-foreground" />;
 };
 
 
@@ -77,11 +78,19 @@ export function InteractiveTaskCard({ task, allTasks, isActive, onToggle, onUpda
     });
 
     const handleMarkComplete = (completed: boolean) => {
+        let updatedDataFields = task.dataFields;
+
         if (task.dataFields) {
-            form.handleSubmit((values) => {
-                const updatedDataFields = task.dataFields?.map(df => ({...df, value: values[df.fieldName]}));
-                onUpdate({ ...task, completed, dataFields: updatedDataFields });
-            })();
+             form.trigger().then(isValid => {
+                if (isValid) {
+                    const values = form.getValues();
+                    updatedDataFields = task.dataFields?.map(df => ({...df, value: values[df.fieldName]}));
+                    onUpdate({ ...task, completed, dataFields: updatedDataFields });
+                } else if (!completed) {
+                    // Allow marking as incomplete even if form is invalid
+                    onUpdate({ ...task, completed });
+                }
+             });
         } else {
             onUpdate({ ...task, completed });
         }
@@ -97,7 +106,7 @@ export function InteractiveTaskCard({ task, allTasks, isActive, onToggle, onUpda
         <Collapsible open={isActive} onOpenChange={onToggle}>
             <CollapsibleTrigger asChild>
                  <div className="flex items-center gap-4 p-4 cursor-pointer">
-                    <div onClick={(e) => { e.preventDefault(); handleMarkComplete(!task.completed)}}>
+                    <div onClick={(e) => { e.preventDefault(); e.stopPropagation(); handleMarkComplete(!task.completed)}}>
                         {completionIcon(task)}
                     </div>
                     <div className="flex-1">
@@ -187,4 +196,3 @@ export function InteractiveTaskCard({ task, allTasks, isActive, onToggle, onUpda
     </Card>
   );
 }
-

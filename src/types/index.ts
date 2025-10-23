@@ -1,4 +1,5 @@
 
+import { Timestamp } from "firebase/firestore";
 
 export type UserProfile = {
   id: string;
@@ -16,9 +17,19 @@ export type Kpi = {
 export type KpiHistoryEntry = Kpi & { round: number };
 export type KpiHistory = KpiHistoryEntry[];
 
+export type TimerState = {
+  timeLeft: number;
+  isPaused: boolean;
+  isBreakActive: boolean;
+  isBreakEnabled: boolean;
+  roundDuration: number;
+  breakDuration: number;
+}
+
 export type GameState = Kpi & {
   kpiHistory: KpiHistory;
   teamStrategy: string;
+  timerState: TimerState;
 };
 
 export type ActionItem = {
@@ -32,7 +43,7 @@ export type CompetitorLogEntry = {
   id: string;
   text: string;
   author: string;
-  createdAt: Date;
+  createdAt: Date | Timestamp;
 };
 
 export type PeerData = {
@@ -59,6 +70,7 @@ export type Role = "Procurement" | "Production" | "Logistics" | "Sales" | "Team 
 export type TaskDataField = {
   fieldName: string;
   dataType: "Currency" | "Integer" | "String";
+  value?: number | string; // User-entered value
   suggestedValue?: number | string;
   aiRationale?: string;
 };
@@ -78,4 +90,5 @@ export type Task = {
   completionType: CompletionType;
   taskType: TaskType;
   dataFields?: TaskDataField[];
+  completed: boolean; // Added completion status
 };

@@ -15,7 +15,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { ChevronsUpDown, LogOut, Clock, Settings, Play, Pause, RefreshCw, ChevronLeft, ChevronRight, Coffee, Check } from "lucide-react";
+import { ChevronsUpDown, LogOut, Clock, Settings, Play, Pause, RefreshCw, ChevronLeft, ChevronRight, Coffee } from "lucide-react";
 import { usePathname } from "next/navigation";
 import { SidebarTrigger } from "../ui/sidebar";
 import { useGameState } from "@/hooks/use-game-data";
@@ -35,8 +35,6 @@ const getPageTitle = (pathname: string): string => {
         return "Strategic Advisor";
       case "debriefing":
         return "End-of-Round Debriefing";
-      case "tasks":
-        return "Task Management";
       case "action-items":
         return "Action Items";
       case "competitor-log":
@@ -143,11 +141,11 @@ export function Header() {
                  <DropdownMenuLabel>Timer Settings</DropdownMenuLabel>
                  <div className="grid gap-4 px-2 py-1.5">
                     <div className="grid grid-cols-3 items-center gap-2">
-                        <Label htmlFor="round-duration" className="text-sm">Round</Label>
+                        <Label htmlFor="round-duration" className="text-sm">Round (m)</Label>
                         <Input id="round-duration" type="number" className="col-span-2 h-8" value={roundDuration / 60} onChange={handleRoundDurationChange}/>
                     </div>
                      <div className="grid grid-cols-3 items-center gap-2">
-                        <Label htmlFor="break-duration" className="text-sm">Break</Label>
+                        <Label htmlFor="break-duration" className="text-sm">Break (m)</Label>
                         <Input id="break-duration" type="number" className="col-span-2 h-8" value={breakDuration / 60} onChange={handleBreakDurationChange} disabled={!isBreakEnabled} />
                     </div>
                      <div className="flex items-center justify-between">
@@ -191,5 +189,3 @@ export function Header() {
     </header>
   );
 }
-
-    

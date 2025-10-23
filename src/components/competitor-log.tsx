@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { useCompetitorLog } from "@/hooks/use-game-data";
+import { useCompetitorLog } from "@/hooks/use-competitor-log";
 import { useAuth } from "@/hooks/use-auth";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
@@ -52,7 +52,7 @@ export function CompetitorLog() {
                         <div className="flex items-center gap-2">
                             <p className="font-semibold text-sm">{entry.author}</p>
                             <p className="text-xs text-muted-foreground">
-                                {formatDistanceToNow(entry.createdAt, { addSuffix: true })}
+                                {entry.createdAt ? formatDistanceToNow(entry.createdAt, { addSuffix: true }) : 'just now'}
                             </p>
                         </div>
                         <p className="text-sm bg-secondary/50 p-3 rounded-md">{entry.text}</p>

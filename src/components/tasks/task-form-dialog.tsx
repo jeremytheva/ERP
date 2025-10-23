@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect } from "react";
-import { useForm, Controller } from "react-hook-form";
+import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { Button } from "@/components/ui/button";
@@ -37,9 +37,13 @@ const taskSchema = z.object({
   estimatedTime: z.coerce.number().min(0),
   roundRecurrence: z.enum(["Once", "RoundStart", "Continuous"]),
   startRound: z.coerce.number().min(1).optional(),
-  dependencyIDs: z.string().transform(val => val.split(',').map(s => s.trim()).filter(Boolean)),
+  dependencyIDs: z.preprocess(
+    (val) => (typeof val === 'string' ? val.split(',').map(s => s.trim()).filter(Boolean) : []),
+    z.array(z.string())
+  ),
   completionType: z.enum(["Manual-Tick", "Data-Confirmed", "System-Validated"]),
   taskType: z.enum(["ERPsim Input Data", "ERPsim Gather Data", "Standard"]),
+  completed: z.boolean(),
 });
 
 type TaskFormValues = z.infer<typeof taskSchema>;
@@ -67,6 +71,7 @@ export function TaskFormDialog({ isOpen, onOpenChange, onSave, task }: TaskFormD
       dependencyIDs: [],
       completionType: "Manual-Tick",
       taskType: "Standard",
+      completed: false,
     },
   });
 
@@ -74,7 +79,7 @@ export function TaskFormDialog({ isOpen, onOpenChange, onSave, task }: TaskFormD
     if (task) {
       form.reset({
         ...task,
-        dependencyIDs: task.dependencyIDs ? task.dependencyIDs.join(', ') : '',
+        dependencyIDs: task.dependencyIDs || [],
       });
     } else {
       form.reset({
@@ -90,14 +95,25 @@ export function TaskFormDialog({ isOpen, onOpenChange, onSave, task }: TaskFormD
         dependencyIDs: [],
         completionType: "Manual-Tick",
         taskType: "Standard",
+        completed: false,
       });
     }
   }, [task, form, isOpen]);
 
   const onSubmit = (values: TaskFormValues) => {
-    onSave(values as Task);
+    // This is a bit of a hack to merge back dataFields if they exist
+    const finalTask: Task = {
+        ...(task || {}),
+        ...values,
+        dataFields: task?.dataFields || undefined
+    };
+    onSave(finalTask);
     onOpenChange(false);
   };
+  
+  // Create a string from the array for the input field
+  const dependencyIDsString = Array.isArray(form.getValues("dependencyIDs")) ? form.getValues("dependencyIDs").join(', ') : '';
+
 
   return (
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
@@ -145,7 +161,7 @@ export function TaskFormDialog({ isOpen, onOpenChange, onSave, task }: TaskFormD
                             render={({ field }) => (
                                 <FormItem>
                                     <FormLabel>Role</FormLabel>
-                                    <Select onValueChange={field.onChange} defaultValue={field.value}>
+                                    <Select onValueChange={field.onChange} value={field.value}>
                                     <FormControl>
                                         <SelectTrigger><SelectValue /></SelectTrigger>
                                     </FormControl>
@@ -182,7 +198,7 @@ export function TaskFormDialog({ isOpen, onOpenChange, onSave, task }: TaskFormD
                             render={({ field }) => (
                                 <FormItem>
                                     <FormLabel>Priority</FormLabel>
-                                    <Select onValueChange={field.onChange} defaultValue={field.value}>
+                                    <Select onValueChange={field.onChange} value={field.value}>
                                     <FormControl>
                                         <SelectTrigger><SelectValue /></SelectTrigger>
                                     </FormControl>
@@ -218,7 +234,7 @@ export function TaskFormDialog({ isOpen, onOpenChange, onSave, task }: TaskFormD
                             render={({ field }) => (
                                 <FormItem>
                                     <FormLabel>Recurrence</FormLabel>
-                                    <Select onValueChange={field.onChange} defaultValue={field.value}>
+                                    <Select onValueChange={field.onChange} value={field.value}>
                                     <FormControl>
                                         <SelectTrigger><SelectValue /></SelectTrigger>
                                     </FormControl>
@@ -253,7 +269,7 @@ export function TaskFormDialog({ isOpen, onOpenChange, onSave, task }: TaskFormD
                             <FormItem>
                             <FormLabel>Dependency IDs</FormLabel>
                             <FormControl>
-                                <Input placeholder="e.g. T1, T5" {...field} />
+                                <Input placeholder="e.g. T1, T5" {...field} value={dependencyIDsString} onChange={e => field.onChange(e.target.value.split(',').map(s => s.trim()))} />
                             </FormControl>
                             <FormMessage />
                             </FormItem>
@@ -266,7 +282,7 @@ export function TaskFormDialog({ isOpen, onOpenChange, onSave, task }: TaskFormD
                             render={({ field }) => (
                                 <FormItem>
                                     <FormLabel>Completion Type</FormLabel>
-                                    <Select onValueChange={field.onChange} defaultValue={field.value}>
+                                    <Select onValueChange={field.onChange} value={field.value}>
                                     <FormControl>
                                         <SelectTrigger><SelectValue /></SelectTrigger>
                                     </FormControl>
@@ -286,7 +302,7 @@ export function TaskFormDialog({ isOpen, onOpenChange, onSave, task }: TaskFormD
                             render={({ field }) => (
                                 <FormItem>
                                     <FormLabel>Task Type</FormLabel>
-                                    <Select onValueChange={field.onChange} defaultValue={field.value}>
+                                    <Select onValueChange={field.onChange} value={field.value}>
                                     <FormControl>
                                         <SelectTrigger><SelectValue /></SelectTrigger>
                                     </FormControl>

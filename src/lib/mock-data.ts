@@ -17,37 +17,15 @@ export const INITIAL_GAME_STATE: GameState = {
   teamStrategy: "Focus on high-margin products and expand market share in Europe.",
   kpiHistory: [
     { round: 1, companyValuation: 45000000, netIncome: 1800000, inventoryValue: 600000, totalEmissions: 1100 },
-    { round: 2, companyValuation: 48000000, netIncome: 2200000, inventoryValue: 700000, totalEmissions: 1150 },
-    { round: 3, companyValuation: 50000000, netIncome: 2500000, inventoryValue: 750000, totalEmissions: 1200 },
   ],
-};
-
-export const ROLE_ACTION_ITEMS: RoleActionItems = {
-    procurement: [
-        "Review supplier contracts and negotiate better terms.",
-        "Analyze raw material inventory levels and place new orders.",
-        "Monitor purchase order status and resolve any delays.",
-    ],
-    production: [
-        "Check the production schedule and adjust for demand changes.",
-        "Monitor manufacturing capacity and efficiency.",
-        "Ensure quality control standards are being met.",
-    ],
-    logistics: [
-        "Analyze shipping costs and optimize delivery routes.",
-        "Manage warehouse inventory and stock transfers.",
-        "Coordinate with sales on finished goods availability.",
-    ],
-    sales: [
-        "Update sales forecasts based on market trends.",
-        "Analyze pricing strategies against competitors.",
-        "Engage with key customers and gather feedback.",
-    ],
-    team_leader: [
-        "Review overall team performance against KPIs.",
-        "Coordinate with all managers to ensure strategy alignment.",
-        "Prepare the summary report for the next round debriefing.",
-    ]
+  timerState: {
+    timeLeft: 1200,
+    isPaused: true,
+    isBreakActive: false,
+    isBreakEnabled: true,
+    roundDuration: 1200, // 20 minutes
+    breakDuration: 300, // 5 minutes
+  }
 };
 
 
@@ -67,6 +45,7 @@ export const ALL_TASKS: Task[] = [
     dependencyIDs: [],
     completionType: "Data-Confirmed",
     taskType: "ERPsim Input Data",
+    completed: false,
     dataFields: [
       { fieldName: "Nut_Muesli_500g_Initial_Stock", dataType: "Integer", suggestedValue: 20000 },
       { fieldName: "Blueberry_Muesli_500g_Initial_Stock", dataType: "Integer", suggestedValue: 20000 },
@@ -96,6 +75,7 @@ export const ALL_TASKS: Task[] = [
     dependencyIDs: [],
     completionType: "Data-Confirmed",
     taskType: "ERPsim Input Data",
+    completed: false,
     dataFields: [
       { fieldName: "Wheat_Initial_Stock_kg", dataType: "Integer", suggestedValue: 20000 },
       { fieldName: "Oats_Initial_Stock_kg", dataType: "Integer", suggestedValue: 30000 },
@@ -122,7 +102,8 @@ export const ALL_TASKS: Task[] = [
     timeframeConstraint: "StartPhase",
     dependencyIDs: [],
     completionType: "Manual-Tick",
-    taskType: "Standard"
+    taskType: "Standard",
+    completed: false,
   },
   {
     id: "T0.4",
@@ -138,6 +119,7 @@ export const ALL_TASKS: Task[] = [
     dependencyIDs: [],
     completionType: "Data-Confirmed",
     taskType: "ERPsim Input Data",
+    completed: false,
     dataFields: [
       { fieldName: "Nut_Muesli_500g_Price", dataType: "Currency", suggestedValue: 3.90 },
       { fieldName: "Blueberry_Muesli_500g_Price", dataType: "Currency", suggestedValue: 4.23 },
@@ -159,6 +141,7 @@ export const ALL_TASKS: Task[] = [
     dependencyIDs: [],
     completionType: "Data-Confirmed",
     taskType: "ERPsim Input Data",
+    completed: false,
     dataFields: [
       { fieldName: "Total_Units_Forecasted", dataType: "Integer", suggestedValue: 370000 },
     ]
@@ -175,7 +158,8 @@ export const ALL_TASKS: Task[] = [
     timeframeConstraint: "StartPhase",
     dependencyIDs: ["T1"],
     completionType: "Manual-Tick",
-    taskType: "Standard"
+    taskType: "Standard",
+    completed: false,
   },
   {
     id: "T3",
@@ -189,7 +173,8 @@ export const ALL_TASKS: Task[] = [
     timeframeConstraint: "StartPhase",
     dependencyIDs: ["T2"],
     completionType: "Manual-Tick",
-    taskType: "Standard"
+    taskType: "Standard",
+    completed: false,
   },
   {
     id: "T4",
@@ -203,7 +188,8 @@ export const ALL_TASKS: Task[] = [
     timeframeConstraint: "None",
     dependencyIDs: [],
     completionType: "Manual-Tick",
-    taskType: "Standard"
+    taskType: "Standard",
+    completed: false,
   },
   {
     id: "T5",
@@ -218,6 +204,7 @@ export const ALL_TASKS: Task[] = [
     dependencyIDs: [],
     completionType: "ERPsim Gather Data",
     taskType: "ERPsim Gather Data",
+    completed: false,
     dataFields: [{ fieldName: "Competitor_Avg_Price", dataType: "Currency" }]
   },
   {
@@ -233,6 +220,7 @@ export const ALL_TASKS: Task[] = [
     dependencyIDs: ["T5"],
     completionType: "Data-Confirmed",
     taskType: "ERPsim Input Data",
+    completed: false,
     dataFields: [
       {
         fieldName: "Blueberry_Muesli_1kg_Price",
@@ -255,6 +243,7 @@ export const ALL_TASKS: Task[] = [
     dependencyIDs: [],
     completionType: "Data-Confirmed",
     taskType: "ERPsim Input Data",
+    completed: false,
     dataFields: [{ fieldName: "Total_Marketing_Spend", dataType: "Currency", suggestedValue: 50000 }]
   },
   {
@@ -269,14 +258,9 @@ export const ALL_TASKS: Task[] = [
     timeframeConstraint: "None",
     dependencyIDs: [],
     completionType: "Manual-Tick",
-    taskType: "Standard"
+    taskType: "Standard",
+    completed: false,
   }
-];
-
-export const MOCK_COMPETITOR_LOG: CompetitorLogEntry[] = [
-    { id: '1', text: 'Team Alpha is heavily investing in marketing in North America.', author: 'Sales Manager', createdAt: new Date(Date.now() - 24 * 60 * 60 * 1000) },
-    { id: '2', text: 'Team Bravo seems to be struggling with their supply chain.', author: 'Procurement Manager', createdAt: new Date(Date.now() - 2 * 60 * 60 * 1000) },
-    { id: '3', text: 'Keep an eye on Team Charlie\'s new product launch.', author: 'Sales Manager', createdAt: new Date(Date.now() - 15 * 60 * 1000) },
 ];
 
 export const MOCK_PEER_DATA: PeerData[] = [

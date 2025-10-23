@@ -1,0 +1,77 @@
+/**
+ * @file Firestore Security Rules
+ * @description This ruleset enforces a strict user-ownership model for both user profiles and game sessions.
+ *
+ * Data Structure:
+ * - All user data and game sessions are nested under `/users/{userId}`.
+ * - User profiles are stored directly at `/users/{userId}`.
+ * - Game sessions are stored in a subcollection at `/users/{userId}/gameSessions/{gameSessionId}`.
+ *
+ * Key Security Decisions:
+ * - Users can only access their own profiles and game sessions.
+ * - Listing of users is disallowed.
+ * - GameSessions have a userId property that is used for validation that the user owns the game session
+ *
+ * Denormalization for Authorization:
+ * - The `GameSession` document contains a `userId` field, enabling direct authorization checks
+ *   without requiring additional reads.
+ */
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    /**
+     * @description Secure user profiles by enforcing ownership. Only the user can read or write their own profile.
+     * @path /users/{userId}
+     * @allow (create) - User with ID 'user123' can create their profile if request.auth.uid == 'user123'.
+     * @allow (get, update, delete) - User with ID 'user123' can read, update, or delete their profile if request.auth.uid == 'user123'.
+     * @deny (create) - User with ID 'user123' cannot create a profile with a different ID (e.g., 'user456').
+     * @deny (get, update, delete) - User with ID 'user123' cannot read, update, or delete profile with ID 'user456'.
+     * @principle Enforces document ownership for all operations on user profiles.
+     */
+    match /users/{userId} {
+      //Function to check if the request is from the signed in user
+      function isSignedIn() {
+        return request.auth != null;
+      }
+
+      //Function to check if the request is for a specific user id
+      function isOwner(userId) {
+        return request.auth.uid == userId;
+      }
+
+      allow get: if isSignedIn() && isOwner(userId);
+      allow list: if false;
+      allow create: if isSignedIn() && isOwner(userId);
+      allow update: if isSignedIn() && isOwner(userId);
+      allow delete: if isSignedIn() && isOwner(userId);
+    }
+
+    /**
+     * @description Secure game sessions by enforcing ownership. Only the user can read or write their own game sessions.
+     * @path /users/{userId}/gameSessions/{gameSessionId}
+     * @allow (create) - User 'user123' can create a game session under their profile.
+     * @allow (get, update, delete) - User 'user123' can read, update, or delete their game sessions.
+     * @deny (create) - User 'user123' cannot create a game session under another user's profile ('user456').
+     * @deny (get, update, delete) - User 'user123' cannot read, update, or delete game sessions under user 'user456's profile.
+     * @principle Enforces document ownership for all operations on game sessions, validating the userId.
+     */
+    match /users/{userId}/gameSessions/{gameSessionId} {
+       //Function to check if the request is from the signed in user
+      function isSignedIn() {
+        return request.auth != null;
+      }
+
+      //Function to check if the request is for a specific user id
+      function isOwner(userId) {
+        return request.auth.uid == userId;
+      }
+
+      allow get: if isSignedIn() && isOwner(userId);
+      allow list: if false;
+      allow create: if isSignedIn() && isOwner(userId);
+      allow update: if isSignedIn() && isOwner(userId);
+      allow delete: if isSignedIn() && isOwner(userId);
+    }
+  }
+}

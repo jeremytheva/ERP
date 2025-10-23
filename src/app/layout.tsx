@@ -5,6 +5,7 @@ import "./globals.css";
 import { AuthProvider } from "@/context/auth-context";
 import { Toaster } from "@/components/ui/toaster";
 import { TeamSettingsProvider } from "@/hooks/use-team-settings";
+import { TasksProvider } from "@/hooks/use-tasks";
 
 export const metadata: Metadata = {
   title: "ERPsim Dashboard",
@@ -35,12 +36,14 @@ export default function RootLayout({
         <link href="https://fonts.googleapis.com/css2?family=Source+Code+Pro&display=swap" rel="stylesheet" />
       </head>
       <body className={`${inter.variable} ${sourceCodePro.variable} font-body antialiased`} suppressHydrationWarning>
-        <TeamSettingsProvider>
-          <AuthProvider>
-            {children}
-            <Toaster />
-          </AuthProvider>
-        </TeamSettingsProvider>
+        <TasksProvider>
+          <TeamSettingsProvider>
+            <AuthProvider>
+              {children}
+              <Toaster />
+            </AuthProvider>
+          </TeamSettingsProvider>
+        </TasksProvider>
       </body>
     </html>
   );

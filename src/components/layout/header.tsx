@@ -32,6 +32,8 @@ const getPageTitle = (pathname: string): string => {
         return "Strategic Advisor";
       case "debriefing":
         return "End-of-Round Debriefing";
+      case "tasks":
+        return "Task Management";
       case "action-items":
         return "Action Items";
       case "competitor-log":

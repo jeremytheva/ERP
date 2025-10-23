@@ -53,6 +53,8 @@ export type RoundRecurrence = "Once" | "RoundStart" | "Continuous";
 export type TimeframeConstraint = "None" | "StartPhase" | "MidPhase" | "EndPhase";
 export type CompletionType = "Manual-Tick" | "Data-Confirmed" | "System-Validated";
 export type TaskType = "ERPsim Input Data" | "ERPsim Gather Data" | "Standard";
+export type Role = "Procurement" | "Production" | "Logistics" | "Sales" | "Team Leader";
+
 
 export type TaskDataField = {
   fieldName: string;
@@ -65,12 +67,13 @@ export type Task = {
   id: string;
   title: string;
   description: string;
-  role: "Procurement" | "Production" | "Logistics" | "Sales" | "Team Leader";
+  role: Role;
   transactionCode: string;
   priority: TaskPriority;
   estimatedTime: number; // in minutes
   roundRecurrence: RoundRecurrence;
-  timeframeConstraint: TimeframeConstraint;
+  startRound?: number;
+  timeframeConstraint?: TimeframeConstraint;
   dependencyIDs: string[];
   completionType: CompletionType;
   taskType: TaskType;

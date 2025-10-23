@@ -39,7 +39,7 @@ service cloud.firestore {
      * @principle Ownership.
      */
     function isOwner(userId) {
-        return request.auth.uid == userId;
+        return isSignedIn() && request.auth.uid == userId;
     }
 
     /**
@@ -50,7 +50,11 @@ service cloud.firestore {
      * @principle Ownership and existence check.
      */
     function isExistingOwner(userId) {
-        return resource.data.userId == request.auth.uid;
+        return isSignedIn() && request.auth.uid == userId && exists(/databases/$(database)/documents/users/$(userId));
+    }
+
+    function getSelf() {
+      return get(/databases/$(database)/documents/users/$(request.auth.uid));
     }
 
     /**
@@ -61,7 +65,9 @@ service cloud.firestore {
      * @principle Public read-only for game data.
      */
     match /games/{gameId} {
-      allow get, list: if true;
+      allow get: if true;
+      allow list: if true;
+      allow create, update, delete: if false;
     }
 
     /**
@@ -72,7 +78,9 @@ service cloud.firestore {
      * @principle Public read-only for task data.
      */
     match /tasks/{taskId} {
-      allow get, list: if true;
+      allow get: if true;
+      allow list: if true;
+      allow create, update, delete: if false;
     }
 
     /**
@@ -83,7 +91,9 @@ service cloud.firestore {
      * @principle Public read-only for settings data.
      */
     match /settings/{settingsId} {
-      allow get, list: if true;
+      allow get: if true;
+      allow list: if true;
+      allow create, update, delete: if false;
     }
 
     /**
@@ -94,7 +104,9 @@ service cloud.firestore {
      * @principle Public read-only for competitor log data.
      */
     match /competitor_log/{logId} {
-      allow get, list: if true;
+      allow get: if true;
+      allow list: if true;
+      allow create, update, delete: if false;
     }
 
     /**
@@ -110,8 +122,9 @@ service cloud.firestore {
     match /users/{userId} {
       allow get: if true;
       allow list: if false; // Prevent listing of all users.
-      allow create: if request.auth.uid == userId;
-      allow update, delete: if request.auth.uid == userId;
+      allow create: if isOwner(userId);
+      allow update: if isOwner(userId);
+      allow delete: if isOwner(userId);
     }
   }
 }

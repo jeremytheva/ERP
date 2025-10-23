@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useState, useEffect, createContext, useContext, ReactNode } from "react";
@@ -25,10 +24,8 @@ export const TeamSettingsProvider = ({ children }: { children: ReactNode }) => {
     setTeamLeaderState(roleId);
   };
 
-  const value = { teamLeader, setTeamLeader };
-
   return (
-    <TeamSettingsContext.Provider value={value}>
+    <TeamSettingsContext.Provider value={{ teamLeader, setTeamLeader }}>
       {children}
     </TeamSettingsContext.Provider>
   );

@@ -18,7 +18,7 @@ export function TeamSettings() {
         </p>
       </div>
       <RadioGroup
-        value={teamLeader}
+        value={teamLeader || ""}
         onValueChange={setTeamLeader}
         className="space-y-2"
       >

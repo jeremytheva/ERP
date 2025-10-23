@@ -3,12 +3,13 @@ import { getAuth } from "firebase/auth";
 import { getFirestore } from "firebase/firestore";
 
 const firebaseConfig = {
-  apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
-  authDomain: process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN,
-  projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID,
-  storageBucket: process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET,
-  messagingSenderId: process.env.NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID,
-  appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID,
+  apiKey: "AIzaSyDN_ZVv5jlV7qh_A2JqQcrt0F7CWoYytx4",
+  authDomain: "erpsim-project.firebaseapp.com",
+  projectId: "erpsim-project",
+  storageBucket: "erpsim-project.appspot.com",
+  messagingSenderId: "353698400971",
+  appId: "1:353698400971:web:544fffce8ddcba8734a94e",
+  measurementId: "G-FKJVTS55SL"
 };
 
 const app = !getApps().length ? initializeApp(firebaseConfig) : getApp();

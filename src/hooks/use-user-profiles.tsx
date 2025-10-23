@@ -21,7 +21,8 @@ export const UserProfilesProvider = ({ children }: { children: ReactNode }) => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    if (!auth || !firestore) {
+    // We check for firestore readiness, but not auth, as auth can be null initially.
+    if (!firestore) {
       setProfiles(USER_PROFILES);
       setLoading(false);
       return;
@@ -66,7 +67,7 @@ export const UserProfilesProvider = ({ children }: { children: ReactNode }) => {
     });
 
     return () => unsubscribe();
-  }, [auth, firestore]);
+  }, [firestore]);
   
   const value = { profiles, loading };
 

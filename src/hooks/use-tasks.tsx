@@ -34,20 +34,24 @@ export const TasksProvider = ({ children }: { children: ReactNode }) => {
     const tasksColRef = collection(firestore, "tasks");
 
     const unsubscribe = onSnapshot(tasksColRef, async (querySnapshot) => {
-      if (querySnapshot.empty) {
-        // Initialize tasks if collection doesn't exist or is empty
-        const batch = writeBatch(firestore);
-        ALL_TASKS.forEach(task => {
-          const taskDocRef = doc(firestore, "tasks", task.id);
-          batch.set(taskDocRef, task);
-        });
-        await batch.commit();
-        setTasks(ALL_TASKS);
-      } else {
-        const tasksData = querySnapshot.docs.map(doc => doc.data() as Task);
-        setTasks(tasksData);
-      }
-      setIsLoading(false);
+        const firestoreTasks = querySnapshot.docs.map(doc => doc.data() as Task);
+        const firestoreTaskIds = new Set(firestoreTasks.map(t => t.id));
+
+        const missingTasks = ALL_TASKS.filter(mockTask => !firestoreTaskIds.has(mockTask.id));
+
+        if (missingTasks.length > 0) {
+            const batch = writeBatch(firestore);
+            missingTasks.forEach(task => {
+                const taskDocRef = doc(firestore, "tasks", task.id);
+                batch.set(taskDocRef, task);
+            });
+            await batch.commit();
+            // The onSnapshot listener will fire again with the updated data,
+            // so we don't need to set state here immediately.
+        } else {
+            setTasks(firestoreTasks);
+            setIsLoading(false);
+        }
     },
     (error: FirestoreError) => {
         const contextualError = new FirestorePermissionError({

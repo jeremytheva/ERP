@@ -29,7 +29,15 @@ export const TeamSettingsProvider = ({ children }: { children: ReactNode }) => {
         setTeamLeaderState(docSnap.data().teamLeader || null);
       } else {
         // Initialize settings document if it doesn't exist
-        setDoc(settingsDocRef, { teamLeader: null });
+        const data = { teamLeader: null };
+        setDoc(settingsDocRef, data).catch(error => {
+            const contextualError = new FirestorePermissionError({
+                path: settingsDocRef.path,
+                operation: 'create',
+                requestResourceData: data,
+            });
+            errorEmitter.emit('permission-error', contextualError);
+        });
       }
     },
     (error: FirestoreError) => {
@@ -46,7 +54,15 @@ export const TeamSettingsProvider = ({ children }: { children: ReactNode }) => {
   const setTeamLeader = (roleId: string) => {
     if (!user || !firestore) return;
     const settingsDocRef = doc(firestore, "settings", SETTINGS_ID);
-    setDoc(settingsDocRef, { teamLeader: roleId }, { merge: true });
+    const data = { teamLeader: roleId };
+    setDoc(settingsDocRef, data, { merge: true }).catch(error => {
+        const contextualError = new FirestorePermissionError({
+            path: settingsDocRef.path,
+            operation: 'update',
+            requestResourceData: data,
+        });
+        errorEmitter.emit('permission-error', contextualError);
+    });
   };
 
   return (

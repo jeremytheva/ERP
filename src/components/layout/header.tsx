@@ -170,7 +170,7 @@ export function Header() {
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end" className="w-56">
-            <DropdownMenuLabel>{profile?.name}</DropdownMenuLabel>
+            <DropdownMenuLabel>Switch Role</DropdownMenuLabel>
             <DropdownMenuSeparator />
             <DropdownMenuRadioGroup value={profile?.id} onValueChange={handleProfileSwitch}>
               {userProfiles.map((p) => (

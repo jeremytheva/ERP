@@ -54,7 +54,7 @@ export function CompetitorLog() {
                         <div className="flex items-center gap-2">
                             <p className="font-semibold text-sm">{entry.author}</p>
                             <p className="text-xs text-muted-foreground">
-                                {entry.createdAt ? formatDistanceToNow(entry.createdAt, { addSuffix: true }) : 'just now'}
+                                {entry.createdAt ? formatDistanceToNow(new Date(entry.createdAt.toString()), { addSuffix: true }) : 'just now'}
                             </p>
                         </div>
                         <p className="text-sm bg-secondary/50 p-3 rounded-md">{entry.text}</p>

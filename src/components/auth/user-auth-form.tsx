@@ -52,7 +52,7 @@ export function UserAuthForm({ className, ...props }: UserAuthFormProps) {
           <div className="grid gap-2">
             <Select onValueChange={setSelectedProfile} defaultValue={selectedProfile} value={selectedProfile}>
               <SelectTrigger disabled={profilesLoading}>
-                <SelectValue placeholder={profilesLoading ? "Loading profiles..." : "Select a profile"} />
+                <SelectValue placeholder={profilesLoading ? "Loading roles..." : "Select a role"} />
               </SelectTrigger>
               <SelectContent>
                 {profiles.map((profile) => (
@@ -67,7 +67,7 @@ export function UserAuthForm({ className, ...props }: UserAuthFormProps) {
             {(isLoading || profilesLoading) && (
               <Loader2 className="mr-2 h-4 w-4 animate-spin" />
             )}
-            Sign In
+            Sign In As Role
           </Button>
         </div>
       </form>

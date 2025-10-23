@@ -82,7 +82,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         }
     } catch (error)
     {
-        console.error("Profile switch failed:", error);
+        console.error("Role switch failed:", error);
     } finally {
         setLoading(false);
     }

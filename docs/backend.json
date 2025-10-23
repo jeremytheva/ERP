@@ -5,19 +5,19 @@
       "$schema": "http://json-schema.org/draft-07/schema#",
       "title": "UserProfile",
       "type": "object",
-      "description": "Represents a user profile within the ERPsim Dashboard application.",
+      "description": "Represents a user profile (role) within the ERPsim Dashboard application.",
       "properties": {
         "id": {
           "type": "string",
-          "description": "Unique identifier for the user profile."
+          "description": "Unique identifier for the user profile (e.g., 'sales', 'procurement')."
         },
         "name": {
           "type": "string",
-          "description": "The display name of the user."
+          "description": "The display name of the role (e.g., 'Sales Manager')."
         },
         "avatarUrl": {
           "type": "string",
-          "description": "URL for the user's avatar."
+          "description": "URL for the role's avatar."
         }
       },
       "required": ["id", "name"]
@@ -146,7 +146,7 @@
     },
     "/users/{userId}": {
       "schema": { "$ref": "#/entities/UserProfile" },
-      "description": "Stores the user profiles for the application."
+      "description": "Stores the role profiles for the application."
     }
   }
 }

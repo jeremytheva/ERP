@@ -3,8 +3,7 @@
 
 import { useState, useEffect, createContext, useContext, ReactNode } from "react";
 import { collection, onSnapshot, writeBatch, doc, FirestoreError } from "firebase/firestore";
-import { useFirestore, errorEmitter, FirestorePermissionError } from "@/firebase";
-import { useAuth } from "./use-auth";
+import { useFirestore, errorEmitter, FirestorePermissionError, useAuth as useFirebaseAuth } from "@/firebase";
 import type { UserProfile } from "@/types";
 import { USER_PROFILES } from "@/lib/mock-data";
 
@@ -16,13 +15,13 @@ interface UserProfilesContextType {
 const UserProfilesContext = createContext<UserProfilesContextType | undefined>(undefined);
 
 export const UserProfilesProvider = ({ children }: { children: ReactNode }) => {
-  const { user } = useAuth();
+  const auth = useFirebaseAuth();
   const firestore = useFirestore();
   const [profiles, setProfiles] = useState<UserProfile[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    if (!user || !firestore) {
+    if (!auth || !firestore) {
       setProfiles(USER_PROFILES);
       setLoading(false);
       return;
@@ -60,7 +59,7 @@ export const UserProfilesProvider = ({ children }: { children: ReactNode }) => {
     });
 
     return () => unsubscribe();
-  }, [user, firestore]);
+  }, [auth, firestore]);
   
   const value = { profiles, loading };
 

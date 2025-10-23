@@ -3,10 +3,10 @@
 import type { UserProfile, GameState, CompetitorLogEntry, PeerData, RoleActionItems, Task } from "@/types";
 
 export const USER_PROFILES: UserProfile[] = [
-  { id: 'procurement', name: 'Procurement Manager', avatarUrl: 'https://picsum.photos/seed/procurement/100/100' },
-  { id: 'production', name: 'Production Manager', avatarUrl: 'https://picsum.photos/seed/production/100/100' },
-  { id: 'logistics', name: 'Logistics Manager', avatarUrl: 'https://picsum.photos/seed/logistics/100/100' },
-  { id: 'sales', name: 'Sales Manager', avatarUrl: 'https://picsum.photos/seed/sales/100/100' },
+  { id: 'procurement', name: 'Procurement', avatarUrl: 'https://picsum.photos/seed/procurement/100/100' },
+  { id: 'production', name: 'Production', avatarUrl: 'https://picsum.photos/seed/production/100/100' },
+  { id: 'logistics', name: 'Logistics', avatarUrl: 'https://picsum.photos/seed/logistics/100/100' },
+  { id: 'sales', name: 'Sales', avatarUrl: 'https://picsum.photos/seed/sales/100/100' },
 ];
 
 export const INITIAL_GAME_STATE: GameState = {

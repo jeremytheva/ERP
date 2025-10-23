@@ -1,5 +1,6 @@
 
-import type { UserProfile, GameState, CompetitorLogEntry, PeerData, RoleActionItems } from "@/types";
+
+import type { UserProfile, GameState, CompetitorLogEntry, PeerData, RoleActionItems, Task } from "@/types";
 
 export const USER_PROFILES: UserProfile[] = [
   { id: 'procurement', name: 'Procurement Manager', avatarUrl: 'https://picsum.photos/seed/procurement/100/100' },
@@ -48,6 +49,136 @@ export const ROLE_ACTION_ITEMS: RoleActionItems = {
         "Prepare the summary report for the next round debriefing.",
     ]
 };
+
+
+export const ALL_TASKS: Task[] = [
+  {
+    id: "T1",
+    title: "Forecast Sales",
+    description: "Create the sales forecast for all products for the upcoming period.",
+    role: "Sales",
+    transactionCode: "MD61",
+    priority: "Critical",
+    estimatedTime: 10,
+    roundRecurrence: "RoundStart",
+    timeframeConstraint: "StartPhase",
+    dependencyIDs: [],
+    completionType: "Data-Confirmed",
+    taskType: "ERPsim Input Data",
+    dataFields: [
+      { fieldName: "Yogurt_Forecast", dataType: "Integer", suggestedValue: 120000 },
+      { fieldName: "Muesli_Forecast", dataType: "Integer", suggestedValue: 250000 },
+    ]
+  },
+  {
+    id: "T2",
+    title: "Plan Production",
+    description: "Run MRP and convert planned orders to production orders.",
+    role: "Production",
+    transactionCode: "MD01, CO41",
+    priority: "Critical",
+    estimatedTime: 15,
+    roundRecurrence: "RoundStart",
+    timeframeConstraint: "StartPhase",
+    dependencyIDs: ["T1"],
+    completionType: "Manual-Tick",
+    taskType: "Standard"
+  },
+  {
+    id: "T3",
+    title: "Procure Raw Materials",
+    description: "Order raw materials needed for the production plan.",
+    role: "Procurement",
+    transactionCode: "ZME21N",
+    priority: "Critical",
+    estimatedTime: 10,
+    roundRecurrence: "RoundStart",
+    timeframeConstraint: "StartPhase",
+    dependencyIDs: ["T2"],
+    completionType: "Manual-Tick",
+    taskType: "Standard"
+  },
+  {
+    id: "T4",
+    title: "Check Inventory Report",
+    description: "Continuously monitor inventory levels of raw materials and finished goods.",
+    role: "Logistics",
+    transactionCode: "ZMB52",
+    priority: "High",
+    estimatedTime: 5,
+    roundRecurrence: "Continuous",
+    timeframeConstraint: "None",
+    dependencyIDs: [],
+    completionType: "Manual-Tick",
+    taskType: "Standard"
+  },
+  {
+    id: "T5",
+    title: "Review Market Reports",
+    description: "Analyze market reports to understand competitor pricing and market share.",
+    role: "Sales",
+    transactionCode: "ZMARKET",
+    priority: "High",
+    estimatedTime: 10,
+    roundRecurrence: "Continuous",
+    timeframeConstraint: "None",
+dependencyIDs: [],
+    completionType: "Manual-Tick",
+    taskType: "ERPsim Gather Data",
+    dataFields: [{ fieldName: "Competitor_Avg_Price", dataType: "Currency" }]
+  },
+  {
+    id: "T6",
+    title: "Set Product Prices",
+    description: "Adjust the selling price for all finished products based on strategy and market data.",
+    role: "Sales",
+    transactionCode: "VK32",
+    priority: "High",
+    estimatedTime: 8,
+    roundRecurrence: "RoundStart",
+    timeframeConstraint: "StartPhase",
+    dependencyIDs: ["T5"],
+    completionType: "Data-Confirmed",
+    taskType: "ERPsim Input Data",
+    dataFields: [
+      {
+        fieldName: "Yogurt_Selling_Price",
+        dataType: "Currency",
+        suggestedValue: 3.85,
+        aiRationale: "Suggested by Strategic Advisor based on competitor's historical low margin of 15%."
+      }
+    ]
+  },
+  {
+    id: "T7",
+    title: "Run Marketing Campaign",
+    description: "Set the marketing budget for each product.",
+    role: "Sales",
+    transactionCode: "ZADS",
+    priority: "Medium",
+    estimatedTime: 5,
+    roundRecurrence: "RoundStart",
+    timeframeConstraint: "StartPhase",
+    dependencyIDs: [],
+    completionType: "Data-Confirmed",
+    taskType: "ERPsim Input Data",
+    dataFields: [{ fieldName: "Total_Marketing_Spend", dataType: "Currency", suggestedValue: 50000 }]
+  },
+  {
+    id: "T8",
+    title: "Review Financial Statements",
+    description: "Analyze the company's financial performance to track profitability.",
+    role: "Team Leader",
+    transactionCode: "F.01",
+    priority: "High",
+    estimatedTime: 10,
+    roundRecurrence: "Continuous",
+    timeframeConstraint: "None",
+    dependencyIDs: [],
+    completionType: "Manual-Tick",
+    taskType: "Standard"
+  }
+];
 
 export const MOCK_COMPETITOR_LOG: CompetitorLogEntry[] = [
     { id: '1', text: 'Team Alpha is heavily investing in marketing in North America.', author: 'Sales Manager', createdAt: new Date(Date.now() - 24 * 60 * 60 * 1000) },

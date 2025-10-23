@@ -1,4 +1,5 @@
 
+
 export type UserProfile = {
   id: string;
   name: string;
@@ -44,3 +45,34 @@ export type PeerData = {
 export type RoleActionItems = {
   [key: string]: string[];
 }
+
+
+// New Expanded Task Definition
+export type TaskPriority = "Critical" | "High" | "Medium" | "Low";
+export type RoundRecurrence = "Once" | "RoundStart" | "Continuous";
+export type TimeframeConstraint = "None" | "StartPhase" | "MidPhase" | "EndPhase";
+export type CompletionType = "Manual-Tick" | "Data-Confirmed" | "System-Validated";
+export type TaskType = "ERPsim Input Data" | "ERPsim Gather Data" | "Standard";
+
+export type TaskDataField = {
+  fieldName: string;
+  dataType: "Currency" | "Integer" | "String";
+  suggestedValue?: number | string;
+  aiRationale?: string;
+};
+
+export type Task = {
+  id: string;
+  title: string;
+  description: string;
+  role: "Procurement" | "Production" | "Logistics" | "Sales" | "Team Leader";
+  transactionCode: string;
+  priority: TaskPriority;
+  estimatedTime: number; // in minutes
+  roundRecurrence: RoundRecurrence;
+  timeframeConstraint: TimeframeConstraint;
+  dependencyIDs: string[];
+  completionType: CompletionType;
+  taskType: TaskType;
+  dataFields?: TaskDataField[];
+};

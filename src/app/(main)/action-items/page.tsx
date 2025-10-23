@@ -22,7 +22,7 @@ export default function ActionItemsPage() {
 
   const userRoles = useMemo(() => {
     if (!profile) return [];
-    const roles: Role[] = [profile.id as Role];
+    const roles: Role[] = [profile.name as Role];
     if (profile.id === teamLeader) {
       roles.push("Team Leader");
     }

@@ -27,7 +27,7 @@ const generalMenuItems = [
   { href: "/key-metrics", label: "Key Metrics", icon: BarChart2 },
   { href: "/master-data", label: "Master Data", icon: Database },
   { href: "/live-inventory", label: "Live Inventory (LIT)", icon: FileText },
-  { href: "/roles-responsibilities", label: "Roles & Responsibilities", icon: ListTodo },
+  { href: "/action-items", label: "Action Items", icon: ListTodo },
 ];
 
 const roleSpecificMenus: Record<string, { href: string; label: string; icon: any }[]> = {

@@ -16,11 +16,10 @@ import {
   SidebarGroupLabel,
 } from "@/components/ui/sidebar";
 import { Button } from "@/components/ui/button";
-import { Bot, LayoutDashboard, Database, FileText, ListTodo, Users, Settings, Briefcase, ShoppingCart, Factory, Truck, BarChart2 } from "lucide-react";
+import { Bot, LayoutDashboard, Database, FileText, ListTodo, Users, Settings, Briefcase, ShoppingCart, Factory, Truck, BarChart2, Crown } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
 import { useTeamSettings } from "@/hooks/use-team-settings";
 import { useMemo } from "react";
-import type { Role } from "@/types";
 
 const generalMenuItems = [
   { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
@@ -43,8 +42,12 @@ const roleSpecificMenus: Record<string, { href: string; label: string; icon: any
   "Logistics": [
     { href: "/logistics", label: "Logistics", icon: Truck },
   ],
-  "Team Leader": [], // Team leader gets all role-specific tabs
 };
+
+const teamLeaderMenu = [
+    { href: "/team-leader", label: "Team Leader", icon: Crown },
+];
+
 
 export function MainSidebar() {
   const pathname = usePathname();
@@ -55,11 +58,23 @@ export function MainSidebar() {
 
   const roleSpecificItems = useMemo(() => {
     if (!profile) return [];
-    if (isTeamLeader) {
-      // Team leader sees all role-specific tabs
-      return Object.values(roleSpecificMenus).flat();
+    
+    let items = [];
+
+    // Add role-specific items
+    if (profile.name in roleSpecificMenus) {
+        items.push(...roleSpecificMenus[profile.name]);
     }
-    return roleSpecificMenus[profile.name] || [];
+    
+    // Add team leader specific items if they are the leader
+    if (isTeamLeader) {
+        items.push(...teamLeaderMenu);
+    }
+    
+    // Deduplicate in case a role and team leader have the same page
+    const uniqueItems = Array.from(new Map(items.map(item => [item.href, item])).values());
+
+    return uniqueItems;
   }, [profile, isTeamLeader]);
 
   return (
@@ -83,7 +98,7 @@ export function MainSidebar() {
                 <Link href={href} passHref>
                 <SidebarMenuButton
                     as="a"
-                    isActive={pathname.startsWith(href)}
+                    isActive={pathname === href}
                     tooltip={{ children: label, side: "right", align:"center" }}
                     className="justify-start"
                 >
@@ -95,26 +110,28 @@ export function MainSidebar() {
             ))}
         </SidebarGroup>
 
-        <SidebarSeparator />
+        {(roleSpecificItems.length > 0) && <SidebarSeparator />}
 
-        <SidebarGroup>
-            <SidebarGroupLabel>Role Specific</SidebarGroupLabel>
-            {roleSpecificItems.map(({ href, label, icon: Icon }) => (
-                <SidebarMenuItem key={href}>
-                    <Link href={href} passHref>
-                    <SidebarMenuButton
-                        as="a"
-                        isActive={pathname.startsWith(href)}
-                        tooltip={{ children: label, side: "right", align:"center" }}
-                        className="justify-start"
-                    >
-                        <Icon />
-                        <span>{label}</span>
-                    </SidebarMenuButton>
-                    </Link>
-                </SidebarMenuItem>
-            ))}
-        </SidebarGroup>
+        {roleSpecificItems.length > 0 && (
+            <SidebarGroup>
+                <SidebarGroupLabel>Role Specific</SidebarGroupLabel>
+                {roleSpecificItems.map(({ href, label, icon: Icon }) => (
+                    <SidebarMenuItem key={href}>
+                        <Link href={href} passHref>
+                        <SidebarMenuButton
+                            as="a"
+                            isActive={pathname.startsWith(href)}
+                            tooltip={{ children: label, side: "right", align:"center" }}
+                            className="justify-start"
+                        >
+                            <Icon />
+                            <span>{label}</span>
+                        </SidebarMenuButton>
+                        </Link>
+                    </SidebarMenuItem>
+                ))}
+            </SidebarGroup>
+        )}
         
         <SidebarSeparator />
         

@@ -1,134 +1,124 @@
 /**
  * @file Firestore Security Rules
- * @description This ruleset is in prototyping mode to enable rapid development. It prioritizes
- *   strong authorization and minimal data validation to allow for schema flexibility during
- *   initial development.
+ * @description This ruleset is in prototyping mode to enable rapid development.
+ *   It prioritizes secure authorization over strict data validation. Data validation
+ *   is intentionally relaxed to allow for flexible schema changes during early development.
  *
  * Core Philosophy:
- *   - Public Read, Owner-Only Write. Most top-level collections are readable by anyone,
- *     but only the owner (creator) can modify data.
+ *   - Authenticated access is enforced for all collections.  Anonymous authentication is used, all access is therefore authenticated access.
+ *   - The rules are structured to prevent unauthorized data access or modification,
+ *     while minimizing constraints on the shape of data being written.
  *
  * Data Structure:
- *   - Top-level collections: `/games`, `/tasks`, `/settings`, `/competitor_log`, `/users`.
+ *   - The database contains top-level collections for 'games', 'tasks', 'settings', 'competitor_log', and 'users'.
+ *   - The 'users' collection is intended to store user profile data.
  *
  * Key Security Decisions:
- *   - User listing is explicitly denied.
- *   - All write operations require user authentication.
- *   - Data validation is minimal, focusing on ownership checks and preventing modification
- *     of key relationship fields.
- *
- * Denormalization for Authorization:
- *   - The `id` field on the UserProfile document is used for fast ownership checks in the `/users/{userId}` path.
- *
- * Structural Segregation:
- *   - No separation of public/private data within a single collection.
+ *   - Listing the `users` collection is explicitly denied. This is to prevent
+ *     enumeration of user accounts. Access to individual user documents is still possible.
+ *   - All write operations are protected by authorization checks based on
+ *     resource ownership or role-based access control (where applicable).
  */
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
     /**
-     * @description Allows read-only access to user profiles, but prohibits listing all profiles.
-     * @path /databases/{database}/documents/users/{userId}
-     * @allow (get) Authenticated user can read any user profile.
-     * @deny (list) All users are denied listing all user profiles.
-     * @principle Restricts listing of user profiles. Allows public read of individual profiles.
-     */
-    match /users/{userId} {
-      allow get: if true;
-      allow list: if false;
-      allow create: if isOwner(userId);
-      allow update: if isExistingOwner(userId);
-      allow delete: if isExistingOwner(userId);
-    }
-
-    /**
-     * @description Allows public read access to game states, but restricts modifications to owners.
-     * @path /databases/{database}/documents/games/{gameId}
-     * @allow (get, list) Any user can read the game state.
-     * @allow (create) Authenticated user can create a game state, if they are the owner.
-     * @allow (update, delete) The user can update or delete a game state if they are the owner and the document exists.
-     * @deny (create) An unauthenticated user cannot create a game state.
-     * @deny (update, delete) A non-owner cannot update or delete the game state.
-     * @principle Enforces document ownership for writes.
+     * @description Allows read and write access to individual game documents.
+     * @path /games/{gameId}
+     * @allow (get) Any authenticated user can read a game document.
+     * @allow (list) Any authenticated user can list game documents.
+     * @allow (create) No one can create a game document via the client.
+     * @allow (update) No one can update a game document via the client.
+     * @allow (delete) No one can delete a game document via the client.
+     * @deny (create) No client side create allowed
+     * @deny (update) No client side update allowed
+     * @deny (delete) No client side delete allowed
+     * @principle Public read, server-only write.
      */
     match /games/{gameId} {
-      allow get, list: if true;
-      allow create: if isSignedIn();
-      allow update: if isSignedIn() && resource != null;
-      allow delete: if isSignedIn() && resource != null;
+      allow get, list: if isSignedIn();
+      allow create, update, delete: if false; // Server-side writes only.
     }
 
     /**
-     * @description Allows public read access to tasks, but restricts modifications to owners.
-     * @path /databases/{database}/documents/tasks/{taskId}
-     * @allow (get, list) Any user can read the task.
-     * @allow (create) Authenticated user can create a task.
-     * @allow (update, delete) The user can update or delete a task if they are the owner and the document exists.
-     * @deny (create) An unauthenticated user cannot create a task.
-     * @deny (update, delete) A non-owner cannot update or delete the task.
-     * @principle Enforces document ownership for writes.
+     * @description Allows read and write access to individual task documents.
+     * @path /tasks/{taskId}
+     * @allow (get) Any authenticated user can read a task document.
+     * @allow (list) Any authenticated user can list task documents.
+     * @allow (create) No one can create a task document via the client.
+     * @allow (update) No one can update a task document via the client.
+     * @allow (delete) No one can delete a task document via the client.
+     * @deny (create) No client side create allowed
+     * @deny (update) No client side update allowed
+     * @deny (delete) No client side delete allowed
+     * @principle Public read, server-only write.
      */
     match /tasks/{taskId} {
-      allow get, list: if true;
-      allow create: if isSignedIn();
-      allow update: if isSignedIn() && resource != null;
-      allow delete: if isSignedIn() && resource != null;
+      allow get, list: if isSignedIn();
+      allow create, update, delete: if false; // Server-side writes only.
     }
 
     /**
-     * @description Allows public read access to settings, but restricts modifications to owners.
-     * @path /databases/{database}/documents/settings/{settingsId}
-     * @allow (get, list) Any user can read the settings.
-     * @allow (create) Authenticated user can create settings.
-     * @allow (update, delete) The user can update or delete settings if they are the owner and the document exists.
-     * @deny (create) An unauthenticated user cannot create settings.
-     * @deny (update, delete) A non-owner cannot update or delete the settings.
-     * @principle Enforces document ownership for writes.
+     * @description Allows read and write access to individual settings documents.
+     * @path /settings/{settingsId}
+     * @allow (get) Any authenticated user can read a settings document.
+     * @allow (list) Any authenticated user can list settings documents.
+     * @allow (create) No one can create a settings document via the client.
+     * @allow (update) No one can update a settings document via the client.
+     * @allow (delete) No one can delete a settings document via the client.
+     * @deny (create) No client side create allowed
+     * @deny (update) No client side update allowed
+     * @deny (delete) No client side delete allowed
+     * @principle Public read, server-only write.
      */
     match /settings/{settingsId} {
-      allow get, list: if true;
-      allow create: if isSignedIn();
-      allow update: if isSignedIn() && resource != null;
-      allow delete: if isSignedIn() && resource != null;
+      allow get, list: if isSignedIn();
+      allow create, update, delete: if false; // Server-side writes only.
     }
 
     /**
-     * @description Allows public read access to competitor log entries, but restricts modifications to owners.
-     * @path /databases/{database}/documents/competitor_log/{logId}
-     * @allow (get, list) Any user can read the competitor log entries.
-     * @allow (create) Authenticated user can create a competitor log entry.
-     * @allow (update, delete) The user can update or delete a competitor log entry if they are the owner and the document exists.
-     * @deny (create) An unauthenticated user cannot create a competitor log entry.
-     * @deny (update, delete) A non-owner cannot update or delete the competitor log entry.
-     * @principle Enforces document ownership for writes.
+     * @description Allows read and write access to individual competitor log entries.
+     * @path /competitor_log/{logId}
+     * @allow (get) Any authenticated user can read a log entry.
+     * @allow (list) Any authenticated user can list log entries.
+     * @allow (create) No one can create a log entry via the client.
+     * @allow (update) No one can update a log entry via the client.
+     * @allow (delete) No one can delete a log entry via the client.
+     * @deny (create) No client side create allowed
+     * @deny (update) No client side update allowed
+     * @deny (delete) No client side delete allowed
+     * @principle Public read, server-only write.
      */
     match /competitor_log/{logId} {
-      allow get, list: if true;
-      allow create: if isSignedIn();
-      allow update: if isSignedIn() && resource != null;
-      allow delete: if isSignedIn() && resource != null;
+      allow get, list: if isSignedIn();
+      allow create, update, delete: if false; // Server-side writes only.
     }
 
     /**
-     * @description Checks if the user is signed in
+     * @description Allows read access to individual user profile documents.
+     *  Denies listing the entire collection.
+     * @path /users/{userId}
+     * @allow (get) Any authenticated user can read any user profile.
+     * @deny (list) Listing all user profiles is not allowed.
+     * @allow (create) Any authenticated user can create their own user profile.
+     * @allow (update) Any authenticated user can update their own user profile.
+     * @allow (delete) No user can delete another user profile
+     * @deny (create) An unauthenticated user cannot create a profile.
+     * @deny (update) An unauthenticated user cannot update a profile.
+     * @deny (delete) Non-owners cannot delete a profile.
+     * @principle Enforces user ownership and prevents user enumeration.
      */
+    match /users/{userId} {
+      allow get: if isSignedIn();
+      allow list: if false; // Prevent user enumeration.
+      allow create: if isSignedIn() && request.auth.uid == userId;
+      allow update: if isSignedIn() && request.auth.uid == userId && resource != null;
+      allow delete: if false;
+    }
+
     function isSignedIn() {
       return request.auth != null;
-    }
-
-    /**
-     * @description Checks if the user ID matches the requested ID.
-     */
-    function isOwner(userId) {
-      return request.auth.uid == userId;
-    }
-
-    /**
-     * @description Checks if the user ID matches the requested ID and the resource exists
-     */
-    function isExistingOwner(userId) {
-        return isOwner(userId) && resource != null;
     }
   }
 }

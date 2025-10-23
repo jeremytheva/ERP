@@ -2,11 +2,11 @@
 "use client";
 
 import { useState, useEffect, useCallback, createContext, useContext, ReactNode } from "react";
-import { doc, onSnapshot, writeBatch } from "firebase/firestore";
+import { doc, onSnapshot, writeBatch, FirestoreError } from "firebase/firestore";
 import { useAuth } from "./use-auth";
 import type { GameState, KpiHistoryEntry } from "@/types";
 import { INITIAL_GAME_STATE } from "@/lib/mock-data";
-import { useFirestore } from "@/firebase";
+import { useFirestore, errorEmitter, FirestorePermissionError } from "@/firebase";
 
 const GAME_ID = "default_game"; // For now, we use a single game document
 
@@ -66,6 +66,15 @@ export const GameStateProvider = ({ children }: { children: ReactNode }) => {
         batch.commit().then(() => setGameState(INITIAL_GAME_STATE));
       }
       setIsLoading(false);
+    },
+    (error: FirestoreError) => {
+        const contextualError = new FirestorePermissionError({
+          path: gameDocRef.path,
+          operation: 'get',
+        });
+        console.error("Permission error in useGameState:", contextualError.message);
+        errorEmitter.emit('permission-error', contextualError);
+        setIsLoading(false);
     });
 
     return () => unsubscribe();

@@ -2,10 +2,10 @@
 "use client";
 
 import { useState, useEffect, createContext, useContext, ReactNode } from "react";
-import { collection, onSnapshot, addDoc, serverTimestamp, query, orderBy } from "firebase/firestore";
+import { collection, onSnapshot, addDoc, serverTimestamp, query, orderBy, FirestoreError } from "firebase/firestore";
 import { useAuth } from "./use-auth";
 import type { CompetitorLogEntry } from "@/types";
-import { useFirestore } from "@/firebase";
+import { useFirestore, errorEmitter, FirestorePermissionError } from "@/firebase";
 
 interface CompetitorLogContextType {
   logEntries: CompetitorLogEntry[];
@@ -31,6 +31,14 @@ export const CompetitorLogProvider = ({ children }: { children: ReactNode }) => 
         createdAt: doc.data().createdAt?.toDate(),
       } as CompetitorLogEntry));
       setLogEntries(entries);
+    },
+    (error: FirestoreError) => {
+        const contextualError = new FirestorePermissionError({
+            path: 'competitor_log',
+            operation: 'list',
+        });
+        console.error("Permission error in useCompetitorLog:", contextualError.message);
+        errorEmitter.emit('permission-error', contextualError);
     });
 
     return () => unsubscribe();

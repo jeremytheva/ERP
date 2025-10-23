@@ -2,9 +2,9 @@
 "use client";
 
 import { useState, useEffect, createContext, useContext, ReactNode } from "react";
-import { doc, onSnapshot, setDoc } from "firebase/firestore";
+import { doc, onSnapshot, setDoc, FirestoreError } from "firebase/firestore";
 import { useAuth } from "./use-auth";
-import { useFirestore } from "@/firebase";
+import { useFirestore, errorEmitter, FirestorePermissionError } from "@/firebase";
 
 const SETTINGS_ID = "default_settings";
 
@@ -31,6 +31,14 @@ export const TeamSettingsProvider = ({ children }: { children: ReactNode }) => {
         // Initialize settings document if it doesn't exist
         setDoc(settingsDocRef, { teamLeader: null });
       }
+    },
+    (error: FirestoreError) => {
+        const contextualError = new FirestorePermissionError({
+            path: settingsDocRef.path,
+            operation: 'get',
+        });
+        console.error("Permission error in useTeamSettings:", contextualError.message);
+        errorEmitter.emit('permission-error', contextualError);
     });
 
     return () => unsubscribe();

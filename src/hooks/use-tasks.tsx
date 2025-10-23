@@ -2,8 +2,8 @@
 "use client";
 
 import { useState, useEffect, createContext, useContext, ReactNode } from "react";
-import { collection, doc, onSnapshot, writeBatch } from "firebase/firestore";
-import { useFirestore } from "@/firebase";
+import { collection, doc, onSnapshot, writeBatch, FirestoreError } from "firebase/firestore";
+import { useFirestore, errorEmitter, FirestorePermissionError } from "@/firebase";
 import { useAuth } from "./use-auth";
 import type { Task } from "@/types";
 import { ALL_TASKS } from "@/lib/mock-data";
@@ -48,6 +48,15 @@ export const TasksProvider = ({ children }: { children: ReactNode }) => {
         setTasks(tasksData);
       }
       setIsLoading(false);
+    },
+    (error: FirestoreError) => {
+        const contextualError = new FirestorePermissionError({
+            path: 'tasks',
+            operation: 'list',
+        });
+        console.error("Permission error in useTasks:", contextualError.message);
+        errorEmitter.emit('permission-error', contextualError);
+        setIsLoading(false);
     });
 
     return () => unsubscribe();
@@ -73,7 +82,7 @@ export const TasksProvider = ({ children }: { children: ReactNode }) => {
     if (!user || !firestore) return;
     const taskDocRef = doc(firestore, "tasks", taskId);
     const batch = writeBatch(firestore);
-batch.delete(taskDocRef);
+    batch.delete(taskDocRef);
     await batch.commit();
   };
   

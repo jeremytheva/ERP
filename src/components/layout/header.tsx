@@ -1,4 +1,5 @@
 
+
 "use client";
 
 import { useAuth } from "@/hooks/use-auth";
@@ -35,6 +36,8 @@ const getPageTitle = (pathname: string): string => {
         return "Action Items";
       case "competitor-log":
         return "Competitor Log";
+      case "settings":
+        return "Settings";
       default:
         return "ERPsim";
     }

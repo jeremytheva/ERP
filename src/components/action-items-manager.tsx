@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState } from "react";
@@ -7,15 +8,23 @@ import { Input } from "@/components/ui/input";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Plus, Trash2 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useAuth } from "@/hooks/use-auth";
 
 export function ActionItemsManager() {
-  const { actionItems, addActionItem, toggleActionItem, removeActionItem } = useActionItems();
+  const { profile } = useAuth();
+  const {
+    actionItems,
+    addActionItem,
+    toggleActionItem,
+    removeActionItem,
+  } = useActionItems();
+
   const [newItemText, setNewItemText] = useState("");
 
   const handleAddItem = (e: React.FormEvent) => {
     e.preventDefault();
-    if (newItemText.trim()) {
-      addActionItem(newItemText.trim());
+    if (newItemText.trim() && profile) {
+      addActionItem(newItemText.trim(), profile.id);
       setNewItemText("");
     }
   };

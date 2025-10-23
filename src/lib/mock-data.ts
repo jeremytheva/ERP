@@ -1,8 +1,11 @@
-import type { UserProfile, GameState, ActionItem, CompetitorLogEntry, PeerData } from "@/types";
+
+import type { UserProfile, GameState, CompetitorLogEntry, PeerData, RoleActionItems } from "@/types";
 
 export const USER_PROFILES: UserProfile[] = [
-  { id: 'ceo', name: 'CEO', avatarUrl: 'https://picsum.photos/seed/ceo/100/100' },
-  { id: 'cfo', name: 'CFO', avatarUrl: 'https://picsum.photos/seed/cfo/100/100' },
+  { id: 'procurement', name: 'Procurement Manager', avatarUrl: 'https://picsum.photos/seed/procurement/100/100' },
+  { id: 'production', name: 'Production Manager', avatarUrl: 'https://picsum.photos/seed/production/100/100' },
+  { id: 'logistics', name: 'Logistics Manager', avatarUrl: 'https://picsum.photos/seed/logistics/100/100' },
+  { id: 'sales', name: 'Sales Manager', avatarUrl: 'https://picsum.photos/seed/sales/100/100' },
 ];
 
 export const INITIAL_GAME_STATE: GameState = {
@@ -18,16 +21,38 @@ export const INITIAL_GAME_STATE: GameState = {
   ],
 };
 
-export const MOCK_ACTION_ITEMS: ActionItem[] = [
-    { id: '1', text: 'Analyze competitor pricing for Q3.', completed: false },
-    { id: '2', text: 'Review marketing spend effectiveness.', completed: true },
-    { id: '3', text: 'Prepare presentation for next round.', completed: false },
-];
+export const ROLE_ACTION_ITEMS: RoleActionItems = {
+    procurement: [
+        "Review supplier contracts and negotiate better terms.",
+        "Analyze raw material inventory levels and place new orders.",
+        "Monitor purchase order status and resolve any delays.",
+    ],
+    production: [
+        "Check the production schedule and adjust for demand changes.",
+        "Monitor manufacturing capacity and efficiency.",
+        "Ensure quality control standards are being met.",
+    ],
+    logistics: [
+        "Analyze shipping costs and optimize delivery routes.",
+        "Manage warehouse inventory and stock transfers.",
+        "Coordinate with sales on finished goods availability.",
+    ],
+    sales: [
+        "Update sales forecasts based on market trends.",
+        "Analyze pricing strategies against competitors.",
+        "Engage with key customers and gather feedback.",
+    ],
+    team_leader: [
+        "Review overall team performance against KPIs.",
+        "Coordinate with all managers to ensure strategy alignment.",
+        "Prepare the summary report for the next round debriefing.",
+    ]
+};
 
 export const MOCK_COMPETITOR_LOG: CompetitorLogEntry[] = [
-    { id: '1', text: 'Team Alpha is heavily investing in marketing in North America.', author: 'CEO', createdAt: new Date(Date.now() - 24 * 60 * 60 * 1000) },
-    { id: '2', text: 'Team Bravo seems to be struggling with their supply chain.', author: 'CFO', createdAt: new Date(Date.now() - 2 * 60 * 60 * 1000) },
-    { id: '3', text: 'Keep an eye on Team Charlie\'s new product launch.', author: 'CEO', createdAt: new Date(Date.now() - 15 * 60 * 1000) },
+    { id: '1', text: 'Team Alpha is heavily investing in marketing in North America.', author: 'Sales Manager', createdAt: new Date(Date.now() - 24 * 60 * 60 * 1000) },
+    { id: '2', text: 'Team Bravo seems to be struggling with their supply chain.', author: 'Procurement Manager', createdAt: new Date(Date.now() - 2 * 60 * 60 * 1000) },
+    { id: '3', text: 'Keep an eye on Team Charlie\'s new product launch.', author: 'Sales Manager', createdAt: new Date(Date.now() - 15 * 60 * 1000) },
 ];
 
 export const MOCK_PEER_DATA: PeerData[] = [

@@ -4,10 +4,12 @@
 import { useState, useEffect, useCallback } from "react";
 import {
   INITIAL_GAME_STATE,
-  MOCK_ACTION_ITEMS,
   MOCK_COMPETITOR_LOG,
+  ROLE_ACTION_ITEMS,
 } from "@/lib/mock-data";
 import type { GameState, ActionItem, CompetitorLogEntry, KpiHistoryEntry } from "@/types";
+import { useTeamSettings } from "./use-team-settings";
+import { useAuth } from "./use-auth";
 
 export function useGameState() {
   const [gameState, setGameState] = useState<GameState>(INITIAL_GAME_STATE);
@@ -154,14 +156,55 @@ export function useGameState() {
 }
 
 export function useActionItems() {
-  const [actionItems, setActionItems] =
-    useState<ActionItem[]>(MOCK_ACTION_ITEMS);
+  const { profile } = useAuth();
+  const { teamLeader } = useTeamSettings();
+  const [actionItems, setActionItems] = useState<ActionItem[]>([]);
 
-  const addActionItem = (text: string) => {
+  useEffect(() => {
+    if (profile?.id) {
+      const isTeamLeader = profile.id === teamLeader;
+      const roleTasks = ROLE_ACTION_ITEMS[profile.id] || [];
+      const leaderTasks = isTeamLeader ? ROLE_ACTION_ITEMS.team_leader || [] : [];
+      const combinedTasks = [...roleTasks, ...leaderTasks];
+
+      // Reset state and avoid duplicates from local storage if any
+      const initialItems = combinedTasks.map(task => ({
+        id: `${profile.id}-${task}`,
+        text: task,
+        completed: false
+      }));
+      
+      const storedItems = localStorage.getItem(`actionItems_${profile.id}`);
+      if (storedItems) {
+          const parsedStoredItems = JSON.parse(storedItems) as ActionItem[];
+          // A simple merge: keep stored items if they exist in the initial template
+          const merged = initialItems.map(item => {
+              const stored = parsedStoredItems.find(s => s.id === item.id);
+              return stored || item;
+          });
+           // Add any custom-added items from storage that are not in the template
+          const customItems = parsedStoredItems.filter(s => !initialItems.some(i => i.id === s.id));
+          setActionItems([...merged, ...customItems]);
+
+      } else {
+          setActionItems(initialItems);
+      }
+    }
+  }, [profile, teamLeader]);
+
+  useEffect(() => {
+    if (profile?.id && actionItems.length > 0) {
+      localStorage.setItem(`actionItems_${profile.id}`, JSON.stringify(actionItems));
+    }
+  }, [actionItems, profile]);
+
+
+  const addActionItem = (text: string, roleId: string) => {
     const newItem: ActionItem = {
       id: new Date().toISOString(),
       text,
       completed: false,
+      isCustom: true
     };
     setActionItems((prev) => [...prev, newItem]);
   };
@@ -175,7 +218,7 @@ export function useActionItems() {
   };
   
   const removeActionItem = (id: string) => {
-    setActionItems((prev) => prev.filter((item) => item.id !== id));
+    setActionItems((prev) => prev.filter((item) => item.id !== id && item.isCustom));
   };
 
 

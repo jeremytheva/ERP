@@ -1,3 +1,4 @@
+
 "use client";
 
 import { usePathname } from "next/navigation";
@@ -12,7 +13,7 @@ import {
   SidebarTrigger,
 } from "@/components/ui/sidebar";
 import { Button } from "@/components/ui/button";
-import { Bot, LayoutDashboard, Boxes, Lightbulb, BookText, ListTodo, Users, PanelLeft } from "lucide-react";
+import { Bot, LayoutDashboard, Boxes, Lightbulb, BookText, ListTodo, Users, Settings } from "lucide-react";
 
 const menuItems = [
   { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
@@ -21,6 +22,7 @@ const menuItems = [
   { href: "/debriefing", label: "Round Debriefing", icon: BookText },
   { href: "/action-items", label: "Action Items", icon: ListTodo },
   { href: "/competitor-log", label: "Competitor Log", icon: Users },
+  { href: "/settings", label: "Settings", icon: Settings },
 ];
 
 export function MainSidebar() {

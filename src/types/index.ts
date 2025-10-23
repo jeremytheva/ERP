@@ -1,3 +1,4 @@
+
 export type UserProfile = {
   id: string;
   name: string;
@@ -23,6 +24,7 @@ export type ActionItem = {
   id: string;
   text: string;
   completed: boolean;
+  isCustom?: boolean;
 };
 
 export type CompetitorLogEntry = {
@@ -38,3 +40,7 @@ export type PeerData = {
   netIncome: number;
   totalEmissions: number;
 };
+
+export type RoleActionItems = {
+  [key: string]: string[];
+}

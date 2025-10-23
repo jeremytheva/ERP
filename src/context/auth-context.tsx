@@ -32,9 +32,16 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         const storedProfileId = localStorage.getItem("userProfileId");
         const userProfile = USER_PROFILES.find(p => p.id === storedProfileId) || null;
         setProfile(userProfile);
-        if (pathname === '/') {
+        // If there's a user but no profile, and we are not on the auth page, it might be the initial login
+        // but if we have a user and profile, and are on the auth page, redirect to dashboard.
+        if (userProfile && pathname === '/') {
           router.push('/dashboard');
+        } else if (!userProfile && pathname !== '/') {
+          // If profile is lost somehow, send back to login
+          // but preserve history for back button
+          router.replace('/');
         }
+
       } else {
         setUser(null);
         setProfile(null);
@@ -52,16 +59,21 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const login = async (profileId: string) => {
     setLoading(true);
     try {
-        const userCredential = await signInAnonymously(auth);
-        setUser(userCredential.user);
+        if (!user) {
+            await signInAnonymously(auth);
+        }
         const userProfile = USER_PROFILES.find(p => p.id === profileId) || null;
         setProfile(userProfile);
         if (userProfile) {
             localStorage.setItem("userProfileId", userProfile.id);
         }
-        router.push("/dashboard");
+        
+        // Only push to dashboard if we are coming from the login page
+        if(pathname === '/') {
+            router.push("/dashboard");
+        }
     } catch (error) {
-        console.error("Anonymous sign-in failed:", error);
+        console.error("Anonymous sign-in/profile switch failed:", error);
     } finally {
         setLoading(false);
     }
@@ -98,3 +110,5 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     </AuthContext.Provider>
   );
 };
+
+    

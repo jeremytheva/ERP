@@ -10,16 +10,19 @@ import {
   DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
+  DropdownMenuRadioGroup,
+  DropdownMenuRadioItem,
 } from "@/components/ui/dropdown-menu";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { ChevronsUpDown, LogOut, Clock, Settings, Play, Pause, RefreshCw, ChevronLeft, ChevronRight, Coffee } from "lucide-react";
+import { ChevronsUpDown, LogOut, Clock, Settings, Play, Pause, RefreshCw, ChevronLeft, ChevronRight, Coffee, Check } from "lucide-react";
 import { usePathname } from "next/navigation";
 import { SidebarTrigger } from "../ui/sidebar";
 import { useGameState } from "@/hooks/use-game-data";
 import { Label } from "../ui/label";
 import { Input } from "../ui/input";
 import { Switch } from "../ui/switch";
+import { USER_PROFILES } from "@/lib/mock-data";
 
 const getPageTitle = (pathname: string): string => {
     const segment = pathname.split("/").pop() || "dashboard";
@@ -53,7 +56,7 @@ const getPageTitle = (pathname: string): string => {
   }
 
 export function Header() {
-  const { profile, logout } = useAuth();
+  const { profile, logout, login } = useAuth();
   const { 
     gameState, 
     timeLeft, 
@@ -86,6 +89,12 @@ export function Header() {
         setBreakDuration(minutes * 60);
     }
   };
+
+  const handleProfileSwitch = (profileId: string) => {
+    if (profileId && profileId !== profile?.id) {
+        login(profileId);
+    }
+  }
 
 
   return (
@@ -164,6 +173,14 @@ export function Header() {
           <DropdownMenuContent align="end" className="w-56">
             <DropdownMenuLabel>{profile?.name}</DropdownMenuLabel>
             <DropdownMenuSeparator />
+            <DropdownMenuRadioGroup value={profile?.id} onValueChange={handleProfileSwitch}>
+              {USER_PROFILES.map((p) => (
+                <DropdownMenuRadioItem key={p.id} value={p.id}>
+                  {p.name}
+                </DropdownMenuRadioItem>
+              ))}
+            </DropdownMenuRadioGroup>
+            <DropdownMenuSeparator />
             <DropdownMenuItem onClick={logout}>
               <LogOut className="mr-2 h-4 w-4" />
               <span>Log out</span>
@@ -174,3 +191,5 @@ export function Header() {
     </header>
   );
 }
+
+    

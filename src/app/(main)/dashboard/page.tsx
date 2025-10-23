@@ -4,17 +4,7 @@
 import { KpiCard } from "@/components/dashboard/kpi-card";
 import { KpiCharts } from "@/components/dashboard/kpi-charts";
 import { useGameState } from "@/hooks/use-game-data";
-import { DollarSign, Factory, PiggyBank, Target, BarChart, LineChart, TrendingUp, HandCoins, Percent, Package, Truck } from "lucide-react";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { PeerComparisonChart } from "@/components/dashboard/peer-comparison-chart";
-
-// Mock peer data - in a real app, this would come from your database
-const mockPeerData = [
-  { name: 'Team Alpha', companyValuation: 52000000, netIncome: 2800000, totalEmissions: 1150 },
-  { name: 'Team Bravo', companyValuation: 48000000, netIncome: 2300000, totalEmissions: 1300 },
-  { name: 'Team Charlie', companyValuation: 55000000, netIncome: 3100000, totalEmissions: 1050 },
-];
-
+import { DollarSign, Factory, HandCoins, Percent, Package, TrendingUp } from "lucide-react";
 
 export default function DashboardPage() {
   const { gameState } = useGameState();
@@ -68,11 +58,6 @@ export default function DashboardPage() {
       </div>
       
       <KpiCharts history={gameState.kpiHistory} />
-
-      <PeerComparisonChart 
-        peerData={mockPeerData}
-        currentUserValuation={gameState.companyValuation}
-      />
     </div>
   );
 }

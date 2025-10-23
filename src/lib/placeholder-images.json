@@ -1,3 +1,16 @@
 {
-  "placeholderImages": []
+  "placeholderImages": [
+    {
+      "id": "user-jeremy",
+      "description": "Avatar for Jeremy",
+      "imageUrl": "https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw2fHxtYWxlJTIwcG9ydHJhaXR8ZW58MHx8fHwxNzYxMTAzMDAxfDA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "male portrait"
+    },
+    {
+      "id": "user-nawrin",
+      "description": "Avatar for Nawrin",
+      "imageUrl": "https://images.unsplash.com/photo-1496203695688-3b8985780d6a?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwxMHx8ZmVtYWxlJTIwcG9ydHJhaXR8ZW58MHx8fHwxNzYxMDc4MjUwfDA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "female portrait"
+    }
+  ]
 }

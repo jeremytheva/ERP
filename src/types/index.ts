@@ -11,7 +11,8 @@ export type Kpi = {
   totalEmissions: number;
 };
 
-export type KpiHistory = (Kpi & { round: number })[];
+export type KpiHistoryEntry = Kpi & { round: number };
+export type KpiHistory = KpiHistoryEntry[];
 
 export type GameState = Kpi & {
   kpiHistory: KpiHistory;

@@ -11,7 +11,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { ChevronsUpDown, LogOut, Clock } from "lucide-react";
+import { ChevronsUpDown, LogOut, Clock, Settings, Play, Pause, RefreshCw, ChevronLeft, ChevronRight } from "lucide-react";
 import { usePathname } from "next/navigation";
 import { SidebarTrigger } from "../ui/sidebar";
 import { useGameState } from "@/hooks/use-game-data";
@@ -44,7 +44,7 @@ const getPageTitle = (pathname: string): string => {
 
 export function Header() {
   const { profile, logout } = useAuth();
-  const { gameState, roundTimeLeft } = useGameState();
+  const { gameState, roundTimeLeft, isPaused, togglePause, resetTimer, setRound } = useGameState();
   const pathname = usePathname();
   const pageTitle = getPageTitle(pathname);
   const currentRound = gameState.kpiHistory[gameState.kpiHistory.length - 1]?.round || 1;
@@ -56,13 +56,43 @@ export function Header() {
         </div>
       <h1 className="text-xl font-semibold md:text-2xl font-headline hidden md:block">{pageTitle}</h1>
 
-      <div className="flex items-center gap-4 ml-auto">
+      <div className="flex items-center gap-2 ml-auto">
         <div className="flex items-center gap-2 rounded-md bg-muted px-3 py-1.5 text-sm font-medium">
             <span className="font-semibold">Round {currentRound}</span>
             <span className="text-muted-foreground">|</span>
             <Clock className="h-4 w-4 text-muted-foreground" />
             <span>{formatTime(roundTimeLeft)}</span>
         </div>
+        <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+                <Button variant="ghost" size="icon" className="h-8 w-8">
+                    <Settings className="h-4 w-4" />
+                </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-56">
+                <DropdownMenuLabel>Game Controls</DropdownMenuLabel>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem onClick={togglePause}>
+                    {isPaused ? <Play className="mr-2 h-4 w-4" /> : <Pause className="mr-2 h-4 w-4" />}
+                    <span>{isPaused ? 'Resume Timer' : 'Pause Timer'}</span>
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={resetTimer}>
+                    <RefreshCw className="mr-2 h-4 w-4" />
+                    <span>Reset Timer</span>
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
+                <DropdownMenuLabel>Round Control</DropdownMenuLabel>
+                 <div className="flex items-center justify-between px-2 py-1.5">
+                    <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => setRound(currentRound - 1)} disabled={currentRound <= 1}>
+                        <ChevronLeft className="h-4 w-4" />
+                    </Button>
+                    <span className="text-sm">Round {currentRound}</span>
+                    <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => setRound(currentRound + 1)}>
+                        <ChevronRight className="h-4 w-4" />
+                    </Button>
+                 </div>
+            </DropdownMenuContent>
+        </DropdownMenu>
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <Button variant="ghost" className="flex items-center gap-3">

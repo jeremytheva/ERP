@@ -11,13 +11,16 @@ export type Kpi = {
   companyValuation: number;
   netIncome: number;
   inventoryValue: number;
-  totalEmissions: number;
   cashBalance: number;
   grossMargin: number;
   marketShare: number;
   averageSellingPrice: number;
   inventoryTurnover: number;
   capacityUtilization: number;
+  averagePriceGap: number;
+  warehouseCosts: number;
+  onTimeDeliveryRate: number;
+  cumulativeCO2eEmissions: number;
 };
 
 export type KpiHistoryEntry = Kpi & { round: number };
@@ -57,7 +60,7 @@ export type PeerData = {
   name: string;
   companyValuation: number;
   netIncome: number;
-  totalEmissions: number;
+  cumulativeCO2eEmissions: number;
 };
 
 export type RoleActionItems = {
@@ -99,3 +102,4 @@ export type Task = {
   dataFields?: TaskDataField[];
   completed: boolean; // Added completion status
 };
+

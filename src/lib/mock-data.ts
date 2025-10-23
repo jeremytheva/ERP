@@ -13,16 +13,19 @@ export const INITIAL_GAME_STATE: GameState = {
   companyValuation: 50000000,
   netIncome: 2500000,
   inventoryValue: 750000,
-  totalEmissions: 1200,
   cashBalance: 500000,
   grossMargin: 0.45,
   marketShare: 0.25,
   averageSellingPrice: 350,
   inventoryTurnover: 8.5,
   capacityUtilization: 0.8,
+  averagePriceGap: -15, // Negative means we are cheaper
+  warehouseCosts: 120000,
+  onTimeDeliveryRate: 0.98,
+  cumulativeCO2eEmissions: 1200,
   teamStrategy: "Focus on high-margin products and expand market share in Europe.",
   kpiHistory: [
-    { round: 1, companyValuation: 45000000, netIncome: 1800000, inventoryValue: 600000, totalEmissions: 1100, cashBalance: 450000, grossMargin: 0.42, marketShare: 0.22, averageSellingPrice: 340, inventoryTurnover: 8.2, capacityUtilization: 0.78 },
+    { round: 1, companyValuation: 45000000, netIncome: 1800000, inventoryValue: 600000, cumulativeCO2eEmissions: 1100, cashBalance: 450000, grossMargin: 0.42, marketShare: 0.22, averageSellingPrice: 340, inventoryTurnover: 8.2, capacityUtilization: 0.78, averagePriceGap: -20, warehouseCosts: 110000, onTimeDeliveryRate: 0.97 },
   ],
   timerState: {
     timeLeft: 1200,
@@ -131,26 +134,26 @@ export const ALL_TASKS: Task[] = [
       completed: false
     },
     {
-      id: `P-${round}-3`,
+        id: `P-${round}-3`,
+        title: "Raw Material Stock Check & PO Req.",
+        description: "Check stock levels and create purchase requisitions.",
+        role: "Procurement" as Role,
+        transactionCode: "ZMB52 (Stock Check)",
+        priority: "High" as TaskPriority,
+        estimatedTime: 2,
+        roundRecurrence: "RoundStart" as RoundRecurrence,
+        startRound: round,
+        dependencyIDs: [],
+        completionType: "Manual-Tick" as CompletionType,
+        taskType: "Standard" as TaskType,
+        completed: false
+      },
+    {
+      id: `P-${round}-3A`,
       title: "Create Purchase Order",
       description: "Create purchase orders based on MRP.",
       role: "Procurement" as Role,
       transactionCode: "ME59N",
-      priority: "High" as TaskPriority,
-      estimatedTime: 2,
-      roundRecurrence: "RoundStart" as RoundRecurrence,
-      startRound: round,
-      dependencyIDs: [],
-      completionType: "Manual-Tick" as CompletionType,
-      taskType: "Standard" as TaskType,
-      completed: false
-    },
-     {
-      id: `P-${round}-3A`,
-      title: "Raw Material Stock Check & PO Req.",
-      description: "Check stock levels and create purchase requisitions.",
-      role: "Procurement" as Role,
-      transactionCode: "ZMB52 (Stock Check)",
       priority: "High" as TaskPriority,
       estimatedTime: 2,
       roundRecurrence: "RoundStart" as RoundRecurrence,
@@ -222,6 +225,129 @@ export const ALL_TASKS: Task[] = [
       completed: false
     },
   ]),
+    // Round 8 Procurement
+    {
+        id: "P-8-1",
+        title: "Supply, Carbon, & Vendor Check",
+        description: "Review supply, carbon impact, and vendor contracts.",
+        role: "Procurement",
+        transactionCode: "ZME2N/ZMB52",
+        priority: "High",
+        estimatedTime: 5,
+        roundRecurrence: "RoundStart",
+        startRound: 8,
+        dependencyIDs: [],
+        completionType: "Manual-Tick",
+        taskType: "Standard",
+        completed: false
+    },
+    {
+        id: "P-8-2",
+        title: "Select Vendor (Sourcing)",
+        description: "Analyze and select vendors for raw materials.",
+        role: "Procurement",
+        transactionCode: "ZME12 (Procurement Sourcing)",
+        priority: "High",
+        estimatedTime: 5,
+        roundRecurrence: "RoundStart",
+        startRound: 8,
+        dependencyIDs: [],
+        completionType: "Manual-Tick",
+        taskType: "Standard",
+        completed: false
+    },
+    {
+        id: "P-8-3",
+        title: "Raw Material Stock Check & PO Req.",
+        description: "Check stock levels and create purchase requisitions.",
+        role: "Procurement",
+        transactionCode: "ZMB52 (Stock Check)",
+        priority: "High",
+        estimatedTime: 2,
+        roundRecurrence: "RoundStart",
+        startRound: 8,
+        dependencyIDs: [],
+        completionType: "Manual-Tick",
+        taskType: "Standard",
+        completed: false
+    },
+    {
+        id: "P-8-3A",
+        title: "Create Purchase Order",
+        description: "Create purchase orders based on MRP.",
+        role: "Procurement",
+        transactionCode: "ME59N",
+        priority: "High",
+        estimatedTime: 2,
+        roundRecurrence: "RoundStart",
+        startRound: 8,
+        dependencyIDs: [],
+        completionType: "Manual-Tick",
+        taskType: "Standard",
+        completed: false
+    },
+    {
+        id: "P-8-4",
+        title: "Contingency: Stock Alert Action",
+        description: "Take action on stock alerts, e.g., create urgent POs.",
+        role: "Procurement",
+        transactionCode: "ZME12",
+        priority: "Medium",
+        estimatedTime: 5,
+        roundRecurrence: "RoundStart",
+        startRound: 8,
+        dependencyIDs: [],
+        completionType: "Manual-Tick",
+        taskType: "Standard",
+        completed: false
+    },
+    {
+        id: "P-8-5",
+        title: "Sustainability Investment",
+        description: "Post investments for sustainability initiatives.",
+        role: "Procurement",
+        transactionCode: "ZFB50 (Financial Postings)",
+        priority: "Medium",
+        estimatedTime: 3,
+        roundRecurrence: "RoundStart",
+        startRound: 8,
+        dependencyIDs: [],
+        completionType: "Data-Confirmed",
+        taskType: "ERPsim Input Data",
+        completed: false,
+        dataFields: [{ fieldName: "Investment_Cost", dataType: "Currency" }]
+    },
+    {
+        id: "P-8-6",
+        title: "Final Lock Confirm: Vendor Save",
+        description: "Finalize and save vendor selections for the round.",
+        role: "Procurement",
+        transactionCode: "ZME12 (Vendor Selection)",
+        priority: "High",
+        estimatedTime: 2,
+        roundRecurrence: "RoundStart",
+        startRound: 8,
+        dependencyIDs: [],
+        completionType: "Manual-Tick",
+        taskType: "Standard",
+        completed: false
+    },
+    {
+        id: "P-8-7",
+        title: "Final Lock Confirm: Investment Post",
+        description: "Finalize and post all financial investments for the round.",
+        role: "Procurement",
+        transactionCode: "ZFB50 (Investment Posting)",
+        priority: "High",
+        estimatedTime: 2,
+        roundRecurrence: "RoundStart",
+        startRound: 8,
+        dependencyIDs: [],
+        completionType: "Manual-Tick",
+        taskType: "Standard",
+        completed: false
+    },
+
 
   // --- PRODUCTION MANAGER TASKS ---
   {
@@ -273,21 +399,6 @@ export const ALL_TASKS: Task[] = [
   ...Array.from({ length: 7 }, (_, i) => i + 2).flatMap(round => [
     {
         id: `PM-${round}-1`,
-        title: "Capacity, Efficiency, & Inventory Check",
-        description: "Focus: Finished Goods Stock, Capacity Used, Defect Rate. CF: Check for Overstock if Finished Goods > 100,000 units. Prepares for Lot Size Decision.",
-        role: "Production" as Role,
-        transactionCode: "ZMB52 (Stock) & ZCOOIS (Production Log)",
-        priority: "High" as TaskPriority,
-        estimatedTime: 2,
-        roundRecurrence: "RoundStart" as RoundRecurrence,
-        startRound: round,
-        dependencyIDs: [],
-        completionType: "Manual-Tick" as CompletionType,
-        taskType: "Standard" as TaskType,
-        completed: false
-    },
-    {
-        id: `PM-${round}-2`,
         title: "Validated BOM Change",
         description: "Check/Change Product Design",
         role: "Production" as Role,
@@ -302,7 +413,22 @@ export const ALL_TASKS: Task[] = [
         completed: false
     },
     {
-        id: `PM-${round}-3`,
+        id: `PM-${round}-2`,
+        title: "Capacity, Efficiency, & Inventory Check",
+        description: "Focus: Finished Goods Stock, Capacity Used, Defect Rate. CF: Check for Overstock if Finished Goods > 100,000 units. Prepares for Lot Size Decision.",
+        role: "Production" as Role,
+        transactionCode: "ZMB52 (Stock) & ZCOOIS (Production Log)",
+        priority: "High" as TaskPriority,
+        estimatedTime: 2,
+        roundRecurrence: "RoundStart" as RoundRecurrence,
+        startRound: round,
+        dependencyIDs: [],
+        completionType: "Manual-Tick" as CompletionType,
+        taskType: "Standard" as TaskType,
+        completed: false
+    },
+    {
+        id: `PM-${round}-4`,
         title: "Run MRP, Set Lot Size, Release",
         description: "CF: Orange if Lot Size < 48,000 units (Inefficiency).",
         role: "Production" as Role,
@@ -317,7 +443,7 @@ export const ALL_TASKS: Task[] = [
         completed: false
     },
     {
-        id: `PM-${round}-4`,
+        id: `PM-${round}-5`,
         title: "Execution Lock Confirm: Production Release",
         description: "Confirm: Production release was successful, and no planned orders remain unconverted. Verify no remaining Planned Orders are pending.",
         role: "Production" as Role,
@@ -332,7 +458,7 @@ export const ALL_TASKS: Task[] = [
         completed: false
     },
     {
-        id: `PM-${round}-5`,
+        id: `PM-${round}-6`,
         title: "Capacity & Cost Efficiency",
         description: "If Efficiency Alert is Active (Lot Size < 48,000): No action is possible this round, but document the cost penalty for the next round's planning. Check with Procurement: Confirm that no raw material shortages are going to stop the currently running batch. If a run is failing, quickly cancel the planned orders (CO41) to free up capacity.",
         role: "Production" as Role,
@@ -382,20 +508,20 @@ export const ALL_TASKS: Task[] = [
   },
   ...Array.from({ length: 7 }, (_, i) => i + 2).flatMap(round => [
     {
-      id: `L-${round}-1`,
-      title: "Cash, Profit, & Liquidity Check",
-      description: "Focus: Cash Balance, Total Profit, Accounts Receivable (AR). CF: Red if Cash Balance < €100,000. Prepares for Stock Transfer/Payment Monitoring.",
-      role: "Logistics" as Role,
-      transactionCode: "ZFF7B/F.01",
-      priority: "High" as TaskPriority,
-      estimatedTime: 2,
-      roundRecurrence: "RoundStart" as RoundRecurrence,
-      startRound: round,
-      dependencyIDs: [],
-      completionType: "Manual-Tick" as CompletionType,
-      taskType: "Standard" as TaskType,
-      completed: false
-    },
+        id: `L-${round}-1`,
+        title: "Cash, Profit, & Liquidity Check",
+        description: "Focus: Cash Balance, Total Profit, Accounts Receivable (AR). CF: Red if Cash Balance < €100,000. Prepares for Stock Transfer/Payment Monitoring.",
+        role: "Logistics" as Role,
+        transactionCode: "ZFF7B/F.01",
+        priority: "High" as TaskPriority,
+        estimatedTime: 2,
+        roundRecurrence: "RoundStart" as RoundRecurrence,
+        startRound: round,
+        dependencyIDs: [],
+        completionType: "Manual-Tick" as CompletionType,
+        taskType: "Standard" as TaskType,
+        completed: false
+      },
     {
       id: `L-${round}-2`,
       title: "Execute Stock Transfer to DCs",
@@ -427,9 +553,9 @@ export const ALL_TASKS: Task[] = [
       completed: false
     },
     {
-      id: `L-${round}-4A`,
+      id: `L-${round}-3A`,
       title: "Transfer & Financial Lock Confirm",
-      description: "Confirm: Stock Transfer was executed and saved to ensure no red cash alert is triggered right at the final minute.",
+      description: "Confirm: Stock Transfer was executed and saved to ensure no red cash alert is triggered right at the final minute. Final Check: Review ZFF7B to ensure Cash Balance > €0.",
       role: "Logistics" as Role,
       transactionCode: "ZMB1B (Stock Transfer)",
       priority: "Low" as TaskPriority,
@@ -442,7 +568,7 @@ export const ALL_TASKS: Task[] = [
       completed: false
     },
     {
-      id: `L-${round}-4B`,
+      id: `L-${round}-4`,
       title: "Contingency: PO Hold for Cash",
       description: "If Cash Alert is Active: Immediately alert Procurement to hold or cancel any large pending Purchase Orders (POs) to prevent a bank overdraft.",
       role: "Logistics" as Role,
@@ -455,6 +581,21 @@ export const ALL_TASKS: Task[] = [
       completionType: "Manual-Tick" as CompletionType,
       taskType: "Standard" as TaskType,
       completed: false
+    },
+    {
+        id: `L-${round}-4A`,
+        title: "Transfer & Financial Lock Confirm",
+        description: "Review final cash balance (ZFF7B) to ensure no red cash alert is triggered right at the final minute.",
+        role: "Logistics" as Role,
+        transactionCode: "ZFF7B (cash balance)",
+        priority: "Low" as TaskPriority,
+        estimatedTime: 1,
+        roundRecurrence: "RoundStart" as RoundRecurrence,
+        startRound: round,
+        dependencyIDs: [],
+        completionType: "Manual-Tick" as CompletionType,
+        taskType: "Standard" as TaskType,
+        completed: false
     },
     {
       id: `L-${round}-5`,
@@ -471,6 +612,21 @@ export const ALL_TASKS: Task[] = [
       taskType: "Standard" as TaskType,
       completed: false
     },
+    {
+        id: `L-${round}-5A`,
+        title: "Financial Stability (Liquidity)",
+        description: "If Cash Alert is Active: Immediately alert Procurement to hold or cancel any large pending Purchase Orders (POs) to prevent a bank overdraft. Check with Sales: Are transfers still on track to meet the latest forecast? If cash is tight, prioritize stock transfer to high-volume/fast-paying DCs (Grocery Chains).",
+        role: "Logistics" as Role,
+        transactionCode: "N/A",
+        priority: "Low" as TaskPriority,
+        estimatedTime: 2,
+        roundRecurrence: "Continuous" as RoundRecurrence,
+        startRound: round,
+        dependencyIDs: [],
+        completionType: "Manual-Tick" as CompletionType,
+        taskType: "Standard" as TaskType,
+        completed: false
+      },
     {
       id: `L-${round}-6`,
       title: "Final Lock Confirm: Cash Review",
@@ -694,3 +850,4 @@ export const ALL_TASKS: Task[] = [
     }
   ])
 ];
+

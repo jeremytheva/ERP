@@ -15,7 +15,7 @@ import {
   ChartLegend,
   ChartLegendContent,
 } from "@/components/ui/chart";
-import { Area, AreaChart, Bar, BarChart, CartesianGrid, XAxis, YAxis, Line, LineChart } from "recharts";
+import { Area, AreaChart, Bar, BarChart, CartesianGrid, XAxis, YAxis, Line, LineChart, ComposedChart } from "recharts";
 import type { KpiHistory } from "@/types";
 import type { ChartConfig } from "@/components/ui/chart"
 
@@ -61,8 +61,8 @@ const chartConfigMarket: ChartConfig = {
         label: "Market Share",
         color: "hsl(var(--chart-4))",
     },
-    averageSellingPrice: {
-        label: "Avg. Selling Price",
+    averagePriceGap: {
+        label: "Avg. Price Gap",
         color: "hsl(var(--chart-5))",
     },
 }
@@ -72,10 +72,14 @@ const chartConfigOperational: ChartConfig = {
         label: "Inventory Turnover",
         color: "hsl(var(--chart-3))",
     },
-    totalEmissions: {
-        label: "Total Emissions (t CO₂e)",
-        color: "hsl(var(--chart-5))",
+    cumulativeCO2eEmissions: {
+        label: "CO₂e Emissions (kg)",
+        color: "hsl(var(--muted-foreground))",
     },
+    warehouseCosts: {
+        label: "Warehouse Costs",
+        color: "hsl(var(--chart-1))",
+    }
 }
 
 export function KpiCharts({ history }: KpiChartsProps) {
@@ -109,7 +113,7 @@ export function KpiCharts({ history }: KpiChartsProps) {
       <Card className="lg:col-span-1">
         <CardHeader>
           <CardTitle>Market Performance</CardTitle>
-          <CardDescription>Market share and average selling price.</CardDescription>
+          <CardDescription>Market share and average price gap.</CardDescription>
         </CardHeader>
         <CardContent>
           <ChartContainer config={chartConfigMarket} className="h-[250px] w-full">
@@ -121,7 +125,7 @@ export function KpiCharts({ history }: KpiChartsProps) {
                 <ChartTooltip content={<ChartTooltipContent indicator="dot" />} />
                 <ChartLegend content={<ChartLegendContent />} />
                 <Line type="monotone" dataKey="marketShare" yAxisId="left" stroke="var(--color-marketShare)" strokeWidth={2} dot={false} />
-                <Line type="monotone" dataKey="averageSellingPrice" yAxisId="right" stroke="var(--color-averageSellingPrice)" strokeWidth={2} dot={false} />
+                <Line type="monotone" dataKey="averagePriceGap" yAxisId="right" stroke="var(--color-averagePriceGap)" strokeWidth={2} dot={false} />
              </LineChart>
           </ChartContainer>
         </CardContent>
@@ -129,20 +133,21 @@ export function KpiCharts({ history }: KpiChartsProps) {
        <Card className="lg:col-span-1">
         <CardHeader>
           <CardTitle>Operational & ESG</CardTitle>
-          <CardDescription>Inventory turnover and CO₂ emissions.</CardDescription>
+          <CardDescription>Turnover, warehouse costs, and CO₂ emissions.</CardDescription>
         </CardHeader>
         <CardContent>
           <ChartContainer config={chartConfigOperational} className="h-[250px] w-full">
-             <BarChart data={chartData}>
+             <ComposedChart data={chartData}>
                 <CartesianGrid vertical={false} />
                 <XAxis dataKey="roundLabel" tickLine={false} axisLine={false} tickMargin={8} />
                 <YAxis yAxisId="left" tickFormatter={formatNumber} />
-                <YAxis yAxisId="right" orientation="right" tickFormatter={formatNumber} />
-                <ChartTooltip content={<ChartTooltipContent indicator="dot" />} />
+                <YAxis yAxisId="right" orientation="right" tickFormatter={formatCurrency} />
+                <ChartTooltip content={<ChartTooltipContent />} />
                 <ChartLegend content={<ChartLegendContent />} />
                 <Bar dataKey="inventoryTurnover" yAxisId="left" fill="var(--color-inventoryTurnover)" radius={4} />
-                <Bar dataKey="totalEmissions" yAxisId="right" fill="var(--color-totalEmissions)" radius={4} />
-             </BarChart>
+                <Line type="monotone" dataKey="warehouseCosts" yAxisId="right" stroke="var(--color-warehouseCosts)" strokeWidth={2} dot={{r: 4}} />
+                <Line type="monotone" dataKey="cumulativeCO2eEmissions" yAxisId="left" stroke="var(--color-cumulativeCO2eEmissions)" strokeWidth={2} strokeDasharray="3 3" dot={false} />
+             </ComposedChart>
           </ChartContainer>
         </CardContent>
       </Card>

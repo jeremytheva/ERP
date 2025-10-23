@@ -16,79 +16,51 @@ import {
   SidebarGroupLabel,
 } from "@/components/ui/sidebar";
 import { Button } from "@/components/ui/button";
-import { Bot, LayoutDashboard, Database, FileText, ListTodo, Users, Settings, Briefcase, ShoppingCart, Factory, Truck, BarChart2, Crown } from "lucide-react";
+import { Bot, LayoutDashboard, Database, FileText, ListTodo, Users, Settings, Briefcase, ShoppingCart, Factory, Truck, BarChart2, Crown, Package, Leaf } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
 import { useTeamSettings } from "@/hooks/use-team-settings";
 import { useMemo } from "react";
 import type { Role } from "@/types";
 
-type MenuItem = {
-  href: string;
-  label: string;
-  icon: React.ElementType;
-  roles: (Role | 'Team Leader')[];
-};
-
-const allMenuItems: MenuItem[] = [
-  // General
-  { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard, roles: ["Sales", "Production", "Procurement", "Logistics", "Team Leader"] },
-  { href: "/key-metrics", label: "Key Metrics", icon: BarChart2, roles: ["Sales", "Production", "Procurement", "Logistics", "Team Leader"] },
-  { href: "/master-data", label: "Master Data", icon: Database, roles: ["Sales", "Production", "Procurement", "Logistics"] },
-  { href: "/live-inventory", label: "Live Inventory (LIT)", icon: FileText, roles: ["Sales", "Production", "Procurement", "Logistics"] },
-  { href: "/action-items", label: "Roles & Responsibilities", icon: ListTodo, roles: ["Team Leader"] },
-  { href: "/roles", label: "Role Views", icon: Users, roles: ["Sales", "Production", "Procurement", "Logistics", "Team Leader"] },
-  
-  // Specifics that might become their own pages later
-  // Sales
-  { href: "/roles", label: "Market Analysis", icon: BarChart2, roles: ["Sales"]},
-  { href: "/roles", label: "Forecasting", icon: FileText, roles: ["Sales"]},
-  { href: "/roles", label: "Pricing", icon: BarChart2, roles: ["Sales"]},
-  { href: "/roles", label: "Marketing", icon: Factory, roles: ["Sales"]},
-  
-  // Production
-  { href: "/roles", label: "Planning & Capacity", icon: Factory, roles: ["Production"]},
-  { href: "/roles", label: "MRP", icon: Truck, roles: ["Production"]},
-  { href: "/roles", label: "Production Release", icon: Briefcase, roles: ["Production"]},
-  { href: "/roles", label: "BOM Review", icon: ShoppingCart, roles: ["Production"]},
-  
-  // Procurement
-  { href: "/roles", label: "Sourcing", icon: Users, roles: ["Procurement"]},
-  { href: "/roles", label: "Order Calculation", icon: BarChart2, roles: ["Procurement"]},
-  { href: "/roles", label: "Sustainability", icon: ListTodo, roles: ["Procurement"]},
-  
-  // Logistics
-  { href: "/roles", label: "Liquidity Check", icon: BarChart2, roles: ["Logistics"]},
-  { href: "/roles", label: "Stock Transfer", icon: Truck, roles: ["Logistics"]},
-  { href: "/roles", label: "Delivery Monitoring", icon: Briefcase, roles: ["Logistics"]},
-];
-
 const generalMenuItems = [
   { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
   { href: "/key-metrics", label: "Key Metrics", icon: BarChart2 },
-  { href: "/roles", label: "Roles", icon: Users },
 ];
 
 const salesMenuItems = [
   ...generalMenuItems,
-  { href: "/live-inventory", label: "Live Inventory (LIT)", icon: FileText },
+  { href: "/live-inventory", label: "Inventory/Stock Status (LIT)", icon: FileText },
+  { href: "/roles", label: "Market Analysis (ZMARKET)", icon: BarChart2, pageAnchor: "sales", subAnchor: "market-analysis" },
+  { href: "/roles", label: "Forecasting (MD61)", icon: FileText, pageAnchor: "sales", subAnchor: "forecasting" },
+  { href: "/roles", label: "Pricing (VK32)", icon: BarChart2, pageAnchor: "sales", subAnchor: "pricing" },
+  { href: "/roles", label: "Marketing (ZADS)", icon: Factory, pageAnchor: "sales", subAnchor: "marketing" },
   { href: "/master-data", label: "Master Data", icon: Database },
 ];
 
 const productionMenuItems = [
   ...generalMenuItems,
-  { href: "/live-inventory", label: "Live Inventory (LIT)", icon: FileText },
+  { href: "/roles", label: "Planning & Capacity", icon: Factory, pageAnchor: "production", subAnchor: "planning-capacity" },
+  { href: "/roles", label: "MRP (MD01)", icon: Truck, pageAnchor: "production", subAnchor: "mrp" },
+  { href: "/roles", label: "Production Release (CO41)", icon: Briefcase, pageAnchor: "production", subAnchor: "production-release" },
+  { href: "/roles", label: "BOM Review (ZCS02)", icon: ShoppingCart, pageAnchor: "production", subAnchor: "bom-review" },
+  { href: "/live-inventory", label: "RM Stock Status (LIT)", icon: FileText },
   { href: "/master-data", label: "Master Data", icon: Database },
 ];
 
 const procurementMenuItems = [
     ...generalMenuItems,
     { href: "/live-inventory", label: "RM Stock Status (LIT)", icon: FileText },
+    { href: "/roles", label: "Sourcing (ZME12)", icon: Users, pageAnchor: "procurement", subAnchor: "sourcing" },
+    { href: "/roles", label: "Order Calculation (ME59N)", icon: BarChart2, pageAnchor: "procurement", subAnchor: "order-calculation" },
+    { href: "/roles", label: "Sustainability (ZFB50)", icon: Leaf, pageAnchor: "procurement", subAnchor: "sustainability" },
     { href: "/master-data", label: "Master Data", icon: Database },
 ];
 
 const logisticsMenuItems = [
     ...generalMenuItems,
-    { href: "/live-inventory", label: "LIT", icon: FileText },
+    { href: "/roles", label: "Liquidity Check (ZFF7B)", icon: BarChart2, pageAnchor: "logistics", subAnchor: "liquidity-check" },
+    { href: "/roles", label: "Stock Transfer (ZMB1B)", icon: Truck, pageAnchor: "logistics", subAnchor: "stock-transfer" },
+    { href: "/roles", label: "Delivery Monitoring (ZME2N)", icon: Briefcase, pageAnchor: "logistics", subAnchor: "delivery-monitoring" },
     { href: "/master-data", label: "Master Data", icon: Database },
 ];
 
@@ -96,7 +68,8 @@ const teamLeaderMenuItems = [
   { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
   { href: "/key-metrics", label: "Key Metrics", icon: BarChart2 },
   { href: "/action-items", label: "R&R Checklist", icon: ListTodo },
-  { href: "/roles", label: "Role Views", icon: Users },
+  { href: "/strategic-advisor", label: "Analysis & Strategy", icon: Lightbulb },
+  { href: "/debriefing", label: "Investment Decisions (ZFB50)", icon: FileText },
 ];
 
 
@@ -109,7 +82,7 @@ export function MainSidebar() {
 
   const menuItems = useMemo(() => {
     if (isTeamLeader) return teamLeaderMenuItems;
-    switch (profile?.id as Role) {
+    switch (profile?.name as Role) {
         case "Sales": return salesMenuItems;
         case "Production": return productionMenuItems;
         case "Procurement": return procurementMenuItems;
@@ -135,21 +108,24 @@ export function MainSidebar() {
       <SidebarMenu className="flex-1 p-2">
         <SidebarGroup>
             <SidebarGroupLabel>Menu</SidebarGroupLabel>
-            {menuItems.map(({ href, label, icon: Icon }) => (
-            <SidebarMenuItem key={href}>
-                <Link href={href} passHref>
-                <SidebarMenuButton
-                    as="a"
-                    isActive={pathname === href}
-                    tooltip={{ children: label, side: "right", align:"center" }}
-                    className="justify-start"
-                >
-                    <Icon />
-                    <span>{label}</span>
-                </SidebarMenuButton>
-                </Link>
-            </SidebarMenuItem>
-            ))}
+            {menuItems.map(({ href, label, icon: Icon, pageAnchor, subAnchor }) => {
+              const finalHref = pageAnchor ? `${href}?tab=${pageAnchor}${subAnchor ? `&section=${subAnchor}` : ''}` : href;
+              return (
+                <SidebarMenuItem key={finalHref}>
+                    <Link href={finalHref} passHref>
+                    <SidebarMenuButton
+                        as="a"
+                        isActive={pathname === href}
+                        tooltip={{ children: label, side: "right", align:"center" }}
+                        className="justify-start"
+                    >
+                        <Icon />
+                        <span>{label}</span>
+                    </SidebarMenuButton>
+                    </Link>
+                </SidebarMenuItem>
+              )
+            })}
         </SidebarGroup>
         
         <SidebarSeparator />

@@ -1,13 +1,30 @@
 
+"use client";
+
+import { useSearchParams } from 'next/navigation'
+import { useEffect, useState } from 'react';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Briefcase, ShoppingCart, Factory, Truck, Crown } from "lucide-react";
-import { Banknote, PackageOpen, Ship, BarChart, FileSignature, CircleDollarSign, Megaphone, Wrench, PackageCheck, FileBox, Leaf, Users, Package } from "lucide-react";
+import { Briefcase, ShoppingCart, Factory, Truck, Crown, Banknote, PackageOpen, Ship, BarChart, FileSignature, CircleDollarSign, Megaphone, Wrench, PackageCheck, FileBox, Leaf, Users, Package } from "lucide-react";
 
 export default function RolesPage() {
+    const searchParams = useSearchParams()
+    const defaultTab = searchParams.get('tab') || 'sales';
+    const defaultSection = searchParams.get('section');
+    
+    // State to manage active tabs to ensure URL params are reflected in the UI
+    const [activeRoleTab, setActiveRoleTab] = useState(defaultTab);
+    const [activeSectionTab, setActiveSectionTab] = useState<string | null>(defaultSection);
+
+    useEffect(() => {
+        setActiveRoleTab(defaultTab);
+        setActiveSectionTab(defaultSection);
+    }, [defaultTab, defaultSection]);
+
+
   return (
     <div className="container mx-auto py-8">
-      <Tabs defaultValue="sales">
+      <Tabs defaultValue={activeRoleTab} value={activeRoleTab} onValueChange={setActiveRoleTab} className="w-full">
         <TabsList className="grid w-full grid-cols-1 md:grid-cols-5">
             <TabsTrigger value="sales"><Briefcase className="mr-2 h-4 w-4" />Sales</TabsTrigger>
             <TabsTrigger value="production"><Factory className="mr-2 h-4 w-4" />Production</TabsTrigger>
@@ -24,7 +41,7 @@ export default function RolesPage() {
                     <CardDescription>Forecasting, pricing, and marketing budget management.</CardDescription>
                 </CardHeader>
                 <CardContent>
-                     <Tabs defaultValue="market-analysis" orientation="vertical">
+                     <Tabs defaultValue={activeSectionTab || "market-analysis"} value={activeSectionTab || "market-analysis"} onValueChange={setActiveSectionTab} orientation="vertical">
                         <div className="grid md:grid-cols-4 gap-6">
                             <TabsList className="md:col-span-1 flex md:flex-col md:h-auto h-auto overflow-x-auto overflow-y-hidden w-full">
                                 <TabsTrigger value="market-analysis" className="justify-start"><BarChart className="mr-2 h-4 w-4" />Market Analysis (ZMARKET)</TabsTrigger>
@@ -72,7 +89,7 @@ export default function RolesPage() {
                     <CardDescription>Capacity, efficiency, BOM, and production release management.</CardDescription>
                 </CardHeader>
                 <CardContent>
-                    <Tabs defaultValue="planning-capacity" orientation="vertical">
+                    <Tabs defaultValue={activeSectionTab || "planning-capacity"} value={activeSectionTab || "planning-capacity"} onValueChange={setActiveSectionTab} orientation="vertical">
                          <div className="grid md:grid-cols-4 gap-6">
                             <TabsList className="md:col-span-1 flex md:flex-col md:h-auto h-auto overflow-x-auto overflow-y-hidden w-full">
                                 <TabsTrigger value="planning-capacity" className="justify-start"><FileBox className="mr-2 h-4 w-4" />Planning & Capacity</TabsTrigger>
@@ -120,7 +137,7 @@ export default function RolesPage() {
                     <CardDescription>RM sourcing, inventory replenishment, and sustainability investment.</CardDescription>
                 </CardHeader>
                 <CardContent>
-                    <Tabs defaultValue="inventory-check" orientation="vertical">
+                    <Tabs defaultValue={activeSectionTab || "inventory-check"} value={activeSectionTab || "inventory-check"} onValueChange={setActiveSectionTab} orientation="vertical">
                          <div className="grid md:grid-cols-4 gap-6">
                             <TabsList className="md:col-span-1 flex md:flex-col md:h-auto h-auto overflow-x-auto overflow-y-hidden w-full">
                                 <TabsTrigger value="inventory-check" className="justify-start"><Package className="mr-2 h-4 w-4" />Inventory Check (ZMB52)</TabsTrigger>
@@ -168,7 +185,7 @@ export default function RolesPage() {
                     <CardDescription>Finished goods transfer, cash flow monitoring, and contingency planning.</CardDescription>
                 </CardHeader>
                 <CardContent>
-                    <Tabs defaultValue="liquidity-check" orientation="vertical">
+                    <Tabs defaultValue={activeSectionTab || "liquidity-check"} value={activeSectionTab || "liquidity-check"} onValueChange={setActiveSectionTab} orientation="vertical">
                         <div className="grid md:grid-cols-4 gap-6">
                             <TabsList className="md:col-span-1 flex md:flex-col md:h-auto h-auto overflow-x-auto overflow-y-hidden w-full">
                                 <TabsTrigger value="liquidity-check" className="justify-start"><Banknote className="mr-2 h-4 w-4" />Liquidity Check (ZFF7B)</TabsTrigger>
@@ -217,3 +234,4 @@ export default function RolesPage() {
     </div>
   );
 }
+

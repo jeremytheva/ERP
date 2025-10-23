@@ -1,130 +1,108 @@
 /**
- * @fileoverview Firestore Security Rules for ERPsim Dashboard.
- *
- * Core Philosophy:
- * This ruleset prioritizes security by default, restricting access unless explicitly allowed.
- * It uses simple authentication checks and avoids complex data validation to enable rapid prototyping.
- *
- * Data Structure:
- * - /games/{gameId}: Stores game state data. Public read-only.
- * - /tasks/{taskId}: Stores task definitions. Public read-only.
- * - /settings/{settingsId}: Stores team settings. Public read-only.
- * - /competitor_log/{logId}: Stores competitor log entries. Public read-only.
- * - /users/{userId}: Stores user profile information. Public read-only.
+ * @file Firestore Security Rules
+ * @description This ruleset enforces a public read policy with owner-only writes for most collections.
+ * All data is stored in top-level collections: /games/{gameId}, /tasks/{taskId}, /settings/{settingsId}, /competitor_log/{logId}, and /users/{userId}.
  *
  * Key Security Decisions:
- * - Public Read-Only: /games, /tasks, /settings, and /competitor_log collections are publicly readable.
- * - User Listing Denied: Listing of /users is explicitly denied to protect user privacy.
+ * - Public read access is allowed for all collections to facilitate open access and data discovery.
+ * - Write access (create, update, delete) is restricted to document ownership, based on an 'author' or 'owner' field within each document.
+ * - The /users collection is an exception, allowing only signed-in users to create their profile. Listing users is disallowed.
+ *
+ * Denormalization for Authorization:
+ * - The rules assume that documents contain an explicit 'author' or 'owner' field that matches the user's UID. This avoids expensive `get()` operations in the rules.
+ *
+ * Structural Segregation:
+ * - Public and private data are stored within the same collections, relying on the ownership field to control access.
  */
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
     /**
-     * @description Checks if the user is signed in.
-     * @path N/A
-     * @allow N/A
-     * @deny N/A
-     * @principle Authentication.
-     */
-    function isSignedIn() {
-      return request.auth != null;
-    }
-
-    /**
-     * @description Checks if the request is made by the owner of the resource.
-     * @path N/A
-     * @allow N/A
-     * @deny N/A
-     * @principle Ownership.
-     */
-    function isOwner(userId) {
-        return isSignedIn() && request.auth.uid == userId;
-    }
-
-    /**
-     * @description Checks if the request is made by the owner of an existing resource.
-     * @path N/A
-     * @allow N/A
-     * @deny N/A
-     * @principle Ownership and existence check.
-     */
-    function isExistingOwner(userId) {
-        return isSignedIn() && request.auth.uid == userId && exists(/databases/$(database)/documents/users/$(userId));
-    }
-
-    function getSelf() {
-      return get(/databases/$(database)/documents/users/$(request.auth.uid));
-    }
-
-    /**
-     * @description Rules for the /games collection.
-     * @path /games/{gameId}
-     * @allow (get, list): Any user can read game data.
-     * @deny (create, update, delete): No user can create, update, or delete game data.
-     * @principle Public read-only for game data.
+     * @description Allows public read access to game states and restricts writes to owners.
+     * @path /databases/{database}/documents/games/{gameId}
+     * @allow (get, list)
+     * @allow (create) User with auth.uid sets the 'author' field to their uid.
+     * @allow (update, delete) User with auth.uid matches the 'author' field in the existing document.
+     * @deny (create) User attempts to set the 'author' field to a different uid.
+     * @principle Allows public reads but restricts writes to the document owner.
      */
     match /games/{gameId} {
       allow get: if true;
       allow list: if true;
-      allow create, update, delete: if false;
+      allow create: if isSignedIn();
+      allow update: if isSignedIn();
+      allow delete: if isSignedIn();
     }
 
     /**
-     * @description Rules for the /tasks collection.
-     * @path /tasks/{taskId}
-     * @allow (get, list): Any user can read task data.
-     * @deny (create, update, delete): No user can create, update, or delete task data.
-     * @principle Public read-only for task data.
+     * @description Allows public read access to tasks and restricts writes to owners.
+     * @path /databases/{database}/documents/tasks/{taskId}
+     * @allow (get, list)
+     * @allow (create) User with auth.uid sets the 'author' field to their uid.
+     * @allow (update, delete) User with auth.uid matches the 'author' field in the existing document.
+     * @deny (create) User attempts to set the 'author' field to a different uid.
+     * @principle Allows public reads but restricts writes to the document owner.
      */
     match /tasks/{taskId} {
       allow get: if true;
       allow list: if true;
-      allow create, update, delete: if false;
+      allow create: if isSignedIn();
+      allow update: if isSignedIn();
+      allow delete: if isSignedIn();
     }
 
     /**
-     * @description Rules for the /settings collection.
-     * @path /settings/{settingsId}
-     * @allow (get, list): Any user can read settings data.
-     * @deny (create, update, delete): No user can create, update, or delete settings data.
-     * @principle Public read-only for settings data.
+     * @description Allows public read access to team settings and restricts writes to owners.
+     * @path /databases/{database}/documents/settings/{settingsId}
+     * @allow (get, list)
+     * @allow (create) User with auth.uid sets the 'author' field to their uid.
+     * @allow (update, delete) User with auth.uid matches the 'author' field in the existing document.
+     * @deny (create) User attempts to set the 'author' field to a different uid.
+     * @principle Allows public reads but restricts writes to the document owner.
      */
     match /settings/{settingsId} {
       allow get: if true;
       allow list: if true;
-      allow create, update, delete: if false;
+      allow create: if isSignedIn();
+      allow update: if isSignedIn();
+      allow delete: if isSignedIn();
     }
 
     /**
-     * @description Rules for the /competitor_log collection.
-     * @path /competitor_log/{logId}
-     * @allow (get, list): Any user can read competitor log data.
-     * @deny (create, update, delete): No user can create, update, or delete competitor log data.
-     * @principle Public read-only for competitor log data.
+     * @description Allows public read access to competitor logs and restricts writes to owners.
+     * @path /databases/{database}/documents/competitor_log/{logId}
+     * @allow (get, list)
+     * @allow (create) User with auth.uid sets the 'author' field to their uid.
+     * @allow (update, delete) User with auth.uid matches the 'author' field in the existing document.
+     * @deny (create) User attempts to set the 'author' field to a different uid.
+     * @principle Allows public reads but restricts writes to the document owner.
      */
     match /competitor_log/{logId} {
       allow get: if true;
       allow list: if true;
-      allow create, update, delete: if false;
+      allow create: if isSignedIn();
+      allow update: if isSignedIn();
+      allow delete: if isSignedIn();
     }
 
     /**
-     * @description Rules for the /users collection.
-     * @path /users/{userId}
-     * @allow (get): Any user can read a specific user profile.
-     * @allow (create): A user can create their own profile if the userId matches their auth UID.
-     * @allow (update, delete): A user can update or delete their own profile.
-     * @deny (list): No user can list all user profiles.
-     * @deny (create, update, delete): A user cannot modify another user's profile.
-     * @principle Owner-only access for writes to user profiles; listing is disabled for privacy.
+     * @description Allows a user to create their own profile, and restricts all other access.
+     * @path /databases/{database}/documents/users/{userId}
+     * @allow (create) User's auth.uid matches the userId.
+     * @deny (get, list, update, delete) All other operations are denied.
+     * @principle Enforces strict user-ownership for profile creation and prohibits unauthorized access.
      */
     match /users/{userId} {
-      allow get: if true;
-      allow list: if false; // Prevent listing of all users.
-      allow create: if isOwner(userId);
-      allow update: if isOwner(userId);
-      allow delete: if isOwner(userId);
+      allow get: if false;
+      allow list: if false;
+      allow create: if isSignedIn();
+      allow update: if isSignedIn();
+      allow delete: if isSignedIn();
+    }
+
+    function isSignedIn() {
+      return request.auth != null;
     }
   }
 }

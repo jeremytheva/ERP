@@ -2,36 +2,35 @@
  * @fileoverview Firestore Security Rules for ERPsim Dashboard.
  *
  * Core Philosophy:
- * This ruleset is in prototyping mode. It prioritizes strict authorization over
- * comprehensive schema validation, enabling rapid iteration. It enforces
- * authentication and role-based access where appropriate.
+ * This ruleset prioritizes security and data access control, especially around
+ * user data. In prototyping mode, it focuses on authorization and skips
+ * extensive data validation to allow for rapid iteration.
  *
  * Data Structure:
- * - /games/{gameId}: Stores the state of a single game. Publicly readable, owner-only writes are intended,
- *   but currently not enforced due to missing `ownerId` field.
- * - /tasks/{taskId}: Stores all defined tasks. Publicly readable. Writes not allowed.
- * - /settings/{settingsId}: Stores global settings. Publicly readable. Writes not allowed.
- * - /competitor_log/{logId}: Stores competitor analysis notes. Publicly readable. Writes not allowed.
- * - /users/{userId}: Stores user profile data. Publicly readable. Writes not allowed.
+ * - /games/{gameId}: Stores the state of each game. Publicly readable, writes restricted.
+ * - /tasks/{taskId}: Stores all defined tasks. Publicly readable, writes restricted.
+ * - /settings/{settingsId}: Stores team settings. Publicly readable, writes restricted.
+ * - /competitor_log/{logId}: Stores competitor log entries. Publicly readable, writes restricted.
+ * - /users/{userId}: Stores user profile information.
  *
  * Key Security Decisions:
- * - **Public Read Access**: Several collections (`tasks`, `settings`, `competitor_log`, `users`, `games`) are
- *   currently configured for public read access (`get`, `list`). This simplifies initial prototyping but should be
- *   reviewed and restricted as the application matures.
- * - **No User Listing**: Listing all users is disallowed.
- * - **Missing Ownership Enforcement**: The `/games/{gameId}` collection lacks an `ownerId` field in its schema.
- *   As a result, the intended owner-only write access cannot be securely enforced and the rules have been adjusted.
+ * - Listing the /users collection is explicitly denied due to privacy concerns.
+ * - All write operations are secured.
+ * - No schema validation is performed beyond authorization checks.
+ *
+ * Denormalization for Authorization: N/A in this version.
+ * Structural Segregation: N/A in this version.
  */
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
     /**
-     * @description Allows public read access to game state, but restricts writes.
-     * @path /databases/{database}/documents/games/{gameId}
-     * @allow (get, list): Any user can read the game state.
-     * @deny (create, update, delete): No user can modify the game state without authentication and proper authorization.
-     * @principle Public read, restricted writes.
+     * @description Allows read access to all users, but restricts write access.
+     * @path /games/{gameId}
+     * @allow get, list: if true;
+     * @deny create, update, delete: if false;
+     * @principle Allows public read access but restricts writes.
      */
     match /games/{gameId} {
       allow get, list: if true;
@@ -39,11 +38,11 @@ service cloud.firestore {
     }
 
     /**
-     * @description Allows public read access to tasks.  Writes are disallowed.
-     * @path /databases/{database}/documents/tasks/{taskId}
-     * @allow (get, list): Any user can read tasks.
-     * @deny (create, update, delete): No user can create, update, or delete tasks.
-     * @principle Public read, no writes.
+     * @description Allows read access to all users, but restricts write access.
+     * @path /tasks/{taskId}
+     * @allow get, list: if true;
+     * @deny create, update, delete: if false;
+     * @principle Allows public read access but restricts writes.
      */
     match /tasks/{taskId} {
       allow get, list: if true;
@@ -51,11 +50,11 @@ service cloud.firestore {
     }
 
     /**
-     * @description Allows public read access to team settings. Writes are disallowed.
-     * @path /databases/{database}/documents/settings/{settingsId}
-     * @allow (get, list): Any user can read team settings.
-     * @deny (create, update, delete): No user can create, update, or delete team settings.
-     * @principle Public read, no writes.
+     * @description Allows read access to all users, but restricts write access.
+     * @path /settings/{settingsId}
+     * @allow get, list: if true;
+     * @deny create, update, delete: if false;
+     * @principle Allows public read access but restricts writes.
      */
     match /settings/{settingsId} {
       allow get, list: if true;
@@ -63,11 +62,11 @@ service cloud.firestore {
     }
 
     /**
-     * @description Allows public read access to competitor log entries. Writes are disallowed.
-     * @path /databases/{database}/documents/competitor_log/{logId}
-     * @allow (get, list): Any user can read competitor log entries.
-     * @deny (create, update, delete): No user can create, update, or delete competitor log entries.
-     * @principle Public read, no writes.
+     * @description Allows read access to all users, but restricts write access.
+     * @path /competitor_log/{logId}
+     * @allow get, list: if true;
+     * @deny create, update, delete: if false;
+     * @principle Allows public read access but restricts writes.
      */
     match /competitor_log/{logId} {
       allow get, list: if true;
@@ -75,17 +74,37 @@ service cloud.firestore {
     }
 
     /**
-     * @description Allows public read access to user profiles.  Writes are disallowed.
-     * @path /databases/{database}/documents/users/{userId}
-     * @allow (get): Any user can read a user profile.
-     * @deny (list): No user can list all user profiles. This is important for privacy.
-     * @deny (create, update, delete): No user can create, update, or delete user profiles.
-     * @principle Public read, no writes, no user listing.
+     * @description Controls access to user profile documents.  Only the owner (user themselves) can read their own profile. Listing is denied.
+     * @path /users/{userId}
+     * @allow get: if isOwner(userId);
+     * @allow create: if isOwner(userId);
+     * @allow update: if isExistingOwner(userId);
+     * @allow delete: if isExistingOwner(userId);
+     * @deny list: if false;
+     * @allow create: if request.auth.uid == userId;
+     * @principle Enforces document ownership for user profiles.
      */
     match /users/{userId} {
-      allow get: if true;
+      allow get: if isOwner(userId);
       allow list: if false;
-      allow create, update, delete: if false;
+      allow create: if isOwner(userId);
+      allow update: if isExistingOwner(userId);
+      allow delete: if isExistingOwner(userId);
+    }
+
+    /**
+     * Helper functions.
+     */
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isOwner(userId) {
+      return isSignedIn() && request.auth.uid == userId;
+    }
+
+    function isExistingOwner(userId) {
+        return isOwner(userId) && resource != null;
     }
   }
 }

@@ -4,8 +4,10 @@
 import { KpiCard } from "@/components/dashboard/kpi-card";
 import { KpiCharts } from "@/components/dashboard/kpi-charts";
 import { useGameState } from "@/hooks/use-game-data";
-import { DollarSign, Factory, PiggyBank, Target, BarChart } from "lucide-react";
+import { DollarSign, Factory, PiggyBank, Target } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { BarChart } from "lucide-react";
+
 
 export default function DashboardPage() {
   const { gameState } = useGameState();
@@ -40,7 +42,7 @@ export default function DashboardPage() {
         />
       </div>
       <KpiCharts history={gameState.kpiHistory} />
-       <Card>
+      <Card>
         <CardHeader>
           <CardTitle>Peer Comparison: Company Valuation</CardTitle>
           <CardDescription>

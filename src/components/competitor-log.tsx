@@ -1,18 +1,20 @@
+
 "use client";
 
 import { useState } from "react";
 import { useCompetitorLog } from "@/hooks/use-competitor-log";
 import { useAuth } from "@/hooks/use-auth";
+import { useUserProfiles } from "@/hooks/use-user-profiles";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { formatDistanceToNow } from "date-fns";
-import { USER_PROFILES } from "@/lib/mock-data";
 import { Send } from "lucide-react";
 
 export function CompetitorLog() {
   const { logEntries, addLogEntry } = useCompetitorLog();
   const { profile } = useAuth();
+  const { profiles } = useUserProfiles();
   const [newEntryText, setNewEntryText] = useState("");
 
   const handleAddEntry = (e: React.FormEvent) => {
@@ -41,7 +43,7 @@ export function CompetitorLog() {
 
       <div className="space-y-4">
         {logEntries.map((entry) => {
-            const authorProfile = USER_PROFILES.find(p => p.name === entry.author);
+            const authorProfile = profiles.find(p => p.name === entry.author);
             return (
                 <div key={entry.id} className="flex gap-3">
                     <Avatar>

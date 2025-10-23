@@ -1,79 +1,72 @@
 /**
- * @file Firestore Security Rules
- * @description This ruleset enforces a public read with owner-restricted write model for all data.
- * All collections are publicly readable, but write access (create, update, delete) is restricted to the owner.
- * There is no user-specific data or subcollections. Therefore, the rules focus on validating ownership on write operations.
- * Data Structure: Top-level collections for games, tasks, settings, and competitor logs. No user-specific data.
- * Key Security Decisions: Public read access is granted for all collections to facilitate open data consumption.
- *  Write operations are strictly controlled by requiring an ownership field to match the authenticated user's UID.
+ * @fileoverview Firestore Security Rules for ERPsim Dashboard.
+ *
+ * Core Philosophy:
+ * This ruleset prioritizes ease of prototyping by focusing on access control,
+ * while relaxing data validation constraints. This allows for rapid iteration
+ * on the data model while maintaining a secure authorization perimeter. Data validation should happen on client.
+ *
+ * Data Structure:
+ * - /games/{gameId}: Stores the game state for each simulation. Publicly readable.
+ * - /tasks/{taskId}: Stores task definitions. Publicly readable.
+ * - /settings/{settingsId}: Stores team settings. Publicly readable.
+ * - /competitor_log/{logId}: Stores competitor log entries. Publicly readable.
+ *
+ * Key Security Decisions:
+ * - No user-specific data or private subcollections are present in this model.
+ * - All top-level collections are publicly readable to simplify data access during prototyping.
+ * - Write access to all collections is disallowed for all users. This maintains a secure initial posture.
  */
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
     /**
-     * @description Allows anyone to read game state data, but restricts modifications to the owner.
+     * @description Allows anyone to read game state; restricts all writes.
      * @path /games/{gameId}
      * @allow (get, list)
-     * @allow (create) if request.auth.uid != null
-     * @allow (update, delete) if request.auth.uid != null
-     * @deny (create, update, delete) if request.auth.uid == null
-     * @principle Public read, owner-only write.
+     * @deny (create, update, delete)
+     * @principle Public read, no writes allowed
      */
     match /games/{gameId} {
       allow get, list: if true;
-      allow create: if isSignedIn();
-      allow update, delete: if isSignedIn();
+      allow create, update, delete: if false;
     }
 
     /**
-     * @description Allows anyone to read task data, but restricts modifications to the owner.
+     * @description Allows anyone to read task definitions; restricts all writes.
      * @path /tasks/{taskId}
      * @allow (get, list)
-     * @allow (create) if request.auth.uid != null
-     * @allow (update, delete) if request.auth.uid != null
-     * @deny (create, update, delete) if request.auth.uid == null
-     * @principle Public read, owner-only write.
+     * @deny (create, update, delete)
+     * @principle Public read, no writes allowed
      */
     match /tasks/{taskId} {
       allow get, list: if true;
-      allow create: if isSignedIn();
-      allow update, delete: if isSignedIn();
+      allow create, update, delete: if false;
     }
 
     /**
-     * @description Allows anyone to read team settings, but restricts modifications to the owner.
+     * @description Allows anyone to read team settings; restricts all writes.
      * @path /settings/{settingsId}
      * @allow (get, list)
-     * @allow (create) if request.auth.uid != null
-     * @allow (update, delete) if request.auth.uid != null
-     * @deny (create, update, delete) if request.auth.uid == null
-     * @principle Public read, owner-only write.
+     * @deny (create, update, delete)
+     * @principle Public read, no writes allowed
      */
     match /settings/{settingsId} {
       allow get, list: if true;
-      allow create: if isSignedIn();
-      allow update, delete: if isSignedIn();
+      allow create, update, delete: if false;
     }
 
     /**
-     * @description Allows anyone to read competitor log entries, but restricts modifications to the owner.
+     * @description Allows anyone to read competitor log entries; restricts all writes.
      * @path /competitor_log/{logId}
      * @allow (get, list)
-     * @allow (create) if request.auth.uid != null
-     * @allow (update, delete) if request.auth.uid != null
-     * @deny (create, update, delete) if request.auth.uid == null
-     * @principle Public read, owner-only write.
+     * @deny (create, update, delete)
+     * @principle Public read, no writes allowed
      */
     match /competitor_log/{logId} {
       allow get, list: if true;
-      allow create: if isSignedIn();
-      allow update, delete: if isSignedIn();
-    }
-
-    // Helper function to determine if the user is signed in
-    function isSignedIn() {
-      return request.auth != null;
+      allow create, update, delete: if false;
     }
   }
 }

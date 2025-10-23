@@ -422,11 +422,3 @@ export const ALL_TASKS: Task[] = [
     completed: false,
   }
 ];
-
-export const MOCK_PEER_DATA: PeerData[] = [
-    { name: 'Team Alpha', companyValuation: 55000000, netIncome: 2800000, totalEmissions: 1300 },
-    { name: 'Team Bravo', companyValuation: 48000000, netIncome: 2100000, totalEmissions: 1050 },
-    { name: 'Team Charlie', companyValuation: 62000000, netIncome: 3500000, totalEmissions: 1500 },
-];
-
-    

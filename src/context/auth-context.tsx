@@ -4,10 +4,10 @@
 import React, { createContext, useState, useEffect, ReactNode } from "react";
 import { User, onAuthStateChanged } from "firebase/auth";
 import type { UserProfile } from "@/types";
-import { USER_PROFILES } from "@/lib/mock-data";
 import { usePathname, useRouter } from "next/navigation";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useAuth as useFirebaseAuth } from "@/firebase";
+import { useUserProfiles } from "@/hooks/use-user-profiles";
 
 
 interface AuthContextType {
@@ -22,6 +22,7 @@ export const AuthContext = createContext<AuthContextType | undefined>(undefined)
 
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const auth = useFirebaseAuth();
+  const { profiles, loading: profilesLoading } = useUserProfiles();
   const [user, setUser] = useState<User | null>(null);
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [loading, setLoading] = useState(true);
@@ -29,15 +30,15 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const pathname = usePathname();
 
   useEffect(() => {
-    if (!auth) {
-        setLoading(false); // Firebase not initialized yet
+    if (!auth || profilesLoading) {
+        if (!profilesLoading) setLoading(false); // Firebase not initialized yet
         return;
     }
     const unsubscribe = onAuthStateChanged(auth, (firebaseUser) => {
       if (firebaseUser) {
         setUser(firebaseUser);
         const storedProfileId = localStorage.getItem("userProfileId");
-        const userProfile = USER_PROFILES.find(p => p.id === storedProfileId) || null;
+        const userProfile = profiles.find(p => p.id === storedProfileId) || null;
         setProfile(userProfile);
         // If there's a user but no profile, and we are not on the auth page, it might be the initial login
         // but if we have a user and profile, and are on the auth page, redirect to dashboard.
@@ -61,7 +62,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     });
 
     return () => unsubscribe();
-  }, [router, pathname, auth]);
+  }, [router, pathname, auth, profiles, profilesLoading]);
 
   const login = async (profileId: string) => {
     setLoading(true);
@@ -69,7 +70,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         if (!user) {
             // This will be handled by the onAuthStateChanged listener
         }
-        const userProfile = USER_PROFILES.find(p => p.id === profileId) || null;
+        const userProfile = profiles.find(p => p.id === profileId) || null;
         setProfile(userProfile);
         if (userProfile) {
             localStorage.setItem("userProfileId", userProfile.id);

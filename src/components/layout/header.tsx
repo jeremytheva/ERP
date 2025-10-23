@@ -22,7 +22,7 @@ import { useGameState } from "@/hooks/use-game-data";
 import { Label } from "../ui/label";
 import { Input } from "../ui/input";
 import { Switch } from "../ui/switch";
-import { USER_PROFILES } from "@/lib/mock-data";
+import { useUserProfiles } from "@/hooks/use-user-profiles";
 
 const getPageTitle = (pathname: string): string => {
     const segment = pathname.split("/").pop() || "dashboard";
@@ -55,6 +55,7 @@ const getPageTitle = (pathname: string): string => {
 
 export function Header() {
   const { profile, logout, login } = useAuth();
+  const { profiles: userProfiles } = useUserProfiles();
   const { 
     gameState, 
     timeLeft, 
@@ -172,7 +173,7 @@ export function Header() {
             <DropdownMenuLabel>{profile?.name}</DropdownMenuLabel>
             <DropdownMenuSeparator />
             <DropdownMenuRadioGroup value={profile?.id} onValueChange={handleProfileSwitch}>
-              {USER_PROFILES.map((p) => (
+              {userProfiles.map((p) => (
                 <DropdownMenuRadioItem key={p.id} value={p.id}>
                   {p.name}
                 </DropdownMenuRadioItem>

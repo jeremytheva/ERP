@@ -20,80 +20,36 @@ const TasksContext = createContext<TasksContextType | undefined>(undefined);
 export const TasksProvider = ({ children }: { children: ReactNode }) => {
   const { user } = useAuth();
   const firestore = useFirestore();
-  const [tasks, setTasks] = useState<Task[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
+  const [tasks, setTasks] = useState<Task[]>(ALL_TASKS);
+  const [isLoading, setIsLoading] = useState(false);
 
   useEffect(() => {
-    if (!user || !firestore) {
-      setTasks(ALL_TASKS); // Fallback to mock data if firestore is not available
-      setIsLoading(false);
-      return;
-    }
-    setIsLoading(true);
-    
-    const tasksColRef = collection(firestore, "tasks");
-
-    const unsubscribe = onSnapshot(tasksColRef, async (querySnapshot) => {
-        const firestoreTasks = querySnapshot.docs.map(doc => doc.data() as Task);
-        const firestoreTaskIds = new Set(firestoreTasks.map(t => t.id));
-
-        const missingTasks = ALL_TASKS.filter(mockTask => !firestoreTaskIds.has(mockTask.id));
-
-        if (missingTasks.length > 0) {
-            const batch = writeBatch(firestore);
-            missingTasks.forEach(task => {
-                const taskDocRef = doc(firestore, "tasks", task.id);
-                batch.set(taskDocRef, task);
-            });
-            await batch.commit();
-            // The onSnapshot listener will fire again with the updated data,
-            // so we don't need to set state here immediately.
-        } else {
-            setTasks(firestoreTasks);
-            setIsLoading(false);
-        }
-    },
-    (error: FirestoreError) => {
-        const contextualError = new FirestorePermissionError({
-            path: 'tasks',
-            operation: 'list',
-        });
-        errorEmitter.emit('permission-error', contextualError);
-        setIsLoading(false);
-    });
-
-    return () => unsubscribe();
-  }, [user, firestore]);
+    // We are now treating the mock-data.ts as the source of truth for tasks.
+    // The logic to sync from mock to firestore has been removed for simplicity
+    // and to ensure all defined tasks are always available.
+    setTasks(ALL_TASKS);
+  }, []);
 
   const addTask = async (task: Task) => {
-    if (!user || !firestore) return;
-    const taskDocRef = doc(firestore, "tasks", task.id);
-    const batch = writeBatch(firestore);
-    batch.set(taskDocRef, task);
-    await batch.commit();
+    // This now updates the local state. A real implementation would write to a DB.
+    setTasks(prevTasks => [...prevTasks, task]);
   };
 
   const updateTask = async (updatedTask: Task) => {
-    if (!user || !firestore) return;
-    const taskDocRef = doc(firestore, "tasks", updatedTask.id);
-    const batch = writeBatch(firestore);
-    batch.update(taskDocRef, { ...updatedTask });
-    await batch.commit();
+     // This now updates the local state. A real implementation would write to a DB.
+    setTasks(prevTasks => prevTasks.map(task => task.id === updatedTask.id ? updatedTask : task));
   };
 
   const deleteTask = async (taskId: string) => {
-    if (!user || !firestore) return;
-    const taskDocRef = doc(firestore, "tasks", taskId);
-    const batch = writeBatch(firestore);
-    batch.delete(taskDocRef);
-    await batch.commit();
+    // This now updates the local state. A real implementation would write to a DB.
+    setTasks(prevTasks => prevTasks.filter(task => task.id !== taskId));
   };
   
   const value = { tasks, addTask, updateTask, deleteTask };
 
   return (
     <TasksContext.Provider value={value}>
-      {isLoading ? null : children}
+      {children}
     </TasksContext.Provider>
   );
 };

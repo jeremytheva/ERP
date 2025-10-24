@@ -40,17 +40,19 @@ const salesMenuItems = [
 ];
 
 const productionMenuItems = [
-  ...generalMenuItems,
-  { href: "/production", label: "Planning & Capacity", icon: Factory },
-  { href: "/production", label: "MRP (MD01)", icon: Truck },
-  { href: "/production", label: "Production Release (CO41)", icon: Briefcase },
-  { href: "/production", label: "BOM Review (ZCS02)", icon: ShoppingCart },
-  { href: "/live-inventory", label: "RM Stock Status (LIT)", icon: FileText },
-  { href: "/master-data", label: "Master Data", icon: Database },
+    { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
+    { href: "/key-metrics", label: "Key Metrics", icon: BarChart2 },
+    { href: "/production", label: "Planning & Capacity", icon: Factory },
+    { href: "/production", label: "MRP (MD01)", icon: Truck },
+    { href: "/production", label: "Production Release (CO41)", icon: Briefcase },
+    { href: "/production", label: "BOM Review (ZCS02)", icon: ShoppingCart },
+    { href: "/live-inventory", label: "RM Stock Status (LIT)", icon: FileText },
+    { href: "/master-data", label: "Master Data", icon: Database },
 ];
 
 const procurementMenuItems = [
-    ...generalMenuItems,
+    { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
+    { href: "/key-metrics", label: "Key Metrics", icon: BarChart2 },
     { href: "/live-inventory", label: "RM Stock Status (LIT)", icon: FileText },
     { href: "/procurement", label: "Sourcing (ZME12)", icon: Users },
     { href: "/procurement", label: "Order Calculation (ME59N)", icon: BarChart2 },
@@ -59,7 +61,8 @@ const procurementMenuItems = [
 ];
 
 const logisticsMenuItems = [
-    ...generalMenuItems,
+    { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
+    { href: "/key-metrics", label: "Key Metrics", icon: BarChart2 },
     { href: "/logistics", label: "Liquidity Check (ZFF7B)", icon: BarChart2 },
     { href: "/logistics", label: "Stock Transfer (ZMB1B)", icon: Truck },
     { href: "/logistics", label: "Delivery Monitoring (ZME2N)", icon: Briefcase },
@@ -94,7 +97,31 @@ export function MainSidebar() {
   }, [profile, isTeamLeader]);
 
   const isActive = (href: string) => {
+    // For production, multiple links point to the same page. We need to handle active state carefully.
+    if (href.startsWith('/production') && pathname.startsWith('/production')) return true;
+    if (href.startsWith('/procurement') && pathname.startsWith('/procurement')) return true;
+    if (href.startsWith('/logistics') && pathname.startsWith('/logistics')) return true;
     return pathname === href;
+  }
+
+  const getHrefWithSection = (href: string, label: string) => {
+    if (href === '/production') {
+      if (label.includes('Planning')) return '/production?section=planning-capacity';
+      if (label.includes('MRP')) return '/production?section=mrp';
+      if (label.includes('Release')) return '/production?section=production-release';
+      if (label.includes('BOM')) return '/production?section=bom-review';
+    }
+    if (href === '/procurement') {
+        if (label.includes('Sourcing')) return '/procurement?section=sourcing';
+        if (label.includes('Order')) return '/procurement?section=order-calculation';
+        if (label.includes('Sustainability')) return '/procurement?section=sustainability';
+    }
+    if (href === '/logistics') {
+        if (label.includes('Liquidity')) return '/logistics?section=liquidity-check';
+        if (label.includes('Stock Transfer')) return '/logistics?section=stock-transfer';
+        if (label.includes('Delivery')) return '/logistics?section=delivery-monitoring';
+    }
+    return href;
   }
 
   return (
@@ -114,9 +141,9 @@ export function MainSidebar() {
         <SidebarGroup>
             <SidebarGroupLabel>Menu</SidebarGroupLabel>
             {menuItems.map(({ href, label, icon: Icon }) => {
-              const finalHref = href;
+              const finalHref = getHrefWithSection(href, label);
               return (
-                <SidebarMenuItem key={finalHref}>
+                <SidebarMenuItem key={label}>
                     <Link href={finalHref} passHref>
                     <SidebarMenuButton
                         as="a"
@@ -155,6 +182,4 @@ export function MainSidebar() {
     </Sidebar>
   );
 }
-
-
 

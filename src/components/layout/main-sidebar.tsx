@@ -26,7 +26,6 @@ import type { Role } from "@/types";
 const salesMenuItems = [
   { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
   { href: "/key-metrics", label: "Key Metrics", icon: BarChart2 },
-  { href: "/action-items", label: "Round Tasks", icon: ListTodo },
   { href: "/live-inventory", label: "Inventory/Stock Status (LIT)", icon: FileText },
   { href: "/sales", label: "Market Analysis (ZMARKET)", icon: BarChart2 },
   { href: "/debriefing", label: "Forecasting (MD61)", icon: FileText },
@@ -38,7 +37,6 @@ const salesMenuItems = [
 const productionMenuItems = [
     { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
     { href: "/key-metrics", label: "Key Metrics", icon: BarChart2 },
-    { href: "/action-items", label: "Round Tasks", icon: ListTodo },
     { href: "/production", label: "Production Planning", icon: Factory },
     { href: "/live-inventory", label: "RM Stock Status (LIT)", icon: FileText },
     { href: "/master-data", label: "Master Data", icon: Database },
@@ -47,7 +45,6 @@ const productionMenuItems = [
 const procurementMenuItems = [
     { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
     { href: "/key-metrics", label: "Key Metrics", icon: BarChart2 },
-    { href: "/action-items", label: "Round Tasks", icon: ListTodo },
     { href: "/procurement", label: "Sourcing & Ordering", icon: ShoppingCart },
     { href: "/live-inventory", label: "RM Stock Status (LIT)", icon: FileText },
     { href: "/master-data", label: "Master Data", icon: Database },
@@ -56,7 +53,6 @@ const procurementMenuItems = [
 const logisticsMenuItems = [
     { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
     { href: "/key-metrics", label: "Key Metrics", icon: BarChart2 },
-    { href: "/action-items", label: "Round Tasks", icon: ListTodo },
     { href: "/logistics", label: "Liquidity & Transfers", icon: Truck },
     { href: "/master-data", label: "Master Data", icon: Database },
 ];
@@ -64,7 +60,6 @@ const logisticsMenuItems = [
 const teamLeaderMenuItems = [
   { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
   { href: "/key-metrics", label: "Key Metrics", icon: BarChart2 },
-  { href: "/action-items", label: "Round Tasks", icon: ListTodo },
   { href: "/strategic-advisor", label: "Analysis & Strategy", icon: Lightbulb },
   { href: "/debriefing", label: "Investment Decisions", icon: FileText },
   { href: "/competitor-log", label: "Competitor Log", icon: Users },

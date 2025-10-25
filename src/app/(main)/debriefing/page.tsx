@@ -7,12 +7,14 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
-import { ListTodo } from 'lucide-react';
+import { ListTodo, FileText } from 'lucide-react';
 import { InteractiveTaskCard } from '@/components/tasks/interactive-task-card';
 import { useAuth } from '@/hooks/use-auth';
 import { useTasks } from '@/hooks/use-tasks';
 import { useGameState } from '@/hooks/use-game-data';
-import type { Task } from "@/types";
+import type { Task, Role } from "@/types";
+import { useTeamSettings } from "@/hooks/use-team-settings";
+
 
 type SalesFormData = {
     forecastUnits: number;
@@ -28,9 +30,20 @@ export default function DebriefingPage() {
     const { profile } = useAuth();
     const { tasks, updateTask } = useTasks();
     const { gameState } = useGameState();
+    const { teamLeader } = useTeamSettings();
     const [activeTaskId, setActiveTaskId] = useState<string | null>(null);
     
     const currentRound = gameState.kpiHistory[gameState.kpiHistory.length - 1]?.round || 1;
+    const isTeamLeader = profile?.id === teamLeader;
+
+    const userRoles = useMemo(() => {
+        if (!profile) return [];
+        const roles: Role[] = [profile.name as Role];
+        if (isTeamLeader) {
+            roles.push("Team Leader");
+        }
+        return roles;
+    }, [profile, isTeamLeader]);
 
     const forecastingTasks = useMemo(() => {
         if (!profile) return [];
@@ -40,6 +53,15 @@ export default function DebriefingPage() {
              (task.roundRecurrence === "Continuous" || (task.startRound ?? 1) <= currentRound)
         ).sort((a,b) => a.priority.localeCompare(b.priority));
     }, [tasks, profile, currentRound]);
+    
+    const teamLeaderTasks = useMemo(() => {
+        if (!isTeamLeader) return [];
+        return tasks.filter(task =>
+            task.role === "Team Leader" &&
+            task.transactionCode.includes("ZFB50") && // Investment decisions
+            (task.roundRecurrence === "Continuous" || (task.startRound ?? 1) <= currentRound)
+        ).sort((a, b) => a.priority.localeCompare(b.priority));
+    }, [tasks, isTeamLeader, currentRound]);
 
     const handleTaskUpdate = (updatedTask: Task) => {
         updateTask(updatedTask);
@@ -62,14 +84,41 @@ export default function DebriefingPage() {
 
     return (
         <div className="space-y-6">
+             {isTeamLeader && teamLeaderTasks.length > 0 && (
+                <Card>
+                    <CardHeader>
+                        <div className="flex items-center gap-3">
+                            <ListTodo className="h-6 w-6" />
+                            <div>
+                                <CardTitle>Team Leader: Investment Tasks</CardTitle>
+                                <CardDescription>Finalize and confirm investment decisions.</CardDescription>
+                            </div>
+                        </div>
+                    </CardHeader>
+                    <CardContent className="space-y-2">
+                        {teamLeaderTasks.map(task => (
+                            <InteractiveTaskCard
+                                key={task.id}
+                                task={task}
+                                allTasks={tasks}
+                                isActive={activeTaskId === task.id}
+                                onToggle={() => setActiveTaskId(activeTaskId === task.id ? null : task.id)}
+                                onUpdate={handleTaskUpdate}
+                                onFindNext={(id) => handleFindNextTask(id, teamLeaderTasks)}
+                            />
+                        ))}
+                    </CardContent>
+                </Card>
+            )}
+
             {forecastingTasks.length > 0 && (
                 <Card>
                     <CardHeader>
                         <div className="flex items-center gap-3">
                             <ListTodo className="h-6 w-6" />
                             <div>
-                                <CardTitle>Forecasting Tasks</CardTitle>
-                                <CardDescription>Execute forecasting tasks for MD61.</CardDescription>
+                                <CardTitle>Forecasting Tasks (MD61)</CardTitle>
+                                <CardDescription>Execute forecasting tasks.</CardDescription>
                             </div>
                         </div>
                     </CardHeader>
@@ -91,8 +140,13 @@ export default function DebriefingPage() {
 
             <Card>
                 <CardHeader>
-                    <CardTitle className="font-headline text-3xl">Forecasting (MD61)</CardTitle>
-                    <CardDescription>Calculate and set the total sales forecast for MD61. This will be pushed to the LIT.</CardDescription>
+                    <div className="flex items-center gap-3">
+                        <FileText className="h-6 w-6" />
+                        <div>
+                            <CardTitle className="font-headline text-3xl">Forecasting (MD61)</CardTitle>
+                            <CardDescription>Calculate and set the total sales forecast for MD61. This will be pushed to the LIT.</CardDescription>
+                        </div>
+                    </div>
                 </CardHeader>
                 <CardContent className="space-y-4">
                         <div className="space-y-2">

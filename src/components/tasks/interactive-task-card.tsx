@@ -24,6 +24,7 @@ interface InteractiveTaskCardProps {
   task: Task;
   allTasks: Task[];
   isActive: boolean;
+  isCurrent: boolean;
   onToggle: () => void;
   onUpdate: (task: Task) => void;
   onFindNext: (taskId: string) => void;
@@ -48,7 +49,7 @@ const completionIcon = (task: Task) => {
 
 
 export const InteractiveTaskCard = React.forwardRef<HTMLDivElement, InteractiveTaskCardProps>(
-    ({ task, allTasks, isActive, onToggle, onUpdate, onFindNext }, ref) => {
+    ({ task, allTasks, isActive, isCurrent, onToggle, onUpdate, onFindNext }, ref) => {
     const isCompleted = task.completed;
     const dependencies = task.dependencyIDs?.map(depId => allTasks.find(t => t.id === depId)).filter(Boolean) as Task[] | undefined;
     const areDependenciesMet = !dependencies || dependencies.every(dep => dep.completed);
@@ -101,7 +102,7 @@ export const InteractiveTaskCard = React.forwardRef<HTMLDivElement, InteractiveT
 
   return (
     <div ref={ref} className="relative">
-      {isActive && (
+      {isCurrent && (
         <div className="absolute -top-3 left-1/2 -translate-x-1/2 z-10">
           <div className="bg-blue-600 text-white text-xs font-semibold px-3 py-1 rounded-full whitespace-nowrap">
             Current Task

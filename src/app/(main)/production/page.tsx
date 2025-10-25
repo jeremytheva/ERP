@@ -17,6 +17,7 @@ export default function ProductionPage() {
     const { profile } = useAuth();
     const { tasks, updateTask } = useTasks();
     const { gameState } = useGameState();
+    const [openedTaskId, setOpenedTaskId] = useState<string | null>(null);
     const [activeTaskId, setActiveTaskId] = useState<string | null>(null);
 
     const currentRound = gameState.kpiHistory[gameState.kpiHistory.length - 1]?.round || 1;
@@ -58,6 +59,19 @@ export default function ProductionPage() {
     }, [tasks, profile, currentRound]);
 
     const allTasksForPage = useMemo(() => [...planningTasks, ...mrpTasks, ...releaseTasks, ...bomTasks], [planningTasks, mrpTasks, releaseTasks, bomTasks]);
+    
+    useEffect(() => {
+        const firstIncomplete = allTasksForPage.find(t => !t.completed);
+        if (firstIncomplete) {
+            setActiveTaskId(firstIncomplete.id);
+            if (!openedTaskId) {
+                setOpenedTaskId(firstIncomplete.id);
+            }
+        } else {
+            setActiveTaskId(null);
+        }
+    }, [allTasksForPage, openedTaskId]);
+
     const taskRefs = useRef<React.RefObject<HTMLDivElement>[]>([]);
     taskRefs.current = allTasksForPage.map((_, i) => taskRefs.current[i] ?? createRef());
     
@@ -65,8 +79,8 @@ export default function ProductionPage() {
 
     useEffect(() => {
         if (!activeTaskId) {
-        setActiveTaskIsVisible(true);
-        return;
+            setActiveTaskIsVisible(true);
+            return;
         }
 
         const observer = new IntersectionObserver(([entry]) => setActiveTaskIsVisible(entry.isIntersecting), { threshold: 0.5 });
@@ -82,29 +96,25 @@ export default function ProductionPage() {
 
     const handleTaskUpdate = (updatedTask: Task) => {
         updateTask(updatedTask);
+        if (updatedTask.completed && updatedTask.id === activeTaskId) {
+            handleFindNextTask(updatedTask.id, allTasksForPage);
+        }
     };
 
     const handleFindNextTask = (currentTaskId: string, taskGroup: Task[]) => {
         const currentIndex = taskGroup.findIndex(t => t.id === currentTaskId);
         if (currentIndex === -1) {
-            setActiveTaskId(null);
+            setOpenedTaskId(null);
             return;
         }
-        let nextTask: Task | undefined;
         const nextIncompleteTask = taskGroup.slice(currentIndex + 1).find(t => !t.completed);
-        if (nextIncompleteTask) {
-            nextTask = nextIncompleteTask;
-        } else {
-            const firstIncompleteTask = taskGroup.find(t => !t.completed && t.id !== currentTaskId);
-            nextTask = firstIncompleteTask;
-        }
 
-        if (nextTask) {
-            setActiveTaskId(nextTask.id);
-            const nextTaskIndexInPage = allTasksForPage.findIndex(t => t.id === nextTask!.id);
+        if (nextIncompleteTask) {
+            setOpenedTaskId(nextIncompleteTask.id);
+            const nextTaskIndexInPage = allTasksForPage.findIndex(t => t.id === nextIncompleteTask.id);
             taskRefs.current[nextTaskIndexInPage]?.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
         } else {
-            setActiveTaskId(null);
+            setOpenedTaskId(null);
         }
     };
     
@@ -156,8 +166,9 @@ export default function ProductionPage() {
                                         ref={taskRefs.current[getTaskRefIndex(task.id)]}
                                         task={task}
                                         allTasks={tasks}
-                                        isActive={activeTaskId === task.id}
-                                        onToggle={() => setActiveTaskId(activeTaskId === task.id ? null : task.id)}
+                                        isActive={openedTaskId === task.id}
+                                        isCurrent={activeTaskId === task.id}
+                                        onToggle={() => setOpenedTaskId(openedTaskId === task.id ? null : task.id)}
                                         onUpdate={handleTaskUpdate}
                                         onFindNext={(id) => handleFindNextTask(id, planningTasks)}
                                     />
@@ -184,8 +195,9 @@ export default function ProductionPage() {
                                         ref={taskRefs.current[getTaskRefIndex(task.id)]}
                                         task={task}
                                         allTasks={tasks}
-                                        isActive={activeTaskId === task.id}
-                                        onToggle={() => setActiveTaskId(activeTaskId === task.id ? null : task.id)}
+                                        isActive={openedTaskId === task.id}
+                                        isCurrent={activeTaskId === task.id}
+                                        onToggle={() => setOpenedTaskId(openedTaskId === task.id ? null : task.id)}
                                         onUpdate={handleTaskUpdate}
                                         onFindNext={(id) => handleFindNextTask(id, mrpTasks)}
                                     />
@@ -211,8 +223,9 @@ export default function ProductionPage() {
                                         ref={taskRefs.current[getTaskRefIndex(task.id)]}
                                         task={task}
                                         allTasks={tasks}
-                                        isActive={activeTaskId === task.id}
-                                        onToggle={() => setActiveTaskId(activeTaskId === task.id ? null : task.id)}
+                                        isActive={openedTaskId === task.id}
+                                        isCurrent={activeTaskId === task.id}
+                                        onToggle={() => setOpenedTaskId(openedTaskId === task.id ? null : task.id)}
                                         onUpdate={handleTaskUpdate}
                                         onFindNext={(id) => handleFindNextTask(id, releaseTasks)}
                                     />
@@ -238,8 +251,9 @@ export default function ProductionPage() {
                                         ref={taskRefs.current[getTaskRefIndex(task.id)]}
                                         task={task}
                                         allTasks={tasks}
-                                        isActive={activeTaskId === task.id}
-                                        onToggle={() => setActiveTaskId(activeTaskId === task.id ? null : task.id)}
+                                        isActive={openedTaskId === task.id}
+                                        isCurrent={activeTaskId === task.id}
+                                        onToggle={() => setOpenedTaskId(openedTaskId === task.id ? null : task.id)}
                                         onUpdate={handleTaskUpdate}
                                         onFindNext={(id) => handleFindNextTask(id, bomTasks)}
                                     />

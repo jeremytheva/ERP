@@ -35,7 +35,7 @@ const getPageTitle = (pathname: string): string => {
       case "live-inventory":
         return "Live Inventory Tracker (LIT)";
       case "action-items":
-        return "Roles & Responsibilities";
+        return "Tasks";
       case "roles":
         return "Role Views";
       case "competitor-log":

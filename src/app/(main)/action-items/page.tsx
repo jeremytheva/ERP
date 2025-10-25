@@ -58,7 +58,7 @@ export default function ActionItemsPage() {
           <div className="flex items-center gap-4">
             <ListTodo className="h-8 w-8 text-primary" />
             <div>
-              <CardTitle className="font-headline text-3xl">My Tasks for Round {currentRound}</CardTitle>
+              <CardTitle className="font-headline text-3xl">Tasks for Round {currentRound}</CardTitle>
               <CardDescription>
                 Your dynamic to-do list for the current round. Click a task to see details and enter data.
               </CardDescription>

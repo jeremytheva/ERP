@@ -21,6 +21,10 @@ export type Kpi = {
   warehouseCosts: number;
   onTimeDeliveryRate: number;
   cumulativeCO2eEmissions: number;
+  competitorAvgPrice: number;
+  grossRevenue: number;
+  cogs: number;
+  sustainabilityInvestment: number;
 };
 
 export type KpiHistoryEntry = Kpi & { round: number };
@@ -102,4 +106,3 @@ export type Task = {
   dataFields?: TaskDataField[];
   completed: boolean; // Added completion status
 };
-

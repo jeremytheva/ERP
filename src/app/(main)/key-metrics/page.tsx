@@ -1,10 +1,39 @@
 
+"use client";
+
+import { useState } from "react";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
-import { BarChart2, List } from "lucide-react";
+import { BarChart2 } from "lucide-react";
 import { Table, TableHeader, TableRow, TableHead, TableBody, TableCell } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
+import { NewRoundDataDialog } from "@/components/key-metrics/new-round-data-dialog";
+import { useGameState } from "@/hooks/use-game-data";
+import type { KpiHistoryEntry } from "@/types";
 
 export default function KeyMetricsPage() {
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const { gameState, addKpiHistoryEntry } = useGameState();
+
+  const handleSaveRoundData = async (data: Omit<KpiHistoryEntry, 'round'>) => {
+    await addKpiHistoryEntry(data);
+    setIsDialogOpen(false);
+  };
+
+  const formatValue = (key: keyof KpiHistoryEntry, value: any) => {
+    if (typeof value !== 'number') return value;
+
+    const currencyFields = ['cashBalance', 'netIncome', 'grossRevenue', 'cogs', 'warehouseCosts', 'averageSellingPrice', 'competitorAvgPrice', 'sustainabilityInvestment'];
+    const percentFields = ['marketShare'];
+
+    if (currencyFields.includes(key as string)) {
+       return new Intl.NumberFormat('de-DE', { style: 'currency', currency: 'EUR' }).format(value);
+    }
+    if (percentFields.includes(key as string)) {
+        return new Intl.NumberFormat('de-DE', { style: 'percent', minimumFractionDigits: 1 }).format(value);
+    }
+    return value.toLocaleString('de-DE');
+  };
+
   return (
     <div className="container mx-auto py-8">
       <Card>
@@ -28,7 +57,7 @@ export default function KeyMetricsPage() {
                             Manually enter the final numbers from SAP reports (F.01, ZMARKET, ZFF7B) here.
                         </CardDescription>
                     </div>
-                    <Button>Add New Round Data</Button>
+                    <Button onClick={() => setIsDialogOpen(true)}>Add New Round Data</Button>
                 </CardHeader>
                 <CardContent>
                     <Table>
@@ -39,21 +68,38 @@ export default function KeyMetricsPage() {
                                 <TableHead>Net Income</TableHead>
                                 <TableHead>Market Share</TableHead>
                                 <TableHead>Competitor Avg. Price</TableHead>
-                                <TableHead>Actions</TableHead>
                             </TableRow>
                         </TableHeader>
                         <TableBody>
-                            <TableRow>
-                                <TableCell colSpan={6} className="text-center text-muted-foreground">
-                                    No data entered yet. Click "Add New Round Data" to begin.
-                                </TableCell>
-                            </TableRow>
+                             {gameState.kpiHistory.length > 0 ? (
+                                gameState.kpiHistory.slice().reverse().map((entry) => (
+                                    <TableRow key={entry.round}>
+                                        <TableCell className="font-semibold">{entry.round}</TableCell>
+                                        <TableCell>{formatValue('cashBalance', entry.cashBalance)}</TableCell>
+                                        <TableCell>{formatValue('netIncome', entry.netIncome)}</TableCell>
+                                        <TableCell>{formatValue('marketShare', entry.marketShare)}</TableCell>
+                                        <TableCell>{formatValue('competitorAvgPrice', entry.competitorAvgPrice)}</TableCell>
+                                    </TableRow>
+                                ))
+                             ) : (
+                                <TableRow>
+                                    <TableCell colSpan={5} className="text-center text-muted-foreground">
+                                        No data entered yet. Click "Add New Round Data" to begin.
+                                    </TableCell>
+                                </TableRow>
+                             )}
                         </TableBody>
                     </Table>
                 </CardContent>
             </Card>
         </CardContent>
       </Card>
+      <NewRoundDataDialog
+        isOpen={isDialogOpen}
+        onOpenChange={setIsDialogOpen}
+        onSave={handleSaveRoundData}
+        latestRound={gameState.kpiHistory.length}
+      />
     </div>
   );
 }

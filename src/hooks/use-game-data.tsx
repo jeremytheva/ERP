@@ -28,6 +28,7 @@ interface GameStateContextType {
   setBreakDuration: (duration: number) => void;
   setIsBreakEnabled: (enabled: boolean) => void;
   setConfirmNextRound: (enabled: boolean) => void;
+  addKpiHistoryEntry: (data: Omit<KpiHistoryEntry, 'round'>) => Promise<void>;
 }
 
 const GameStateContext = createContext<GameStateContextType | undefined>(undefined);
@@ -113,6 +114,41 @@ export const GameStateProvider = ({ children }: { children: ReactNode }) => {
       });
   }
 
+  const addKpiHistoryEntry = async (data: Omit<KpiHistoryEntry, 'round'>) => {
+    if (!firestore) return;
+    const gameDocRef = doc(firestore, "games", GAME_ID);
+    const batch = writeBatch(firestore);
+
+    const newRoundNumber = (gameState.kpiHistory[gameState.kpiHistory.length - 1]?.round || 0) + 1;
+    const newHistoryEntry: KpiHistoryEntry = {
+        ...INITIAL_GAME_STATE.kpiHistory[0], // Use initial state as a base for all fields
+        ...data,
+        round: newRoundNumber,
+    };
+    
+    const newKpiHistory = [...gameState.kpiHistory, newHistoryEntry];
+    
+    batch.update(gameDocRef, {
+        kpiHistory: newKpiHistory,
+        // Also update top-level KPIs to reflect the latest entry
+        cashBalance: newHistoryEntry.cashBalance,
+        netIncome: newHistoryEntry.netIncome,
+        marketShare: newHistoryEntry.marketShare,
+        averageSellingPrice: newHistoryEntry.averageSellingPrice,
+        competitorAvgPrice: newHistoryEntry.competitorAvgPrice,
+        cumulativeCO2eEmissions: newHistoryEntry.cumulativeCO2eEmissions,
+        warehouseCosts: newHistoryEntry.warehouseCosts
+    });
+
+    await batch.commit().catch(error => {
+      errorEmitter.emit('permission-error', new FirestorePermissionError({
+          path: gameDocRef.path,
+          operation: 'update',
+          requestResourceData: { kpiHistory: newKpiHistory },
+      }));
+    });
+  };
+
   const handleRoundEnd = () => {
     if (confirmNextRound) {
         setIsAwaitingConfirmation(true);
@@ -147,6 +183,20 @@ export const GameStateProvider = ({ children }: { children: ReactNode }) => {
         netIncome: newNetIncome,
         inventoryValue: lastRound.inventoryValue + (Math.random() - 0.5) * 50000,
         totalEmissions: Math.max(0, lastRound.totalEmissions + (Math.random() - 0.5) * 10),
+        cashBalance: lastRound.cashBalance,
+        grossMargin: lastRound.grossMargin,
+        marketShare: lastRound.marketShare,
+        averageSellingPrice: lastRound.averageSellingPrice,
+        inventoryTurnover: lastRound.inventoryTurnover,
+        capacityUtilization: lastRound.capacityUtilization,
+        averagePriceGap: lastRound.averagePriceGap,
+        warehouseCosts: lastRound.warehouseCosts,
+        onTimeDeliveryRate: lastRound.onTimeDeliveryRate,
+        cumulativeCO2eEmissions: lastRound.cumulativeCO2eEmissions,
+        competitorAvgPrice: lastRound.competitorAvgPrice,
+        grossRevenue: lastRound.grossRevenue,
+        cogs: lastRound.cogs,
+        sustainabilityInvestment: lastRound.sustainabilityInvestment,
     };
 
     const newKpiHistory = [...gameState.kpiHistory, newHistoryEntry].slice(-10);
@@ -210,7 +260,7 @@ export const GameStateProvider = ({ children }: { children: ReactNode }) => {
     const batch = writeBatch(firestore);
 
     let newKpiHistory: KpiHistoryEntry[];
-    const currentRound = gameState.kpiHistory[gameState.kpiHistory.length - 1].round;
+    const currentRound = gameState.kpiHistory.length > 0 ? gameState.kpiHistory[gameState.kpiHistory.length - 1].round : 0;
 
     if (newRound > currentRound) {
         newKpiHistory = [...gameState.kpiHistory];
@@ -219,16 +269,15 @@ export const GameStateProvider = ({ children }: { children: ReactNode }) => {
             const change = (Math.random() - 0.5) * 100000;
             const newNetIncome = lastRound.netIncome + change;
             const newHistoryEntry: KpiHistoryEntry = {
+                ...lastRound,
                 round: lastRound.round + 1,
                 companyValuation: lastRound.companyValuation + change * 2,
                 netIncome: newNetIncome,
-                inventoryValue: lastRound.inventoryValue + (Math.random() - 0.5) * 50000,
-                totalEmissions: Math.max(0, lastRound.totalEmissions + (Math.random() - 0.5) * 10),
             };
             newKpiHistory.push(newHistoryEntry);
         }
     } else {
-        if (newRound === 1) {
+        if (newRound === 0) {
             batch.set(gameDocRef, INITIAL_GAME_STATE);
             await batch.commit();
             return;
@@ -236,7 +285,7 @@ export const GameStateProvider = ({ children }: { children: ReactNode }) => {
         newKpiHistory = gameState.kpiHistory.filter(entry => entry.round <= newRound);
     }
     
-    const latestKpis = newKpiHistory[newKpiHistory.length - 1];
+    const latestKpis = newKpiHistory.length > 0 ? newKpiHistory[newKpiHistory.length - 1] : INITIAL_GAME_STATE.kpiHistory[0];
     
     // Preserve settings when changing rounds
     const currentTimerState = gameState.timerState;
@@ -247,10 +296,7 @@ export const GameStateProvider = ({ children }: { children: ReactNode }) => {
     };
 
     batch.update(gameDocRef, {
-        companyValuation: latestKpis.companyValuation,
-        netIncome: latestKpis.netIncome,
-        inventoryValue: latestKpis.inventoryValue,
-        totalEmissions: latestKpis.totalEmissions,
+        ...latestKpis,
         kpiHistory: newKpiHistory.slice(-10),
         timerState: newTimerState,
     });
@@ -276,6 +322,7 @@ export const GameStateProvider = ({ children }: { children: ReactNode }) => {
       setBreakDuration: (duration: number) => updateTimerState({ breakDuration: duration }),
       setIsBreakEnabled: (enabled: boolean) => updateTimerState({ isBreakEnabled: enabled }),
       setConfirmNextRound: (enabled: boolean) => updateTimerState({ confirmNextRound: enabled }),
+      addKpiHistoryEntry,
   };
 
   return (

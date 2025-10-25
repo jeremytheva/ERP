@@ -23,9 +23,13 @@ export const INITIAL_GAME_STATE: GameState = {
   warehouseCosts: 120000,
   onTimeDeliveryRate: 0.98,
   cumulativeCO2eEmissions: 1200,
+  competitorAvgPrice: 15.50,
+  grossRevenue: 5500000,
+  cogs: 3025000,
+  sustainabilityInvestment: 50000,
   teamStrategy: "Focus on high-margin products and expand market share in Europe.",
   kpiHistory: [
-    { round: 1, companyValuation: 45000000, netIncome: 1800000, inventoryValue: 600000, cumulativeCO2eEmissions: 1100, cashBalance: 450000, grossMargin: 0.42, marketShare: 0.22, averageSellingPrice: 340, inventoryTurnover: 8.2, capacityUtilization: 0.78, averagePriceGap: -20, warehouseCosts: 110000, onTimeDeliveryRate: 0.97 },
+    { round: 1, companyValuation: 45000000, netIncome: 1800000, inventoryValue: 600000, cumulativeCO2eEmissions: 1100, cashBalance: 450000, grossMargin: 0.42, marketShare: 0.22, averageSellingPrice: 340, inventoryTurnover: 8.2, capacityUtilization: 0.78, averagePriceGap: -20, warehouseCosts: 110000, onTimeDeliveryRate: 0.97, competitorAvgPrice: 15.60, grossRevenue: 4800000, cogs: 2784000, sustainabilityInvestment: 25000 },
   ],
   timerState: {
     timeLeft: 1200,
@@ -850,4 +854,3 @@ export const ALL_TASKS: Task[] = [
     }
   ])
 ];
-

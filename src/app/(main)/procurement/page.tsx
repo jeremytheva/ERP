@@ -2,10 +2,10 @@
 
 "use client";
 
-import { useMemo, useState } from 'react';
+import { useMemo, useState, useRef, useEffect, createRef } from 'react';
 import { useForm, Controller, useFieldArray } from 'react-hook-form';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Package, Users, Truck, Leaf, AlertTriangle, ListTodo } from "lucide-react";
+import { Package, Users, Truck, Leaf, AlertTriangle, ListTodo, LocateFixed } from "lucide-react";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
@@ -98,6 +98,29 @@ export default function ProcurementPage() {
             (task.roundRecurrence === "Continuous" || (task.startRound ?? 1) <= currentRound)
         ).sort((a,b) => a.priority.localeCompare(b.priority));
     }, [tasks, profile, currentRound]);
+    
+    const allTasksForPage = useMemo(() => [...inventoryTasks, ...sourcingTasks, ...orderTasks, ...sustainabilityTasks], [inventoryTasks, sourcingTasks, orderTasks, sustainabilityTasks]);
+    const taskRefs = useRef<React.RefObject<HTMLDivElement>[]>([]);
+    taskRefs.current = allTasksForPage.map((_, i) => taskRefs.current[i] ?? createRef());
+    
+    const [activeTaskIsVisible, setActiveTaskIsVisible] = useState(true);
+
+    useEffect(() => {
+        if (!activeTaskId) {
+        setActiveTaskIsVisible(true);
+        return;
+        }
+
+        const observer = new IntersectionObserver(([entry]) => setActiveTaskIsVisible(entry.isIntersecting), { threshold: 0.5 });
+        const activeTaskIndex = allTasksForPage.findIndex(t => t.id === activeTaskId);
+        const activeTaskRef = taskRefs.current[activeTaskIndex];
+
+        if (activeTaskRef?.current) observer.observe(activeTaskRef.current);
+        return () => {
+            if (activeTaskRef?.current) observer.unobserve(activeTaskRef.current);
+        };
+    }, [activeTaskId, allTasksForPage]);
+
 
     const handleTaskUpdate = (updatedTask: Task) => {
         updateTask(updatedTask);
@@ -109,286 +132,318 @@ export default function ProcurementPage() {
             setActiveTaskId(null);
             return;
         }
-        const nextTask = taskGroup.slice(currentIndex + 1).find(t => !t.completed);
-        if (nextTask) {
-            setActiveTaskId(nextTask.id);
+        let nextTask: Task | undefined;
+        const nextIncompleteTask = taskGroup.slice(currentIndex + 1).find(t => !t.completed);
+        if (nextIncompleteTask) {
+            nextTask = nextIncompleteTask;
         } else {
             const firstIncompleteTask = taskGroup.find(t => !t.completed && t.id !== currentTaskId);
-            setActiveTaskId(firstIncompleteTask ? firstIncompleteTask.id : null);
+            nextTask = firstIncompleteTask;
+        }
+
+        if (nextTask) {
+            setActiveTaskId(nextTask.id);
+            const nextTaskIndexInPage = allTasksForPage.findIndex(t => t.id === nextTask!.id);
+            taskRefs.current[nextTaskIndexInPage]?.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        } else {
+            setActiveTaskId(null);
         }
     };
+    
+    const handleGoToTask = () => {
+        if (!activeTaskId) return;
+        const activeTaskIndex = allTasksForPage.findIndex(t => t.id === activeTaskId);
+        taskRefs.current[activeTaskIndex]?.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    };
+
+    const getTaskRefIndex = (taskId: string) => allTasksForPage.findIndex(t => t.id === taskId);
+
 
     return (
-        <div className="space-y-6">
-            <Card>
-                <CardHeader>
-                    <div className="flex items-center gap-4">
-                        <ShoppingCart className="h-8 w-8 text-primary" />
-                        <div>
-                            <CardTitle className="font-headline text-3xl">Procurement Manager</CardTitle>
-                            <CardDescription>RM sourcing, inventory replenishment, and sustainability investment.</CardDescription>
-                        </div>
-                    </div>
-                </CardHeader>
-            </Card>
-
-            {inventoryTasks.length > 0 && (
+        <>
+            {activeTaskId && !activeTaskIsVisible && (
+                <div className="fixed bottom-6 right-6 z-50">
+                    <Button size="lg" className="shadow-lg" onClick={handleGoToTask}>
+                        <LocateFixed className="mr-2 h-5 w-5" />
+                        Go to Current Task
+                    </Button>
+                </div>
+            )}
+            <div className="space-y-6">
                 <Card>
                     <CardHeader>
-                        <div className="flex items-center gap-3">
-                            <ListTodo className="h-6 w-6" />
+                        <div className="flex items-center gap-4">
+                            <ShoppingCart className="h-8 w-8 text-primary" />
                             <div>
-                                <CardTitle>Inventory Check Tasks</CardTitle>
-                                <CardDescription>Review current raw material stock and status.</CardDescription>
+                                <CardTitle className="font-headline text-3xl">Procurement Manager</CardTitle>
+                                <CardDescription>RM sourcing, inventory replenishment, and sustainability investment.</CardDescription>
                             </div>
                         </div>
                     </CardHeader>
-                    <CardContent className="space-y-2">
-                        {inventoryTasks.map(task => (
-                             <InteractiveTaskCard
-                                key={task.id}
-                                task={task}
-                                allTasks={tasks}
-                                isActive={activeTaskId === task.id}
-                                onToggle={() => setActiveTaskId(activeTaskId === task.id ? null : task.id)}
-                                onUpdate={handleTaskUpdate}
-                                onFindNext={(id) => handleFindNextTask(id, inventoryTasks)}
-                            />
-                        ))}
-                    </CardContent>
                 </Card>
-            )}
-            <Card>
-                <CardHeader>
-                    <div className="flex items-center gap-3">
-                        <Package className="h-6 w-6" />
-                        <CardTitle>Inventory Check (ZMB52)</CardTitle>
-                    </div>
-                    <CardDescription>Pulls current raw material stock and status from the LIT.</CardDescription>
-                </CardHeader>
-                <CardContent>
-                    <Table>
-                        <TableHeader>
-                            <TableRow>
-                                <TableHead>Material</TableHead>
-                                <TableHead>Current Stock (kg)</TableHead>
-                                <TableHead>Status</TableHead>
-                            </TableRow>
-                        </TableHeader>
-                        <TableBody>
-                            {RAW_MATERIALS.map(rm => (
-                                <TableRow key={rm.id}>
-                                    <TableCell>{rm.name}</TableCell>
-                                    <TableCell>{rm.stock.toLocaleString()}</TableCell>
-                                    <TableCell>
-                                        {rm.stock < 5000 ? 
-                                            <span className="flex items-center text-red-500"><AlertTriangle className="h-4 w-4 mr-2" /> Low Stock</span> : 
-                                            <span className="text-green-500">OK</span>}
-                                    </TableCell>
-                                </TableRow>
+
+                {inventoryTasks.length > 0 && (
+                    <Card>
+                        <CardHeader>
+                            <div className="flex items-center gap-3">
+                                <ListTodo className="h-6 w-6" />
+                                <div>
+                                    <CardTitle>Inventory Check Tasks</CardTitle>
+                                    <CardDescription>Review current raw material stock and status.</CardDescription>
+                                </div>
+                            </div>
+                        </CardHeader>
+                        <CardContent className="space-y-2">
+                            {inventoryTasks.map(task => (
+                                 <InteractiveTaskCard
+                                    key={task.id}
+                                    ref={taskRefs.current[getTaskRefIndex(task.id)]}
+                                    task={task}
+                                    allTasks={tasks}
+                                    isActive={activeTaskId === task.id}
+                                    onToggle={() => setActiveTaskId(activeTaskId === task.id ? null : task.id)}
+                                    onUpdate={handleTaskUpdate}
+                                    onFindNext={(id) => handleFindNextTask(id, inventoryTasks)}
+                                />
                             ))}
-                        </TableBody>
-                    </Table>
-                </CardContent>
-            </Card>
-
-            {sourcingTasks.length > 0 && (
+                        </CardContent>
+                    </Card>
+                )}
                 <Card>
                     <CardHeader>
                         <div className="flex items-center gap-3">
-                            <ListTodo className="h-6 w-6" />
-                            <div>
-                                <CardTitle>Sourcing Tasks</CardTitle>
-                                <CardDescription>Set the order strategy and vendor selection for each material.</CardDescription>
-                            </div>
+                            <Package className="h-6 w-6" />
+                            <CardTitle>Inventory Check (ZMB52)</CardTitle>
                         </div>
+                        <CardDescription>Pulls current raw material stock and status from the LIT.</CardDescription>
                     </CardHeader>
-                    <CardContent className="space-y-2">
-                        {sourcingTasks.map(task => (
-                             <InteractiveTaskCard
-                                key={task.id}
-                                task={task}
-                                allTasks={tasks}
-                                isActive={activeTaskId === task.id}
-                                onToggle={() => setActiveTaskId(activeTaskId === task.id ? null : task.id)}
-                                onUpdate={handleTaskUpdate}
-                                onFindNext={(id) => handleFindNextTask(id, sourcingTasks)}
-                            />
-                        ))}
-                    </CardContent>
-                </Card>
-            )}
-            <Card>
-                <CardHeader>
-                    <div className="flex items-center gap-3">
-                        <Users className="h-6 w-6" />
-                        <CardTitle>Sourcing (ZME12)</CardTitle>
-                    </div>
-                    <CardDescription>Set the order strategy and vendor selection for each raw material.</CardDescription>
-                </CardHeader>
-                <CardContent className="space-y-6">
-                    <div>
-                        <h4 className="font-medium mb-2">Raw Material Sourcing</h4>
+                    <CardContent>
                         <Table>
-                            <TableHeader><TableRow><TableHead>Material</TableHead><TableHead>Vendor Selection</TableHead></TableRow></TableHeader>
+                            <TableHeader>
+                                <TableRow>
+                                    <TableHead>Material</TableHead>
+                                    <TableHead>Current Stock (kg)</TableHead>
+                                    <TableHead>Status</TableHead>
+                                </TableRow>
+                            </TableHeader>
                             <TableBody>
-                                {sourcingFields.map((field, index) => {
-                                    const material = RAW_MATERIALS.find(rm => rm.id === field.materialId);
-                                    return (
-                                        <TableRow key={field.id}>
-                                            <TableCell>{material?.name}</TableCell>
-                                            <TableCell>
-                                                <Controller
-                                                    control={control}
-                                                    name={`sourcing.${index}.vendor`}
-                                                    render={({ field: controllerField }) => (
-                                                        <Select onValueChange={controllerField.onChange} value={controllerField.value}>
-                                                            <SelectTrigger><SelectValue /></SelectTrigger>
-                                                            <SelectContent>
-                                                                <SelectItem value="v01">Fast Vendors (V01)</SelectItem>
-                                                                <SelectItem value="v11">Green Vendors (V11)</SelectItem>
-                                                            </SelectContent>
-                                                        </Select>
-                                                    )}
-                                                />
-                                            </TableCell>
-                                        </TableRow>
-                                    )
-                                })}
-                            </TableBody>
-                        </Table>
-                    </div>
-                    <div>
-                        <h4 className="font-medium mb-2">Packaging Sourcing</h4>
-                        <Table>
-                            <TableHeader><TableRow><TableHead>Material</TableHead><TableHead>Vendor Selection</TableHead></TableRow></TableHeader>
-                            <TableBody>
-                                {packagingSourcingFields.map((field, index) => {
-                                    const material = PACKAGING_MATERIALS.find(rm => rm.id === field.materialId);
-                                    return (
-                                        <TableRow key={field.id}>
-                                            <TableCell>{material?.name}</TableCell>
-                                            <TableCell>
-                                                <Controller
-                                                    control={control}
-                                                    name={`packagingSourcing.${index}.vendor`}
-                                                    render={({ field: controllerField }) => (
-                                                        <Select onValueChange={controllerField.onChange} value={controllerField.value}>
-                                                            <SelectTrigger><SelectValue /></SelectTrigger>
-                                                            <SelectContent>
-                                                                <SelectItem value="v02">Packaging Vendors (V02)</SelectItem>
-                                                                <SelectItem value="v12">Packaging-Green Vendors (V12)</SelectItem>
-                                                            </SelectContent>
-                                                        </Select>
-                                                    )}
-                                                />
-                                            </TableCell>
-                                        </TableRow>
-                                    )
-                                })}
-                            </TableBody>
-                        </Table>
-                    </div>
-                </CardContent>
-            </Card>
-
-            {orderTasks.length > 0 && (
-                <Card>
-                    <CardHeader>
-                        <div className="flex items-center gap-3">
-                            <ListTodo className="h-6 w-6" />
-                            <div>
-                                <CardTitle>Order Calculation Tasks</CardTitle>
-                                <CardDescription>Calculate and create purchase orders.</CardDescription>
-                            </div>
-                        </div>
-                    </CardHeader>
-                    <CardContent className="space-y-2">
-                        {orderTasks.map(task => (
-                             <InteractiveTaskCard
-                                key={task.id}
-                                task={task}
-                                allTasks={tasks}
-                                isActive={activeTaskId === task.id}
-                                onToggle={() => setActiveTaskId(activeTaskId === task.id ? null : task.id)}
-                                onUpdate={handleTaskUpdate}
-                                onFindNext={(id) => handleFindNextTask(id, orderTasks)}
-                            />
-                        ))}
-                    </CardContent>
-                </Card>
-            )}
-            <Card>
-                <CardHeader>
-                    <div className="flex items-center gap-3">
-                        <Truck className="h-6 w-6" />
-                        <CardTitle>Order Calculation (ME59N)</CardTitle>
-                    </div>
-                    <CardDescription>Calculate the required quantity to order based on MRP forecast and current stock.</CardDescription>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                    <Table>
-                        <TableHeader><TableRow><TableHead>Material</TableHead><TableHead>Required (kg)</TableHead><TableHead>Current Stock (kg)</TableHead><TableHead>Final PO Qty (kg)</TableHead></TableRow></TableHeader>
-                        <TableBody>
-                            {orderFields.map((field, index) => {
-                                    const material = RAW_MATERIALS.find(rm => rm.id === field.materialId);
-                                    return (
-                                    <TableRow key={field.id}>
-                                        <TableCell>{material?.name}</TableCell>
-                                        <TableCell>{material?.required.toLocaleString()}</TableCell>
-                                        <TableCell>{material?.stock.toLocaleString()}</TableCell>
-                                        <TableCell><Input type="number" step="100" {...register(`orders.${index}.orderQty`, { valueAsNumber: true })} /></TableCell>
+                                {RAW_MATERIALS.map(rm => (
+                                    <TableRow key={rm.id}>
+                                        <TableCell>{rm.name}</TableCell>
+                                        <TableCell>{rm.stock.toLocaleString()}</TableCell>
+                                        <TableCell>
+                                            {rm.stock < 5000 ? 
+                                                <span className="flex items-center text-red-500"><AlertTriangle className="h-4 w-4 mr-2" /> Low Stock</span> : 
+                                                <span className="text-green-500">OK</span>}
+                                        </TableCell>
                                     </TableRow>
-                                    )
-                            })}
-                        </TableBody>
-                    </Table>
-                    <div className="flex justify-end"><Button>Push PO Qty to LIT (for ME59N)</Button></div>
-                </CardContent>
-            </Card>
-
-            {sustainabilityTasks.length > 0 && (
-                 <Card>
-                    <CardHeader>
-                        <div className="flex items-center gap-3">
-                            <ListTodo className="h-6 w-6" />
-                            <div>
-                                <CardTitle>Sustainability Tasks</CardTitle>
-                                <CardDescription>Track sustainability goals and investment amounts.</CardDescription>
-                            </div>
-                        </div>
-                    </CardHeader>
-                    <CardContent className="space-y-2">
-                        {sustainabilityTasks.map(task => (
-                             <InteractiveTaskCard
-                                key={task.id}
-                                task={task}
-                                allTasks={tasks}
-                                isActive={activeTaskId === task.id}
-                                onToggle={() => setActiveTaskId(activeTaskId === task.id ? null : task.id)}
-                                onUpdate={handleTaskUpdate}
-                                onFindNext={(id) => handleFindNextTask(id, sustainabilityTasks)}
-                            />
-                        ))}
+                                ))}
+                            </TableBody>
+                        </Table>
                     </CardContent>
                 </Card>
-            )}
-            <Card>
-                <CardHeader>
-                    <div className="flex items-center gap-3">
-                        <Leaf className="h-6 w-6" />
-                        <CardTitle>Sustainability (ZFB50)</CardTitle>
-                    </div>
-                    <CardDescription>Track sustainability goals and investment amounts for ZFB50.</CardDescription>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                    <div className="space-y-2">
-                        <Label htmlFor="sustainabilityInvestment">Actual ZFB50 Posting (€)</Label>
-                        <Input id="sustainabilityInvestment" type="number" step="1000" {...register("sustainabilityInvestment", { valueAsNumber: true })} />
-                    </div>
-                    <div className="flex justify-end"><Button>Save Investment</Button></div>
-                </CardContent>
-            </Card>
-        </div>
+
+                {sourcingTasks.length > 0 && (
+                    <Card>
+                        <CardHeader>
+                            <div className="flex items-center gap-3">
+                                <ListTodo className="h-6 w-6" />
+                                <div>
+                                    <CardTitle>Sourcing Tasks</CardTitle>
+                                    <CardDescription>Set the order strategy and vendor selection for each material.</CardDescription>
+                                </div>
+                            </div>
+                        </CardHeader>
+                        <CardContent className="space-y-2">
+                            {sourcingTasks.map(task => (
+                                 <InteractiveTaskCard
+                                    key={task.id}
+                                    ref={taskRefs.current[getTaskRefIndex(task.id)]}
+                                    task={task}
+                                    allTasks={tasks}
+                                    isActive={activeTaskId === task.id}
+                                    onToggle={() => setActiveTaskId(activeTaskId === task.id ? null : task.id)}
+                                    onUpdate={handleTaskUpdate}
+                                    onFindNext={(id) => handleFindNextTask(id, sourcingTasks)}
+                                />
+                            ))}
+                        </CardContent>
+                    </Card>
+                )}
+                <Card>
+                    <CardHeader>
+                        <div className="flex items-center gap-3">
+                            <Users className="h-6 w-6" />
+                            <CardTitle>Sourcing (ZME12)</CardTitle>
+                        </div>
+                        <CardDescription>Set the order strategy and vendor selection for each raw material.</CardDescription>
+                    </CardHeader>
+                    <CardContent className="space-y-6">
+                        <div>
+                            <h4 className="font-medium mb-2">Raw Material Sourcing</h4>
+                            <Table>
+                                <TableHeader><TableRow><TableHead>Material</TableHead><TableHead>Vendor Selection</TableHead></TableRow></TableHeader>
+                                <TableBody>
+                                    {sourcingFields.map((field, index) => {
+                                        const material = RAW_MATERIALS.find(rm => rm.id === field.materialId);
+                                        return (
+                                            <TableRow key={field.id}>
+                                                <TableCell>{material?.name}</TableCell>
+                                                <TableCell>
+                                                    <Controller
+                                                        control={control}
+                                                        name={`sourcing.${index}.vendor`}
+                                                        render={({ field: controllerField }) => (
+                                                            <Select onValueChange={controllerField.onChange} value={controllerField.value}>
+                                                                <SelectTrigger><SelectValue /></SelectTrigger>
+                                                                <SelectContent>
+                                                                    <SelectItem value="v01">Fast Vendors (V01)</SelectItem>
+                                                                    <SelectItem value="v11">Green Vendors (V11)</SelectItem>
+                                                                </SelectContent>
+                                                            </Select>
+                                                        )}
+                                                    />
+                                                </TableCell>
+                                            </TableRow>
+                                        )
+                                    })}
+                                </TableBody>
+                            </Table>
+                        </div>
+                        <div>
+                            <h4 className="font-medium mb-2">Packaging Sourcing</h4>
+                            <Table>
+                                <TableHeader><TableRow><TableHead>Material</TableHead><TableHead>Vendor Selection</TableHead></TableRow></TableHeader>
+                                <TableBody>
+                                    {packagingSourcingFields.map((field, index) => {
+                                        const material = PACKAGING_MATERIALS.find(rm => rm.id === field.materialId);
+                                        return (
+                                            <TableRow key={field.id}>
+                                                <TableCell>{material?.name}</TableCell>
+                                                <TableCell>
+                                                    <Controller
+                                                        control={control}
+                                                        name={`packagingSourcing.${index}.vendor`}
+                                                        render={({ field: controllerField }) => (
+                                                            <Select onValueChange={controllerField.onChange} value={controllerField.value}>
+                                                                <SelectTrigger><SelectValue /></SelectTrigger>
+                                                                <SelectContent>
+                                                                    <SelectItem value="v02">Packaging Vendors (V02)</SelectItem>
+                                                                    <SelectItem value="v12">Packaging-Green Vendors (V12)</SelectItem>
+                                                                </SelectContent>
+                                                            </Select>
+                                                        )}
+                                                    />
+                                                </TableCell>
+                                            </TableRow>
+                                        )
+                                    })}
+                                </TableBody>
+                            </Table>
+                        </div>
+                    </CardContent>
+                </Card>
+
+                {orderTasks.length > 0 && (
+                    <Card>
+                        <CardHeader>
+                            <div className="flex items-center gap-3">
+                                <ListTodo className="h-6 w-6" />
+                                <div>
+                                    <CardTitle>Order Calculation Tasks</CardTitle>
+                                    <CardDescription>Calculate and create purchase orders.</CardDescription>
+                                </div>
+                            </div>
+                        </CardHeader>
+                        <CardContent className="space-y-2">
+                            {orderTasks.map(task => (
+                                 <InteractiveTaskCard
+                                    key={task.id}
+                                    ref={taskRefs.current[getTaskRefIndex(task.id)]}
+                                    task={task}
+                                    allTasks={tasks}
+                                    isActive={activeTaskId === task.id}
+                                    onToggle={() => setActiveTaskId(activeTaskId === task.id ? null : task.id)}
+                                    onUpdate={handleTaskUpdate}
+                                    onFindNext={(id) => handleFindNextTask(id, orderTasks)}
+                                />
+                            ))}
+                        </CardContent>
+                    </Card>
+                )}
+                <Card>
+                    <CardHeader>
+                        <div className="flex items-center gap-3">
+                            <Truck className="h-6 w-6" />
+                            <CardTitle>Order Calculation (ME59N)</CardTitle>
+                        </div>
+                        <CardDescription>Calculate the required quantity to order based on MRP forecast and current stock.</CardDescription>
+                    </CardHeader>
+                    <CardContent className="space-y-4">
+                        <Table>
+                            <TableHeader><TableRow><TableHead>Material</TableHead><TableHead>Required (kg)</TableHead><TableHead>Current Stock (kg)</TableHead><TableHead>Final PO Qty (kg)</TableHead></TableRow></TableHeader>
+                            <TableBody>
+                                {orderFields.map((field, index) => {
+                                        const material = RAW_MATERIALS.find(rm => rm.id === field.materialId);
+                                        return (
+                                        <TableRow key={field.id}>
+                                            <TableCell>{material?.name}</TableCell>
+                                            <TableCell>{material?.required.toLocaleString()}</TableCell>
+                                            <TableCell>{material?.stock.toLocaleString()}</TableCell>
+                                            <TableCell><Input type="number" step="100" {...register(`orders.${index}.orderQty`, { valueAsNumber: true })} /></TableCell>
+                                        </TableRow>
+                                        )
+                                })}
+                            </TableBody>
+                        </Table>
+                        <div className="flex justify-end"><Button>Push PO Qty to LIT (for ME59N)</Button></div>
+                    </CardContent>
+                </Card>
+
+                {sustainabilityTasks.length > 0 && (
+                     <Card>
+                        <CardHeader>
+                            <div className="flex items-center gap-3">
+                                <ListTodo className="h-6 w-6" />
+                                <div>
+                                    <CardTitle>Sustainability Tasks</CardTitle>
+                                    <CardDescription>Track sustainability goals and investment amounts.</CardDescription>
+                                </div>
+                            </div>
+                        </CardHeader>
+                        <CardContent className="space-y-2">
+                            {sustainabilityTasks.map(task => (
+                                 <InteractiveTaskCard
+                                    key={task.id}
+                                    ref={taskRefs.current[getTaskRefIndex(task.id)]}
+                                    task={task}
+                                    allTasks={tasks}
+                                    isActive={activeTaskId === task.id}
+                                    onToggle={() => setActiveTaskId(activeTaskId === task.id ? null : task.id)}
+                                    onUpdate={handleTaskUpdate}
+                                    onFindNext={(id) => handleFindNextTask(id, sustainabilityTasks)}
+                                />
+                            ))}
+                        </CardContent>
+                    </Card>
+                )}
+                <Card>
+                    <CardHeader>
+                        <div className="flex items-center gap-3">
+                            <Leaf className="h-6 w-6" />
+                            <CardTitle>Sustainability (ZFB50)</CardTitle>
+                        </div>
+                        <CardDescription>Track sustainability goals and investment amounts for ZFB50.</CardDescription>
+                    </CardHeader>
+                    <CardContent className="space-y-4">
+                        <div className="space-y-2">
+                            <Label htmlFor="sustainabilityInvestment">Actual ZFB50 Posting (€)</Label>
+                            <Input id="sustainabilityInvestment" type="number" step="1000" {...register("sustainabilityInvestment", { valueAsNumber: true })} />
+                        </div>
+                        <div className="flex justify-end"><Button>Save Investment</Button></div>
+                    </CardContent>
+                </Card>
+            </div>
+        </>
     );
 }

@@ -1,13 +1,13 @@
 
 "use client";
 
-import { useMemo, useState } from "react";
+import { useMemo, useState, useRef, useEffect, createRef } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
 import { useForm, useFieldArray, Controller } from "react-hook-form";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Slider } from "@/components/ui/slider";
-import { ListTodo } from 'lucide-react';
+import { ListTodo, LocateFixed } from 'lucide-react';
 import { InteractiveTaskCard } from '@/components/tasks/interactive-task-card';
 import { useAuth } from '@/hooks/use-auth';
 import { useTasks } from '@/hooks/use-tasks';
@@ -52,6 +52,27 @@ export default function ScenarioPlanningPage() {
              (task.roundRecurrence === "Continuous" || (task.startRound ?? 1) <= currentRound)
         ).sort((a,b) => a.priority.localeCompare(b.priority));
     }, [tasks, profile, currentRound]);
+    
+    const taskRefs = useRef<React.RefObject<HTMLDivElement>[]>([]);
+    taskRefs.current = marketingTasks.map((_, i) => taskRefs.current[i] ?? createRef());
+
+    const [activeTaskIsVisible, setActiveTaskIsVisible] = useState(true);
+
+     useEffect(() => {
+        if (!activeTaskId) {
+        setActiveTaskIsVisible(true);
+        return;
+        }
+
+        const observer = new IntersectionObserver(([entry]) => setActiveTaskIsVisible(entry.isIntersecting), { threshold: 0.5 });
+        const activeTaskIndex = marketingTasks.findIndex(t => t.id === activeTaskId);
+        const activeTaskRef = taskRefs.current[activeTaskIndex];
+
+        if (activeTaskRef?.current) observer.observe(activeTaskRef.current);
+        return () => {
+            if (activeTaskRef?.current) observer.unobserve(activeTaskRef.current);
+        };
+    }, [activeTaskId, marketingTasks]);
 
     const handleTaskUpdate = (updatedTask: Task) => {
         updateTask(updatedTask);
@@ -63,83 +84,109 @@ export default function ScenarioPlanningPage() {
             setActiveTaskId(null);
             return;
         }
-        const nextTask = taskGroup.slice(currentIndex + 1).find(t => !t.completed);
-        if (nextTask) {
-            setActiveTaskId(nextTask.id);
+        let nextTask: Task | undefined;
+        const nextIncompleteTask = taskGroup.slice(currentIndex + 1).find(t => !t.completed);
+        if (nextIncompleteTask) {
+            nextTask = nextIncompleteTask;
         } else {
             const firstIncompleteTask = taskGroup.find(t => !t.completed && t.id !== currentTaskId);
-            setActiveTaskId(firstIncompleteTask ? firstIncompleteTask.id : null);
+            nextTask = firstIncompleteTask;
         }
+
+        if (nextTask) {
+            setActiveTaskId(nextTask.id);
+            const nextTaskIndex = taskGroup.findIndex(t => t.id === nextTask!.id);
+            taskRefs.current[nextTaskIndex]?.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        } else {
+            setActiveTaskId(null);
+        }
+    };
+    
+    const handleGoToTask = () => {
+        if (!activeTaskId) return;
+        const activeTaskIndex = marketingTasks.findIndex(t => t.id === activeTaskId);
+        taskRefs.current[activeTaskIndex]?.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
     };
 
 
     return (
-        <div className="space-y-6">
-            {marketingTasks.length > 0 && (
+        <>
+            {activeTaskId && !activeTaskIsVisible && (
+                <div className="fixed bottom-6 right-6 z-50">
+                    <Button size="lg" className="shadow-lg" onClick={handleGoToTask}>
+                        <LocateFixed className="mr-2 h-5 w-5" />
+                        Go to Current Task
+                    </Button>
+                </div>
+            )}
+            <div className="space-y-6">
+                {marketingTasks.length > 0 && (
+                    <Card>
+                        <CardHeader>
+                            <div className="flex items-center gap-3">
+                                <ListTodo className="h-6 w-6" />
+                                <div>
+                                    <CardTitle>Marketing Tasks</CardTitle>
+                                    <CardDescription>Execute marketing tasks for ZADS.</CardDescription>
+                                </div>
+                            </div>
+                        </CardHeader>
+                        <CardContent className="space-y-2">
+                            {marketingTasks.map((task, index) => (
+                                <InteractiveTaskCard
+                                    key={task.id}
+                                    ref={taskRefs.current[index]}
+                                    task={task}
+                                    allTasks={tasks}
+                                    isActive={activeTaskId === task.id}
+                                    onToggle={() => setActiveTaskId(activeTaskId === task.id ? null : task.id)}
+                                    onUpdate={handleTaskUpdate}
+                                    onFindNext={(id) => handleFindNextTask(id, marketingTasks)}
+                                />
+                            ))}
+                        </CardContent>
+                    </Card>
+                )}
                 <Card>
                     <CardHeader>
-                        <div className="flex items-center gap-3">
-                            <ListTodo className="h-6 w-6" />
-                            <div>
-                                <CardTitle>Marketing Tasks</CardTitle>
-                                <CardDescription>Execute marketing tasks for ZADS.</CardDescription>
-                            </div>
-                        </div>
+                        <CardTitle className="font-headline text-3xl">Marketing (ZADS)</CardTitle>
+                        <CardDescription>Set the advertising spend for each distribution channel for ZADS.</CardDescription>
                     </CardHeader>
-                    <CardContent className="space-y-2">
-                        {marketingTasks.map(task => (
-                            <InteractiveTaskCard
-                                key={task.id}
-                                task={task}
-                                allTasks={tasks}
-                                isActive={activeTaskId === task.id}
-                                onToggle={() => setActiveTaskId(activeTaskId === task.id ? null : task.id)}
-                                onUpdate={handleTaskUpdate}
-                                onFindNext={(id) => handleFindNextTask(id, marketingTasks)}
-                            />
-                        ))}
+                    <CardContent className="space-y-6">
+                        <div className="space-y-4">
+                            {budgetFields.map((field, index) => (
+                                <div key={field.id} className="space-y-2">
+                                    <Label>Ad Spend for {field.dc} (€)</Label>
+                                    <Controller
+                                        control={control}
+                                        name={`marketingBudget.${index}.budget`}
+                                        render={({ field: controllerField }) => (
+                                            <>
+                                                <Slider
+                                                    value={[controllerField.value]}
+                                                    onValueChange={(vals) => controllerField.onChange(vals[0])}
+                                                    min={0}
+                                                    max={100000}
+                                                    step={1000}
+                                                />
+                                                <div className="text-right text-sm text-muted-foreground">
+                                                    {new Intl.NumberFormat('de-DE', { style: 'currency', currency: 'EUR' }).format(controllerField.value)}
+                                                </div>
+                                            </>
+                                        )}
+                                    />
+                                </div>
+                            ))}
+                        </div>
+                        <CardFooter className="flex-col items-start p-0 pt-4">
+                            <p className="font-semibold">Total Marketing Spend: {new Intl.NumberFormat('de-DE', { style: 'currency', currency: 'EUR' }).format(totalMarketingSpend)}</p>
+                            <div className="flex justify-end w-full mt-4">
+                                <Button>Save Budget to SAP (ZADS)</Button>
+                            </div>
+                        </CardFooter>
                     </CardContent>
                 </Card>
-            )}
-            <Card>
-                <CardHeader>
-                    <CardTitle className="font-headline text-3xl">Marketing (ZADS)</CardTitle>
-                    <CardDescription>Set the advertising spend for each distribution channel for ZADS.</CardDescription>
-                </CardHeader>
-                <CardContent className="space-y-6">
-                    <div className="space-y-4">
-                        {budgetFields.map((field, index) => (
-                            <div key={field.id} className="space-y-2">
-                                <Label>Ad Spend for {field.dc} (€)</Label>
-                                <Controller
-                                    control={control}
-                                    name={`marketingBudget.${index}.budget`}
-                                    render={({ field: controllerField }) => (
-                                        <>
-                                            <Slider
-                                                value={[controllerField.value]}
-                                                onValueChange={(vals) => controllerField.onChange(vals[0])}
-                                                min={0}
-                                                max={100000}
-                                                step={1000}
-                                            />
-                                            <div className="text-right text-sm text-muted-foreground">
-                                                {new Intl.NumberFormat('de-DE', { style: 'currency', currency: 'EUR' }).format(controllerField.value)}
-                                            </div>
-                                        </>
-                                    )}
-                                />
-                            </div>
-                        ))}
-                    </div>
-                    <CardFooter className="flex-col items-start p-0 pt-4">
-                        <p className="font-semibold">Total Marketing Spend: {new Intl.NumberFormat('de-DE', { style: 'currency', currency: 'EUR' }).format(totalMarketingSpend)}</p>
-                        <div className="flex justify-end w-full mt-4">
-                            <Button>Save Budget to SAP (ZADS)</Button>
-                        </div>
-                    </CardFooter>
-                </CardContent>
-            </Card>
-        </div>
+            </div>
+        </>
     )
 }

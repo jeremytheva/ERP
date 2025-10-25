@@ -2,10 +2,10 @@
 
 "use client";
 
-import { useMemo, useState } from 'react';
+import { useMemo, useState, useRef, useEffect, createRef } from 'react';
 import { useForm, Controller, useFieldArray } from 'react-hook-form';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Banknote, PackageOpen, Ship, AlertTriangle } from "lucide-react";
+import { Banknote, PackageOpen, Ship, AlertTriangle, LocateFixed } from "lucide-react";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -73,6 +73,28 @@ export default function LogisticsPage() {
              (task.roundRecurrence === "Continuous" || (task.startRound ?? 1) <= currentRound)
         ).sort((a,b) => a.priority.localeCompare(b.priority));
     }, [tasks, profile, currentRound]);
+    
+    const allTasksForPage = useMemo(() => [...monitoringTasks, ...stockTransferTasks], [monitoringTasks, stockTransferTasks]);
+    const taskRefs = useRef<React.RefObject<HTMLDivElement>[]>([]);
+    taskRefs.current = allTasksForPage.map((_, i) => taskRefs.current[i] ?? createRef());
+
+    const [activeTaskIsVisible, setActiveTaskIsVisible] = useState(true);
+
+    useEffect(() => {
+        if (!activeTaskId) {
+        setActiveTaskIsVisible(true);
+        return;
+        }
+
+        const observer = new IntersectionObserver(([entry]) => setActiveTaskIsVisible(entry.isIntersecting), { threshold: 0.5 });
+        const activeTaskIndex = allTasksForPage.findIndex(t => t.id === activeTaskId);
+        const activeTaskRef = taskRefs.current[activeTaskIndex];
+
+        if (activeTaskRef?.current) observer.observe(activeTaskRef.current);
+        return () => {
+            if (activeTaskRef?.current) observer.unobserve(activeTaskRef.current);
+        };
+    }, [activeTaskId, allTasksForPage]);
 
     const handleTaskUpdate = (updatedTask: Task) => {
         updateTask(updatedTask);
@@ -84,14 +106,31 @@ export default function LogisticsPage() {
             setActiveTaskId(null);
             return;
         }
-        const nextTask = taskGroup.slice(currentIndex + 1).find(t => !t.completed);
-        if (nextTask) {
-            setActiveTaskId(nextTask.id);
+        let nextTask: Task | undefined;
+        const nextIncompleteTask = taskGroup.slice(currentIndex + 1).find(t => !t.completed);
+        if (nextIncompleteTask) {
+            nextTask = nextIncompleteTask;
         } else {
             const firstIncompleteTask = taskGroup.find(t => !t.completed && t.id !== currentTaskId);
-            setActiveTaskId(firstIncompleteTask ? firstIncompleteTask.id : null);
+            nextTask = firstIncompleteTask;
+        }
+
+        if (nextTask) {
+            setActiveTaskId(nextTask.id);
+            const nextTaskIndexInPage = allTasksForPage.findIndex(t => t.id === nextTask!.id);
+            taskRefs.current[nextTaskIndexInPage]?.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        } else {
+            setActiveTaskId(null);
         }
     };
+
+    const handleGoToTask = () => {
+        if (!activeTaskId) return;
+        const activeTaskIndex = allTasksForPage.findIndex(t => t.id === activeTaskId);
+        taskRefs.current[activeTaskIndex]?.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    };
+
+    const getTaskRefIndex = (taskId: string) => allTasksForPage.findIndex(t => t.id === taskId);
 
 
     const handleDosChange = (index: number, newDos: number) => {
@@ -108,174 +147,186 @@ export default function LogisticsPage() {
     }, []);
 
     return (
-        <div className="space-y-6">
-            <Card>
-                <CardHeader>
-                    <div className="flex items-center gap-4">
-                        <Truck className="h-8 w-8 text-primary" />
-                        <div>
-                        <CardTitle className="font-headline text-3xl">Logistics Manager</CardTitle>
-                        <CardDescription>Finished goods transfer, cash flow monitoring, and contingency planning.</CardDescription>
-                        </div>
-                    </div>
-                </CardHeader>
-            </Card>
-            
-            {monitoringTasks.length > 0 && (
+        <>
+            {activeTaskId && !activeTaskIsVisible && (
+                <div className="fixed bottom-6 right-6 z-50">
+                    <Button size="lg" className="shadow-lg" onClick={handleGoToTask}>
+                        <LocateFixed className="mr-2 h-5 w-5" />
+                        Go to Current Task
+                    </Button>
+                </div>
+            )}
+            <div className="space-y-6">
                 <Card>
                     <CardHeader>
-                        <div className="flex items-center gap-3">
-                            <ListTodo className="h-6 w-6" />
+                        <div className="flex items-center gap-4">
+                            <Truck className="h-8 w-8 text-primary" />
                             <div>
-                                <CardTitle>Monitoring Tasks</CardTitle>
-                                <CardDescription>Monitor cash flow, deliveries, and stock status.</CardDescription>
+                            <CardTitle className="font-headline text-3xl">Logistics Manager</CardTitle>
+                            <CardDescription>Finished goods transfer, cash flow monitoring, and contingency planning.</CardDescription>
                             </div>
                         </div>
                     </CardHeader>
-                    <CardContent className="space-y-2">
-                        {monitoringTasks.map(task => (
-                            <InteractiveTaskCard
-                                key={task.id}
-                                task={task}
-                                allTasks={tasks}
-                                isActive={activeTaskId === task.id}
-                                onToggle={() => setActiveTaskId(activeTaskId === task.id ? null : task.id)}
-                                onUpdate={handleTaskUpdate}
-                                onFindNext={(id) => handleFindNextTask(id, monitoringTasks)}
-                            />
-                        ))}
-                    </CardContent>
                 </Card>
-            )}
-
-            <Card>
-                <CardHeader>
-                    <div className="flex items-center gap-3">
-                        <Banknote className="h-6 w-6" />
-                        <CardTitle>Liquidity Check (ZFF7B)</CardTitle>
-                    </div>
-                    <CardDescription>Monitor current Cash Balance from ZFF7B.</CardDescription>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                        {isCashAlertActive && (
-                        <div className="rounded-lg border border-red-500/50 bg-red-500/10 p-4 text-sm text-red-200">
-                            <div className="flex items-center gap-2">
-                                <AlertTriangle className="h-5 w-5" />
-                                <h4 className="font-semibold text-red-100">Red Cash Alert</h4>
+                
+                {monitoringTasks.length > 0 && (
+                    <Card>
+                        <CardHeader>
+                            <div className="flex items-center gap-3">
+                                <ListTodo className="h-6 w-6" />
+                                <div>
+                                    <CardTitle>Monitoring Tasks</CardTitle>
+                                    <CardDescription>Monitor cash flow, deliveries, and stock status.</CardDescription>
+                                </div>
                             </div>
-                            <p className="pl-7">Cash Balance is below €100,000. Immediately alert Procurement to hold or cancel large POs to prevent overdraft.</p>
-                        </div>
-                    )}
-                    <div className="rounded-lg border bg-secondary/30 p-4 space-y-1">
-                        <p className="text-sm text-muted-foreground">Current Cash Balance (from Key Metrics)</p>
-                        <p className="text-3xl font-bold">{new Intl.NumberFormat('de-DE', { style: 'currency', currency: 'EUR' }).format(cashBalance)}</p>
-                    </div>
-                </CardContent>
-            </Card>
+                        </CardHeader>
+                        <CardContent className="space-y-2">
+                            {monitoringTasks.map(task => (
+                                <InteractiveTaskCard
+                                    key={task.id}
+                                    ref={taskRefs.current[getTaskRefIndex(task.id)]}
+                                    task={task}
+                                    allTasks={tasks}
+                                    isActive={activeTaskId === task.id}
+                                    onToggle={() => setActiveTaskId(activeTaskId === task.id ? null : task.id)}
+                                    onUpdate={handleTaskUpdate}
+                                    onFindNext={(id) => handleFindNextTask(id, monitoringTasks)}
+                                />
+                            ))}
+                        </CardContent>
+                    </Card>
+                )}
 
-            {stockTransferTasks.length > 0 && (
                 <Card>
                     <CardHeader>
                         <div className="flex items-center gap-3">
-                            <ListTodo className="h-6 w-6" />
-                            <div>
-                                <CardTitle>Stock Transfer Tasks</CardTitle>
-                                <CardDescription>Calculate and plan stock transfers to DCs.</CardDescription>
-                            </div>
+                            <Banknote className="h-6 w-6" />
+                            <CardTitle>Liquidity Check (ZFF7B)</CardTitle>
                         </div>
+                        <CardDescription>Monitor current Cash Balance from ZFF7B.</CardDescription>
                     </CardHeader>
-                    <CardContent className="space-y-2">
-                        {stockTransferTasks.map(task => (
-                            <InteractiveTaskCard
-                                key={task.id}
-                                task={task}
-                                allTasks={tasks}
-                                isActive={activeTaskId === task.id}
-                                onToggle={() => setActiveTaskId(activeTaskId === task.id ? null : task.id)}
-                                onUpdate={handleTaskUpdate}
-                                onFindNext={(id) => handleFindNextTask(id, stockTransferTasks)}
-                            />
-                        ))}
+                    <CardContent className="space-y-4">
+                            {isCashAlertActive && (
+                            <div className="rounded-lg border border-red-500/50 bg-red-500/10 p-4 text-sm text-red-200">
+                                <div className="flex items-center gap-2">
+                                    <AlertTriangle className="h-5 w-5" />
+                                    <h4 className="font-semibold text-red-100">Red Cash Alert</h4>
+                                </div>
+                                <p className="pl-7">Cash Balance is below €100,000. Immediately alert Procurement to hold or cancel large POs to prevent overdraft.</p>
+                            </div>
+                        )}
+                        <div className="rounded-lg border bg-secondary/30 p-4 space-y-1">
+                            <p className="text-sm text-muted-foreground">Current Cash Balance (from Key Metrics)</p>
+                            <p className="text-3xl font-bold">{new Intl.NumberFormat('de-DE', { style: 'currency', currency: 'EUR' }).format(cashBalance)}</p>
+                        </div>
                     </CardContent>
                 </Card>
-            )}
 
-            <Card>
-                <CardHeader>
-                     <div className="flex items-center gap-3">
-                        <PackageOpen className="h-6 w-6" />
-                        <CardTitle>Stock Transfer (ZMB1B)</CardTitle>
-                    </div>
-                    <CardDescription>Calculate and plan stock transfers to DCs using ZMB1B. The Final Transfer Qty will be pushed to the LIT.</CardDescription>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                    {isStockOutRisk && (
-                        <div className="rounded-lg border border-red-500/50 bg-red-500/10 p-3 text-sm text-red-200">
-                            <div className="flex items-center gap-2">
-                                <AlertTriangle className="h-5 w-5" />
-                                <h4 className="font-semibold text-red-100">Stock Out Risk</h4>
+                {stockTransferTasks.length > 0 && (
+                    <Card>
+                        <CardHeader>
+                            <div className="flex items-center gap-3">
+                                <ListTodo className="h-6 w-6" />
+                                <div>
+                                    <CardTitle>Stock Transfer Tasks</CardTitle>
+                                    <CardDescription>Calculate and plan stock transfers to DCs.</CardDescription>
+                                </div>
                             </div>
-                            <p className="pl-7">At least one DC has less than 5,000 units, increasing the risk of missed sales.</p>
-                        </div>
-                    )}
-                    <Table>
-                        <TableHeader>
-                            <TableRow>
-                                <TableHead>DC</TableHead>
-                                <TableHead>Current Stock</TableHead>
-                                <TableHead>Target DOS</TableHead>
-                                <TableHead>Final Transfer Qty</TableHead>
-                            </TableRow>
-                        </TableHeader>
-                        <TableBody>
-                            {transferFields.map((field, index) => {
-                                const fg = FINISHED_GOODS[index];
-                                return (
-                                    <TableRow key={field.id}>
-                                        <TableCell>{field.dc}</TableCell>
-                                        <TableCell>{fg.currentStock.toLocaleString()}</TableCell>
-                                        <TableCell>
-                                            <Input type="number" min="0" value={watchedTransfers[index].targetDOS} onChange={(e) => handleDosChange(index, parseInt(e.target.value, 10))} />
-                                        </TableCell>
-                                        <TableCell>
-                                            <Input readOnly disabled value={watchedTransfers[index].transferQty.toLocaleString()} />
-                                        </TableCell>
-                                    </TableRow>
-                                )
-                            })}
-                        </TableBody>
-                    </Table>
-                        <div className="flex justify-end">
-                        <Button>Push Transfer Qty to LIT (for ZMB1B)</Button>
-                    </div>
-                </CardContent>
-            </Card>
+                        </CardHeader>
+                        <CardContent className="space-y-2">
+                            {stockTransferTasks.map(task => (
+                                <InteractiveTaskCard
+                                    key={task.id}
+                                    ref={taskRefs.current[getTaskRefIndex(task.id)]}
+                                    task={task}
+                                    allTasks={tasks}
+                                    isActive={activeTaskId === task.id}
+                                    onToggle={() => setActiveTaskId(activeTaskId === task.id ? null : task.id)}
+                                    onUpdate={handleTaskUpdate}
+                                    onFindNext={(id) => handleFindNextTask(id, stockTransferTasks)}
+                                />
+                            ))}
+                        </CardContent>
+                    </Card>
+                )}
 
-            <Card>
-                <CardHeader>
-                    <div className="flex items-center gap-3">
-                        <Ship className="h-6 w-6" />
-                        <CardTitle>Delivery Monitoring (ZME2N)</CardTitle>
-                    </div>
-                    <CardDescription>Track incoming raw material deliveries from ZME2N and log execution data.</CardDescription>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                        <div className="rounded-lg border bg-secondary/30 p-4">
-                        <p className="font-semibold">PO Delivery Status (from Procurement)</p>
-                        <p className="text-sm text-muted-foreground">All POs on schedule. No late deliveries to flag.</p>
+                <Card>
+                    <CardHeader>
+                         <div className="flex items-center gap-3">
+                            <PackageOpen className="h-6 w-6" />
+                            <CardTitle>Stock Transfer (ZMB1B)</CardTitle>
                         </div>
-                        <div className="grid sm:grid-cols-2 gap-4">
-                        <div className="space-y-2">
-                            <Label htmlFor="numTransfers">Number of Transfers Executed</Label>
-                            <Input id="numTransfers" type="number" {...register('numTransfers', { valueAsNumber: true })} />
+                        <CardDescription>Calculate and plan stock transfers to DCs using ZMB1B. The Final Transfer Qty will be pushed to the LIT.</CardDescription>
+                    </CardHeader>
+                    <CardContent className="space-y-4">
+                        {isStockOutRisk && (
+                            <div className="rounded-lg border border-red-500/50 bg-red-500/10 p-3 text-sm text-red-200">
+                                <div className="flex items-center gap-2">
+                                    <AlertTriangle className="h-5 w-5" />
+                                    <h4 className="font-semibold text-red-100">Stock Out Risk</h4>
+                                </div>
+                                <p className="pl-7">At least one DC has less than 5,000 units, increasing the risk of missed sales.</p>
+                            </div>
+                        )}
+                        <Table>
+                            <TableHeader>
+                                <TableRow>
+                                    <TableHead>DC</TableHead>
+                                    <TableHead>Current Stock</TableHead>
+                                    <TableHead>Target DOS</TableHead>
+                                    <TableHead>Final Transfer Qty</TableHead>
+                                </TableRow>
+                            </TableHeader>
+                            <TableBody>
+                                {transferFields.map((field, index) => {
+                                    const fg = FINISHED_GOODS[index];
+                                    return (
+                                        <TableRow key={field.id}>
+                                            <TableCell>{field.dc}</TableCell>
+                                            <TableCell>{fg.currentStock.toLocaleString()}</TableCell>
+                                            <TableCell>
+                                                <Input type="number" min="0" value={watchedTransfers[index].targetDOS} onChange={(e) => handleDosChange(index, parseInt(e.target.value, 10))} />
+                                            </TableCell>
+                                            <TableCell>
+                                                <Input readOnly disabled value={watchedTransfers[index].transferQty.toLocaleString()} />
+                                            </TableCell>
+                                        </TableRow>
+                                    )
+                                })}
+                            </TableBody>
+                        </Table>
+                            <div className="flex justify-end">
+                            <Button>Push Transfer Qty to LIT (for ZMB1B)</Button>
                         </div>
+                    </CardContent>
+                </Card>
+
+                <Card>
+                    <CardHeader>
+                        <div className="flex items-center gap-3">
+                            <Ship className="h-6 w-6" />
+                            <CardTitle>Delivery Monitoring (ZME2N)</CardTitle>
+                        </div>
+                        <CardDescription>Track incoming raw material deliveries from ZME2N and log execution data.</CardDescription>
+                    </CardHeader>
+                    <CardContent className="space-y-4">
+                            <div className="rounded-lg border bg-secondary/30 p-4">
+                            <p className="font-semibold">PO Delivery Status (from Procurement)</p>
+                            <p className="text-sm text-muted-foreground">All POs on schedule. No late deliveries to flag.</p>
+                            </div>
+                            <div className="grid sm:grid-cols-2 gap-4">
                             <div className="space-y-2">
-                            <Label htmlFor="onTimeDeliveryRate">On-Time Delivery Rate (%)</Label>
-                            <Input id="onTimeDeliveryRate" type="number" {...register('onTimeDeliveryRate', { valueAsNumber: true })} />
-                        </div>
-                        </div>
-                </CardContent>
-            </Card>
-        </div>
+                                <Label htmlFor="numTransfers">Number of Transfers Executed</Label>
+                                <Input id="numTransfers" type="number" {...register('numTransfers', { valueAsNumber: true })} />
+                            </div>
+                                <div className="space-y-2">
+                                <Label htmlFor="onTimeDeliveryRate">On-Time Delivery Rate (%)</Label>
+                                <Input id="onTimeDeliveryRate" type="number" {...register('onTimeDeliveryRate', { valueAsNumber: true })} />
+                            </div>
+                            </div>
+                    </CardContent>
+                </Card>
+            </div>
+        </>
     );
 }

@@ -47,7 +47,8 @@ const completionIcon = (task: Task) => {
 };
 
 
-export function InteractiveTaskCard({ task, allTasks, isActive, onToggle, onUpdate, onFindNext }: InteractiveTaskCardProps) {
+export const InteractiveTaskCard = React.forwardRef<HTMLDivElement, InteractiveTaskCardProps>(
+    ({ task, allTasks, isActive, onToggle, onUpdate, onFindNext }, ref) => {
     const isCompleted = task.completed;
     const dependencies = task.dependencyIDs?.map(depId => allTasks.find(t => t.id === depId)).filter(Boolean) as Task[] | undefined;
     const areDependenciesMet = !dependencies || dependencies.every(dep => dep.completed);
@@ -99,11 +100,18 @@ export function InteractiveTaskCard({ task, allTasks, isActive, onToggle, onUpda
 
 
   return (
-    <Card className={cn(
-        "transition-all",
+    <Card ref={ref} className={cn(
+        "transition-all relative",
         isCompleted ? "bg-card/50" : "bg-card",
         isActive && "ring-2 ring-primary"
     )}>
+        {isActive && (
+            <div className="absolute -top-3 left-1/2 -translate-x-1/2">
+                <div className="bg-blue-600 text-white text-xs font-semibold px-3 py-1 rounded-full">
+                    Current Task
+                </div>
+            </div>
+        )}
         <Collapsible open={isActive} onOpenChange={onToggle}>
             <CollapsibleTrigger asChild>
                  <div className="flex items-center gap-4 p-4 cursor-pointer">
@@ -202,4 +210,6 @@ export function InteractiveTaskCard({ task, allTasks, isActive, onToggle, onUpda
         </Collapsible>
     </Card>
   );
-}
+});
+
+InteractiveTaskCard.displayName = 'InteractiveTaskCard';

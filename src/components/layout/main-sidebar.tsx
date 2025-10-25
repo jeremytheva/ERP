@@ -48,8 +48,8 @@ const procurementMenuItems = [
     { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
     { href: "/key-metrics", label: "Key Metrics", icon: BarChart2 },
     { href: "/action-items", label: "Round Tasks", icon: ListTodo },
-    { href: "/live-inventory", label: "RM Stock Status (LIT)", icon: FileText },
     { href: "/procurement", label: "Sourcing & Ordering", icon: Users },
+    { href: "/live-inventory", label: "RM Stock Status (LIT)", icon: FileText },
     { href: "/master-data", label: "Master Data", icon: Database },
 ];
 
@@ -57,7 +57,7 @@ const logisticsMenuItems = [
     { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
     { href: "/key-metrics", label: "Key Metrics", icon: BarChart2 },
     { href: "/action-items", label: "Round Tasks", icon: ListTodo },
-    { href: "/logistics", label: "Liquidity & Transfers", icon: BarChart2 },
+    { href: "/logistics", label: "Liquidity & Transfers", icon: Truck },
     { href: "/master-data", label: "Master Data", icon: Database },
 ];
 
@@ -66,7 +66,8 @@ const teamLeaderMenuItems = [
   { href: "/key-metrics", label: "Key Metrics", icon: BarChart2 },
   { href: "/action-items", label: "Round Tasks", icon: ListTodo },
   { href: "/strategic-advisor", label: "Analysis & Strategy", icon: Lightbulb },
-  { href: "/debriefing", label: "Investment Decisions (ZFB50)", icon: FileText },
+  { href: "/debriefing", label: "Investment Decisions", icon: FileText },
+  { href: "/competitor-log", label: "Competitor Log", icon: Users },
 ];
 
 

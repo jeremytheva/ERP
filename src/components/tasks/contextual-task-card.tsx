@@ -1,4 +1,5 @@
 
+
 "use client";
 
 import { useMemo } from "react";
@@ -26,8 +27,9 @@ export function ContextualTaskCard({ transactionCode, title, description, classN
   const currentRound = gameState.kpiHistory[gameState.kpiHistory.length - 1]?.round || 1;
 
   const relevantTasks = useMemo(() => {
+    if (!profile) return [];
     return tasks.filter(task =>
-      task.role === profile?.name &&
+      task.role === profile.name &&
       task.transactionCode === transactionCode &&
       (
         task.roundRecurrence === "Continuous" ||

@@ -2,7 +2,7 @@
 
 "use client";
 
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 import { useForm, Controller, useFieldArray } from 'react-hook-form';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Banknote, PackageOpen, Ship, AlertTriangle } from "lucide-react";
@@ -10,8 +10,13 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Label } from '@/components/ui/label';
-import { Truck } from 'lucide-react';
-import { ContextualTaskCard } from '@/components/tasks/contextual-task-card';
+import { Truck, ListTodo } from 'lucide-react';
+import { InteractiveTaskCard } from '@/components/tasks/interactive-task-card';
+import { useAuth } from '@/hooks/use-auth';
+import { useTasks } from '@/hooks/use-tasks';
+import { useGameState } from '@/hooks/use-game-data';
+import type { Role, Task } from "@/types";
+
 
 const FINISHED_GOODS = [
     { dc: 'DC10', currentStock: 15000, forecast: 40000, salesPerDay: 8000 },
@@ -28,6 +33,11 @@ type LogisticsFormData = {
 export default function LogisticsPage() {
     const cashBalance = 85000; // Mock data from Key Metrics
     const isCashAlertActive = cashBalance < 100000;
+    
+    const { profile } = useAuth();
+    const { tasks, updateTask } = useTasks();
+    const { gameState } = useGameState();
+    const [activeTaskId, setActiveTaskId] = useState<string | null>(null);
 
     const { control, register, watch, setValue } = useForm<LogisticsFormData>({
         defaultValues: {
@@ -43,6 +53,46 @@ export default function LogisticsPage() {
 
     const { fields: transferFields } = useFieldArray({ control, name: 'transfers' });
     const watchedTransfers = watch('transfers');
+    
+    const currentRound = gameState.kpiHistory[gameState.kpiHistory.length - 1]?.round || 1;
+
+    const monitoringTasks = useMemo(() => {
+        if (!profile) return [];
+        return tasks.filter(task =>
+            task.role === profile.name &&
+            (task.transactionCode === "ZFF7B/ZME2N" || task.transactionCode === "ZME2N (PO Status)") &&
+             (task.roundRecurrence === "Continuous" || (task.startRound ?? 1) <= currentRound)
+        ).sort((a,b) => a.priority.localeCompare(b.priority));
+    }, [tasks, profile, currentRound]);
+    
+    const stockTransferTasks = useMemo(() => {
+        if (!profile) return [];
+        return tasks.filter(task =>
+            task.role === profile.name &&
+            task.transactionCode === "ZMB1B" &&
+             (task.roundRecurrence === "Continuous" || (task.startRound ?? 1) <= currentRound)
+        ).sort((a,b) => a.priority.localeCompare(b.priority));
+    }, [tasks, profile, currentRound]);
+
+    const handleTaskUpdate = (updatedTask: Task) => {
+        updateTask(updatedTask);
+    };
+
+    const handleFindNextTask = (currentTaskId: string, taskGroup: Task[]) => {
+        const currentIndex = taskGroup.findIndex(t => t.id === currentTaskId);
+        if (currentIndex === -1) {
+            setActiveTaskId(null);
+            return;
+        }
+        const nextTask = taskGroup.slice(currentIndex + 1).find(t => !t.completed);
+        if (nextTask) {
+            setActiveTaskId(nextTask.id);
+        } else {
+            const firstIncompleteTask = taskGroup.find(t => !t.completed && t.id !== currentTaskId);
+            setActiveTaskId(firstIncompleteTask ? firstIncompleteTask.id : null);
+        }
+    };
+
 
     const handleDosChange = (index: number, newDos: number) => {
         const fg = FINISHED_GOODS[index];
@@ -70,12 +120,34 @@ export default function LogisticsPage() {
                     </div>
                 </CardHeader>
             </Card>
+            
+            {monitoringTasks.length > 0 && (
+                <Card>
+                    <CardHeader>
+                        <div className="flex items-center gap-3">
+                            <ListTodo className="h-6 w-6" />
+                            <div>
+                                <CardTitle>Monitoring Tasks</CardTitle>
+                                <CardDescription>Monitor cash flow, deliveries, and stock status.</CardDescription>
+                            </div>
+                        </div>
+                    </CardHeader>
+                    <CardContent className="space-y-2">
+                        {monitoringTasks.map(task => (
+                            <InteractiveTaskCard
+                                key={task.id}
+                                task={task}
+                                allTasks={tasks}
+                                isActive={activeTaskId === task.id}
+                                onToggle={() => setActiveTaskId(activeTaskId === task.id ? null : task.id)}
+                                onUpdate={handleTaskUpdate}
+                                onFindNext={(id) => handleFindNextTask(id, monitoringTasks)}
+                            />
+                        ))}
+                    </CardContent>
+                </Card>
+            )}
 
-            <ContextualTaskCard 
-                transactionCode="ZFF7B/ZME2N"
-                title="Monitoring Tasks"
-                description="Monitor cash flow, deliveries, and stock status."
-            />
             <Card>
                 <CardHeader>
                     <div className="flex items-center gap-3">
@@ -101,11 +173,33 @@ export default function LogisticsPage() {
                 </CardContent>
             </Card>
 
-            <ContextualTaskCard 
-                transactionCode="ZMB1B"
-                title="Stock Transfer Tasks"
-                description="Calculate and plan stock transfers to DCs."
-            />
+            {stockTransferTasks.length > 0 && (
+                <Card>
+                    <CardHeader>
+                        <div className="flex items-center gap-3">
+                            <ListTodo className="h-6 w-6" />
+                            <div>
+                                <CardTitle>Stock Transfer Tasks</CardTitle>
+                                <CardDescription>Calculate and plan stock transfers to DCs.</CardDescription>
+                            </div>
+                        </div>
+                    </CardHeader>
+                    <CardContent className="space-y-2">
+                        {stockTransferTasks.map(task => (
+                            <InteractiveTaskCard
+                                key={task.id}
+                                task={task}
+                                allTasks={tasks}
+                                isActive={activeTaskId === task.id}
+                                onToggle={() => setActiveTaskId(activeTaskId === task.id ? null : task.id)}
+                                onUpdate={handleTaskUpdate}
+                                onFindNext={(id) => handleFindNextTask(id, stockTransferTasks)}
+                            />
+                        ))}
+                    </CardContent>
+                </Card>
+            )}
+
             <Card>
                 <CardHeader>
                      <div className="flex items-center gap-3">

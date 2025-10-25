@@ -2,16 +2,21 @@
 
 "use client";
 
+import { useMemo, useState } from 'react';
 import { useForm, Controller, useFieldArray } from 'react-hook-form';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Package, Users, Truck, Leaf, AlertTriangle } from "lucide-react";
+import { Package, Users, Truck, Leaf, AlertTriangle, ListTodo } from "lucide-react";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Label } from '@/components/ui/label';
 import { ShoppingCart } from 'lucide-react';
-import { ContextualTaskCard } from '@/components/tasks/contextual-task-card';
+import { InteractiveTaskCard } from '@/components/tasks/interactive-task-card';
+import { useAuth } from '@/hooks/use-auth';
+import { useTasks } from '@/hooks/use-tasks';
+import { useGameState } from '@/hooks/use-game-data';
+import type { Role, Task } from "@/types";
 
 
 const RAW_MATERIALS = [
@@ -38,6 +43,11 @@ type ProcurementFormData = {
 };
 
 export default function ProcurementPage() {
+    const { profile } = useAuth();
+    const { tasks, updateTask } = useTasks();
+    const { gameState } = useGameState();
+    const [activeTaskId, setActiveTaskId] = useState<string | null>(null);
+
     const { register, control } = useForm<ProcurementFormData>({
         defaultValues: {
             sourcing: RAW_MATERIALS.map(rm => ({ materialId: rm.id, vendor: rm.vendor as 'v01' | 'v11' })),
@@ -50,6 +60,63 @@ export default function ProcurementPage() {
     const { fields: sourcingFields } = useFieldArray({ control, name: 'sourcing' });
     const { fields: packagingSourcingFields } = useFieldArray({ control, name: 'packagingSourcing'});
     const { fields: orderFields } = useFieldArray({ control, name: 'orders' });
+
+    const currentRound = gameState.kpiHistory[gameState.kpiHistory.length - 1]?.round || 1;
+
+    const inventoryTasks = useMemo(() => {
+        if (!profile) return [];
+        return tasks.filter(task =>
+            task.role === profile.name &&
+            task.transactionCode === "ZMB52" &&
+            (task.roundRecurrence === "Continuous" || (task.startRound ?? 1) <= currentRound)
+        ).sort((a,b) => a.priority.localeCompare(b.priority));
+    }, [tasks, profile, currentRound]);
+    
+    const sourcingTasks = useMemo(() => {
+        if (!profile) return [];
+        return tasks.filter(task =>
+            task.role === profile.name &&
+            task.transactionCode === "ZME12" &&
+            (task.roundRecurrence === "Continuous" || (task.startRound ?? 1) <= currentRound)
+        ).sort((a,b) => a.priority.localeCompare(b.priority));
+    }, [tasks, profile, currentRound]);
+
+    const orderTasks = useMemo(() => {
+        if (!profile) return [];
+        return tasks.filter(task =>
+            task.role === profile.name &&
+            task.transactionCode === "ME59N" &&
+            (task.roundRecurrence === "Continuous" || (task.startRound ?? 1) <= currentRound)
+        ).sort((a,b) => a.priority.localeCompare(b.priority));
+    }, [tasks, profile, currentRound]);
+
+    const sustainabilityTasks = useMemo(() => {
+        if (!profile) return [];
+        return tasks.filter(task =>
+            task.role === profile.name &&
+            task.transactionCode === "ZFB50" &&
+            (task.roundRecurrence === "Continuous" || (task.startRound ?? 1) <= currentRound)
+        ).sort((a,b) => a.priority.localeCompare(b.priority));
+    }, [tasks, profile, currentRound]);
+
+    const handleTaskUpdate = (updatedTask: Task) => {
+        updateTask(updatedTask);
+    };
+
+    const handleFindNextTask = (currentTaskId: string, taskGroup: Task[]) => {
+        const currentIndex = taskGroup.findIndex(t => t.id === currentTaskId);
+        if (currentIndex === -1) {
+            setActiveTaskId(null);
+            return;
+        }
+        const nextTask = taskGroup.slice(currentIndex + 1).find(t => !t.completed);
+        if (nextTask) {
+            setActiveTaskId(nextTask.id);
+        } else {
+            const firstIncompleteTask = taskGroup.find(t => !t.completed && t.id !== currentTaskId);
+            setActiveTaskId(firstIncompleteTask ? firstIncompleteTask.id : null);
+        }
+    };
 
     return (
         <div className="space-y-6">
@@ -65,11 +132,32 @@ export default function ProcurementPage() {
                 </CardHeader>
             </Card>
 
-             <ContextualTaskCard 
-                transactionCode="ZMB52"
-                title="Inventory Check Tasks"
-                description="Review current raw material stock and status."
-            />
+            {inventoryTasks.length > 0 && (
+                <Card>
+                    <CardHeader>
+                        <div className="flex items-center gap-3">
+                            <ListTodo className="h-6 w-6" />
+                            <div>
+                                <CardTitle>Inventory Check Tasks</CardTitle>
+                                <CardDescription>Review current raw material stock and status.</CardDescription>
+                            </div>
+                        </div>
+                    </CardHeader>
+                    <CardContent className="space-y-2">
+                        {inventoryTasks.map(task => (
+                             <InteractiveTaskCard
+                                key={task.id}
+                                task={task}
+                                allTasks={tasks}
+                                isActive={activeTaskId === task.id}
+                                onToggle={() => setActiveTaskId(activeTaskId === task.id ? null : task.id)}
+                                onUpdate={handleTaskUpdate}
+                                onFindNext={(id) => handleFindNextTask(id, inventoryTasks)}
+                            />
+                        ))}
+                    </CardContent>
+                </Card>
+            )}
             <Card>
                 <CardHeader>
                     <div className="flex items-center gap-3">
@@ -104,11 +192,32 @@ export default function ProcurementPage() {
                 </CardContent>
             </Card>
 
-             <ContextualTaskCard 
-                transactionCode="ZME12"
-                title="Sourcing Tasks"
-                description="Set the order strategy and vendor selection for each material."
-            />
+            {sourcingTasks.length > 0 && (
+                <Card>
+                    <CardHeader>
+                        <div className="flex items-center gap-3">
+                            <ListTodo className="h-6 w-6" />
+                            <div>
+                                <CardTitle>Sourcing Tasks</CardTitle>
+                                <CardDescription>Set the order strategy and vendor selection for each material.</CardDescription>
+                            </div>
+                        </div>
+                    </CardHeader>
+                    <CardContent className="space-y-2">
+                        {sourcingTasks.map(task => (
+                             <InteractiveTaskCard
+                                key={task.id}
+                                task={task}
+                                allTasks={tasks}
+                                isActive={activeTaskId === task.id}
+                                onToggle={() => setActiveTaskId(activeTaskId === task.id ? null : task.id)}
+                                onUpdate={handleTaskUpdate}
+                                onFindNext={(id) => handleFindNextTask(id, sourcingTasks)}
+                            />
+                        ))}
+                    </CardContent>
+                </Card>
+            )}
             <Card>
                 <CardHeader>
                     <div className="flex items-center gap-3">
@@ -183,11 +292,32 @@ export default function ProcurementPage() {
                 </CardContent>
             </Card>
 
-            <ContextualTaskCard 
-                transactionCode="ME59N"
-                title="Order Calculation Tasks"
-                description="Calculate and create purchase orders."
-            />
+            {orderTasks.length > 0 && (
+                <Card>
+                    <CardHeader>
+                        <div className="flex items-center gap-3">
+                            <ListTodo className="h-6 w-6" />
+                            <div>
+                                <CardTitle>Order Calculation Tasks</CardTitle>
+                                <CardDescription>Calculate and create purchase orders.</CardDescription>
+                            </div>
+                        </div>
+                    </CardHeader>
+                    <CardContent className="space-y-2">
+                        {orderTasks.map(task => (
+                             <InteractiveTaskCard
+                                key={task.id}
+                                task={task}
+                                allTasks={tasks}
+                                isActive={activeTaskId === task.id}
+                                onToggle={() => setActiveTaskId(activeTaskId === task.id ? null : task.id)}
+                                onUpdate={handleTaskUpdate}
+                                onFindNext={(id) => handleFindNextTask(id, orderTasks)}
+                            />
+                        ))}
+                    </CardContent>
+                </Card>
+            )}
             <Card>
                 <CardHeader>
                     <div className="flex items-center gap-3">
@@ -217,11 +347,32 @@ export default function ProcurementPage() {
                 </CardContent>
             </Card>
 
-            <ContextualTaskCard 
-                transactionCode="ZFB50"
-                title="Sustainability Tasks"
-                description="Track sustainability goals and investment amounts."
-            />
+            {sustainabilityTasks.length > 0 && (
+                 <Card>
+                    <CardHeader>
+                        <div className="flex items-center gap-3">
+                            <ListTodo className="h-6 w-6" />
+                            <div>
+                                <CardTitle>Sustainability Tasks</CardTitle>
+                                <CardDescription>Track sustainability goals and investment amounts.</CardDescription>
+                            </div>
+                        </div>
+                    </CardHeader>
+                    <CardContent className="space-y-2">
+                        {sustainabilityTasks.map(task => (
+                             <InteractiveTaskCard
+                                key={task.id}
+                                task={task}
+                                allTasks={tasks}
+                                isActive={activeTaskId === task.id}
+                                onToggle={() => setActiveTaskId(activeTaskId === task.id ? null : task.id)}
+                                onUpdate={handleTaskUpdate}
+                                onFindNext={(id) => handleFindNextTask(id, sustainabilityTasks)}
+                            />
+                        ))}
+                    </CardContent>
+                </Card>
+            )}
             <Card>
                 <CardHeader>
                     <div className="flex items-center gap-3">

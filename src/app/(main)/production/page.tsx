@@ -2,16 +2,22 @@
 
 "use client";
 
+import { useMemo, useState } from 'react';
 import { useForm, Controller } from 'react-hook-form';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { FileBox, Wrench, PackageCheck, FileSignature, AlertTriangle } from "lucide-react";
+import { FileBox, Wrench, PackageCheck, FileSignature, AlertTriangle, ListTodo } from "lucide-react";
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Factory } from 'lucide-react';
-import { ContextualTaskCard } from '@/components/tasks/contextual-task-card';
+import { InteractiveTaskCard } from '@/components/tasks/interactive-task-card';
+import { useAuth } from '@/hooks/use-auth';
+import { useTasks } from '@/hooks/use-tasks';
+import { useGameState } from '@/hooks/use-game-data';
+import type { Role, Task } from "@/types";
+
 
 const CAPACITY_PER_DAY = 60000; // Units
 
@@ -23,6 +29,11 @@ type ProductionFormData = {
 };
 
 export default function ProductionPage() {
+    const { profile } = useAuth();
+    const { tasks, updateTask } = useTasks();
+    const { gameState } = useGameState();
+    const [activeTaskId, setActiveTaskId] = useState<string | null>(null);
+
     const { register, control, watch } = useForm<ProductionFormData>({
         defaultValues: {
             lotSize: 48000,
@@ -37,6 +48,55 @@ export default function ProductionPage() {
     const capacityUtilization = (salesForecast / (CAPACITY_PER_DAY * 5)) * 100;
     const watchedLotSize = watch('lotSize');
     const efficiencyAlert = watchedLotSize < 48000;
+    
+    const currentRound = gameState.kpiHistory[gameState.kpiHistory.length - 1]?.round || 1;
+
+    const mrpTasks = useMemo(() => {
+        if (!profile) return [];
+        return tasks.filter(task =>
+            task.role === profile.name &&
+            task.transactionCode === "MD01" &&
+             (task.roundRecurrence === "Continuous" || (task.startRound ?? 1) <= currentRound)
+        ).sort((a,b) => a.priority.localeCompare(b.priority));
+    }, [tasks, profile, currentRound]);
+    
+    const releaseTasks = useMemo(() => {
+        if (!profile) return [];
+        return tasks.filter(task =>
+            task.role === profile.name &&
+            task.transactionCode.startsWith("CO41") &&
+             (task.roundRecurrence === "Continuous" || (task.startRound ?? 1) <= currentRound)
+        ).sort((a,b) => a.priority.localeCompare(b.priority));
+    }, [tasks, profile, currentRound]);
+
+    const bomTasks = useMemo(() => {
+        if (!profile) return [];
+        return tasks.filter(task =>
+            task.role === profile.name &&
+            task.transactionCode === "ZCS02" &&
+             (task.roundRecurrence === "Continuous" || (task.startRound ?? 1) <= currentRound)
+        ).sort((a,b) => a.priority.localeCompare(b.priority));
+    }, [tasks, profile, currentRound]);
+
+
+    const handleTaskUpdate = (updatedTask: Task) => {
+        updateTask(updatedTask);
+    };
+
+    const handleFindNextTask = (currentTaskId: string, taskGroup: Task[]) => {
+        const currentIndex = taskGroup.findIndex(t => t.id === currentTaskId);
+        if (currentIndex === -1) {
+            setActiveTaskId(null);
+            return;
+        }
+        const nextTask = taskGroup.slice(currentIndex + 1).find(t => !t.completed);
+        if (nextTask) {
+            setActiveTaskId(nextTask.id);
+        } else {
+            const firstIncompleteTask = taskGroup.find(t => !t.completed && t.id !== currentTaskId);
+            setActiveTaskId(firstIncompleteTask ? firstIncompleteTask.id : null);
+        }
+    };
 
     return (
         <div className="space-y-6">
@@ -86,11 +146,32 @@ export default function ProductionPage() {
                 </CardContent>
             </Card>
 
-            <ContextualTaskCard
-                transactionCode="MD01"
-                title="MRP Run Tasks"
-                description="Execute the MRP run after the forecast is finalized."
-            />
+            {mrpTasks.length > 0 && (
+                 <Card>
+                    <CardHeader>
+                        <div className="flex items-center gap-3">
+                            <ListTodo className="h-6 w-6" />
+                            <div>
+                                <CardTitle>MRP Run Tasks</CardTitle>
+                                <CardDescription>Execute the MRP run after the forecast is finalized.</CardDescription>
+                            </div>
+                        </div>
+                    </CardHeader>
+                    <CardContent className="space-y-2">
+                        {mrpTasks.map(task => (
+                             <InteractiveTaskCard
+                                key={task.id}
+                                task={task}
+                                allTasks={tasks}
+                                isActive={activeTaskId === task.id}
+                                onToggle={() => setActiveTaskId(activeTaskId === task.id ? null : task.id)}
+                                onUpdate={handleTaskUpdate}
+                                onFindNext={(id) => handleFindNextTask(id, mrpTasks)}
+                            />
+                        ))}
+                    </CardContent>
+                </Card>
+            )}
             <Card>
                 <CardHeader>
                     <div className="flex items-center gap-3">
@@ -109,11 +190,32 @@ export default function ProductionPage() {
                 </CardContent>
             </Card>
 
-             <ContextualTaskCard
-                transactionCode="CO41 (Production Release)"
-                title="Production Release Tasks"
-                description="Final step to release production orders."
-            />
+            {releaseTasks.length > 0 && (
+                <Card>
+                    <CardHeader>
+                        <div className="flex items-center gap-3">
+                            <ListTodo className="h-6 w-6" />
+                            <div>
+                                <CardTitle>Production Release Tasks</CardTitle>
+                                <CardDescription>Final step to release production orders.</CardDescription>
+                            </div>
+                        </div>
+                    </CardHeader>
+                    <CardContent className="space-y-2">
+                        {releaseTasks.map(task => (
+                             <InteractiveTaskCard
+                                key={task.id}
+                                task={task}
+                                allTasks={tasks}
+                                isActive={activeTaskId === task.id}
+                                onToggle={() => setActiveTaskId(activeTaskId === task.id ? null : task.id)}
+                                onUpdate={handleTaskUpdate}
+                                onFindNext={(id) => handleFindNextTask(id, releaseTasks)}
+                            />
+                        ))}
+                    </CardContent>
+                </Card>
+            )}
             <Card>
                 <CardHeader>
                     <div className="flex items-center gap-3">
@@ -135,11 +237,32 @@ export default function ProductionPage() {
                 </CardContent>
             </Card>
 
-             <ContextualTaskCard
-                transactionCode="ZCS02"
-                title="BOM Review Tasks"
-                description="Track and apply recipe changes."
-            />
+            {bomTasks.length > 0 && (
+                <Card>
+                    <CardHeader>
+                        <div className="flex items-center gap-3">
+                            <ListTodo className="h-6 w-6" />
+                            <div>
+                                <CardTitle>BOM Review Tasks</CardTitle>
+                                <CardDescription>Track and apply recipe changes.</CardDescription>
+                            </div>
+                        </div>
+                    </CardHeader>
+                    <CardContent className="space-y-2">
+                        {bomTasks.map(task => (
+                             <InteractiveTaskCard
+                                key={task.id}
+                                task={task}
+                                allTasks={tasks}
+                                isActive={activeTaskId === task.id}
+                                onToggle={() => setActiveTaskId(activeTaskId === task.id ? null : task.id)}
+                                onUpdate={handleTaskUpdate}
+                                onFindNext={(id) => handleFindNextTask(id, bomTasks)}
+                            />
+                        ))}
+                    </CardContent>
+                </Card>
+            )}
             <Card>
                 <CardHeader>
                     <div className="flex items-center gap-3">

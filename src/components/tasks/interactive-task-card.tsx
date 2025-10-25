@@ -100,115 +100,178 @@ export const InteractiveTaskCard = React.forwardRef<HTMLDivElement, InteractiveT
 
 
   return (
-    <Card ref={ref} className={cn(
-        "transition-all relative",
-        isCompleted ? "bg-card/50" : "bg-card",
-        isActive && "ring-2 ring-primary"
-    )}>
-        {isActive && (
-            <div className="absolute -top-3 left-1/2 -translate-x-1/2">
-                <div className="bg-blue-600 text-white text-xs font-semibold px-3 py-1 rounded-full">
-                    Current Task
-                </div>
-            </div>
+    <div ref={ref} className="relative">
+      {isActive && (
+        <div className="absolute -top-3 left-1/2 -translate-x-1/2 z-10">
+          <div className="bg-blue-600 text-white text-xs font-semibold px-3 py-1 rounded-full whitespace-nowrap">
+            Current Task
+          </div>
+        </div>
+      )}
+      <Card
+        className={cn(
+          "transition-all",
+          isCompleted ? "bg-card/50" : "bg-card",
+          isActive && "ring-2 ring-primary"
         )}
+      >
         <Collapsible open={isActive} onOpenChange={onToggle}>
-            <CollapsibleTrigger asChild>
-                 <div className="flex items-center gap-4 p-4 cursor-pointer">
-                    <div onClick={(e) => { e.preventDefault(); e.stopPropagation(); handleMarkComplete(!task.completed)}}>
-                        {completionIcon(task)}
-                    </div>
-                    <div className="flex-1">
-                        <p className={cn("font-semibold", isCompleted && "line-through text-muted-foreground")}>
-                            {task.title}
-                        </p>
-                        <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-muted-foreground mt-1">
-                             <div className="flex items-center gap-1.5" title="Transaction Code">
-                                <Code className="h-3.5 w-3.5" />
-                                <code>{task.transactionCode}</code>
-                            </div>
-                            <div className="flex items-center gap-1.5" title="Estimated Time">
-                                <Clock className="h-3.5 w-3.5" />
-                                <span>{task.estimatedTime} min</span>
-                            </div>
-                        </div>
-                    </div>
-                    <Badge variant={priorityVariant[task.priority]} className="hidden sm:inline-flex">{task.priority}</Badge>
-                    <ChevronDown className={cn("h-5 w-5 transition-transform", isActive && "rotate-180")} />
+          <CollapsibleTrigger asChild>
+            <div className="flex items-center gap-4 p-4 cursor-pointer">
+              <div
+                onClick={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  handleMarkComplete(!task.completed);
+                }}
+              >
+                {completionIcon(task)}
+              </div>
+              <div className="flex-1">
+                <p
+                  className={cn(
+                    "font-semibold",
+                    isCompleted && "line-through text-muted-foreground"
+                  )}
+                >
+                  {task.title}
+                </p>
+                <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-muted-foreground mt-1">
+                  <div
+                    className="flex items-center gap-1.5"
+                    title="Transaction Code"
+                  >
+                    <Code className="h-3.5 w-3.5" />
+                    <code>{task.transactionCode}</code>
+                  </div>
+                  <div
+                    className="flex items-center gap-1.5"
+                    title="Estimated Time"
+                  >
+                    <Clock className="h-3.5 w-3.5" />
+                    <span>{task.estimatedTime} min</span>
+                  </div>
                 </div>
-            </CollapsibleTrigger>
-            <CollapsibleContent>
-                <Separator />
-                <div className="p-6 space-y-6">
-                    <p className="text-sm text-muted-foreground">{task.description}</p>
-                    
-                    {!areDependenciesMet && dependencies && (
-                         <div className="rounded-lg border border-amber-500/50 bg-amber-500/10 p-4 text-sm text-amber-200">
-                             <div className="flex items-start gap-3">
-                                <AlertTriangle className="h-5 w-5 mt-0.5" />
-                                <div>
-                                    <h4 className="font-semibold text-amber-100">Dependencies Not Met</h4>
-                                    <p>This task is blocked until the following tasks are completed:</p>
-                                    <ul className="mt-2 list-disc pl-5">
-                                        {dependencies.filter(d => !d.completed).map(dep => <li key={dep.id}>{dep.title}</li>)}
-                                    </ul>
-                                </div>
-                             </div>
-                         </div>
-                    )}
-                    
-                    {task.dataFields && (
-                        <Form {...form}>
-                            <form className="space-y-4">
-                                {task.dataFields.map(field => (
-                                     <Card key={field.fieldName} className="bg-secondary/50 p-4">
-                                        <FormField
-                                            control={form.control}
-                                            name={field.fieldName}
-                                            render={({ field: formField }) => (
-                                                <FormItem>
-                                                    <FormLabel>{field.fieldName.replace(/_/g, ' ')}</FormLabel>
-                                                    <FormControl>
-                                                        <Input 
-                                                            type={field.dataType === "Currency" || field.dataType === "Integer" ? "number" : "text"}
-                                                            {...formField}
-                                                            className="bg-background"
-                                                            step={field.dataType === "Currency" ? "0.01" : "1"}
-                                                        />
-                                                    </FormControl>
-                                                    <FormMessage />
-                                                </FormItem>
-                                            )}
-                                        />
-                                        {field.aiRationale && (
-                                             <div className="mt-2 flex items-start gap-2 text-xs text-muted-foreground">
-                                                <Info className="h-4 w-4 shrink-0 mt-0.5" />
-                                                <p>
-                                                    <span className="font-semibold">AI Rationale:</span> {field.aiRationale}
-                                                </p>
-                                            </div>
-                                        )}
-                                     </Card>
-                                ))}
-                            </form>
-                        </Form>
-                    )}
+              </div>
+              <Badge
+                variant={priorityVariant[task.priority]}
+                className="hidden sm:inline-flex"
+              >
+                {task.priority}
+              </Badge>
+              <ChevronDown
+                className={cn(
+                  "h-5 w-5 transition-transform",
+                  isActive && "rotate-180"
+                )}
+              />
+            </div>
+          </CollapsibleTrigger>
+          <CollapsibleContent>
+            <Separator />
+            <div className="p-6 space-y-6">
+              <p className="text-sm text-muted-foreground">{task.description}</p>
 
-                    <div className="flex justify-end gap-2">
-                        {isCompleted && (
-                            <Button variant="outline" onClick={() => onFindNext(task.id)}>
-                                <SkipForward className="mr-2 h-4 w-4" />
-                                Next Task
-                            </Button>
-                        )}
-                        <Button onClick={() => handleMarkComplete(!isCompleted)} disabled={!areDependenciesMet}>
-                            {isCompleted ? "Mark as Incomplete" : "Mark as Complete"}
-                        </Button>
+              {!areDependenciesMet && dependencies && (
+                <div className="rounded-lg border border-amber-500/50 bg-amber-500/10 p-4 text-sm text-amber-200">
+                  <div className="flex items-start gap-3">
+                    <AlertTriangle className="h-5 w-5 mt-0.5" />
+                    <div>
+                      <h4 className="font-semibold text-amber-100">
+                        Dependencies Not Met
+                      </h4>
+                      <p>
+                        This task is blocked until the following tasks are
+                        completed:
+                      </p>
+                      <ul className="mt-2 list-disc pl-5">
+                        {dependencies
+                          .filter((d) => !d.completed)
+                          .map((dep) => (
+                            <li key={dep.id}>{dep.title}</li>
+                          ))}
+                      </ul>
                     </div>
+                  </div>
                 </div>
-            </CollapsibleContent>
+              )}
+
+              {task.dataFields && (
+                <Form {...form}>
+                  <form className="space-y-4">
+                    {task.dataFields.map((field) => (
+                      <Card
+                        key={field.fieldName}
+                        className="bg-secondary/50 p-4"
+                      >
+                        <FormField
+                          control={form.control}
+                          name={field.fieldName}
+                          render={({ field: formField }) => (
+                            <FormItem>
+                              <FormLabel>
+                                {field.fieldName.replace(/_/g, " ")}
+                              </FormLabel>
+                              <FormControl>
+                                <Input
+                                  type={
+                                    field.dataType === "Currency" ||
+                                    field.dataType === "Integer"
+                                      ? "number"
+                                      : "text"
+                                  }
+                                  {...formField}
+                                  className="bg-background"
+                                  step={
+                                    field.dataType === "Currency"
+                                      ? "0.01"
+                                      : "1"
+                                  }
+                                />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                        {field.aiRationale && (
+                          <div className="mt-2 flex items-start gap-2 text-xs text-muted-foreground">
+                            <Info className="h-4 w-4 shrink-0 mt-0.5" />
+                            <p>
+                              <span className="font-semibold">
+                                AI Rationale:
+                              </span>{" "}
+                              {field.aiRationale}
+                            </p>
+                          </div>
+                        )}
+                      </Card>
+                    ))}
+                  </form>
+                </Form>
+              )}
+
+              <div className="flex justify-end gap-2">
+                {isCompleted && (
+                  <Button
+                    variant="outline"
+                    onClick={() => onFindNext(task.id)}
+                  >
+                    <SkipForward className="mr-2 h-4 w-4" />
+                    Next Task
+                  </Button>
+                )}
+                <Button
+                  onClick={() => handleMarkComplete(!isCompleted)}
+                  disabled={!areDependenciesMet}
+                >
+                  {isCompleted ? "Mark as Incomplete" : "Mark as Complete"}
+                </Button>
+              </div>
+            </div>
+          </CollapsibleContent>
         </Collapsible>
-    </Card>
+      </Card>
+    </div>
   );
 });
 

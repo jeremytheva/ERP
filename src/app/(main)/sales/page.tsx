@@ -2,11 +2,8 @@
 "use client";
 
 import { useMemo, useState, useRef, useEffect, createRef } from "react";
-import { useForm } from "react-hook-form";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Info, TrendingUp, ListTodo, LocateFixed } from "lucide-react";
+import { ListTodo, LocateFixed } from "lucide-react";
 import { InteractiveTaskCard } from '@/components/tasks/interactive-task-card';
 import { useAuth } from '@/hooks/use-auth';
 import { useTasks } from '@/hooks/use-tasks';
@@ -14,17 +11,7 @@ import { useGameState } from '@/hooks/use-game-data';
 import type { Task } from "@/types";
 import { Button } from "@/components/ui/button";
 
-type SalesFormData = {
-    competitorAvgPrice: number;
-};
-
 export default function SalesPage() {
-    const { register } = useForm<SalesFormData>({
-        defaultValues: {
-            competitorAvgPrice: 15.50,
-        }
-    });
-
     const { profile } = useAuth();
     const { tasks, updateTask } = useTasks();
     const { gameState } = useGameState();
@@ -107,21 +94,15 @@ export default function SalesPage() {
                 </div>
             )}
             <div className="space-y-6">
-                {marketAnalysisTasks.length > 0 && (
-                    <Card>
-                        <CardHeader>
-                            <div className="flex items-center gap-3">
-                                <ListTodo className="h-6 w-6" />
-                                <div>
-                                    <CardTitle>Market Analysis Tasks</CardTitle>
-                                    <CardDescription>Execute tasks related to market analysis (ZMARKET).</CardDescription>
-                                </div>
-                            </div>
-                        </CardHeader>
-                        <CardContent className="space-y-2">
-                            {marketAnalysisTasks.map((task, index) => (
+                 <Card>
+                    <CardHeader>
+                        <CardTitle className="font-headline text-3xl">Market Analysis (ZMARKET)</CardTitle>
+                        <CardDescription>Extract key market data from ZMARKET to drive pricing decisions.</CardDescription>
+                    </CardHeader>
+                    <CardContent className="space-y-2">
+                        {marketAnalysisTasks.map((task, index) => (
+                            <div key={task.id} className="relative pt-6">
                                 <InteractiveTaskCard
-                                    key={task.id}
                                     ref={taskRefs.current[index]}
                                     task={task}
                                     allTasks={tasks}
@@ -130,35 +111,8 @@ export default function SalesPage() {
                                     onUpdate={handleTaskUpdate}
                                     onFindNext={(id) => handleFindNextTask(id, marketAnalysisTasks)}
                                 />
-                            ))}
-                        </CardContent>
-                    </Card>
-                )}
-
-                <Card>
-                    <CardHeader>
-                        <CardTitle className="font-headline text-3xl">Market Analysis (ZMARKET)</CardTitle>
-                        <CardDescription>Extract key market data from ZMARKET to drive pricing decisions.</CardDescription>
-                    </CardHeader>
-                    <CardContent className="space-y-4">
-                        <div className="space-y-2">
-                            <Label htmlFor="competitorAvgPrice">Competitor Avg. Price (€)</Label>
-                            <Input id="competitorAvgPrice" type="number" step="0.01" {...register("competitorAvgPrice", { valueAsNumber: true })} />
-                        </div>
-                            <div className="rounded-lg border bg-secondary/30 p-4">
-                            <div className="flex items-start gap-3">
-                                <Info className="h-5 w-5 mt-0.5 text-primary" />
-                                <div>
-                                    <h4 className="font-semibold">Data from Key Metrics</h4>
-                                    <p className="text-sm text-muted-foreground">
-                                        Market Share: <strong>25%</strong> <TrendingUp className="inline h-4 w-4 text-green-500" />
-                                    </p>
-                                    <p className="text-sm text-muted-foreground">
-                                        On-Time Delivery: <strong>98%</strong>
-                                    </p>
-                                </div>
                             </div>
-                        </div>
+                        ))}
                     </CardContent>
                 </Card>
             </div>

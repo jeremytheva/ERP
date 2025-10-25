@@ -15,18 +15,7 @@ import { useGameState } from '@/hooks/use-game-data';
 import type { Task, Role } from "@/types";
 import { useTeamSettings } from "@/hooks/use-team-settings";
 
-
-type SalesFormData = {
-    forecastUnits: number;
-};
-
 export default function DebriefingPage() {
-    const { register } = useForm<SalesFormData>({
-        defaultValues: {
-            forecastUnits: 120000,
-        }
-    });
-
     const { profile } = useAuth();
     const { tasks, updateTask } = useTasks();
     const { gameState } = useGameState();
@@ -146,16 +135,17 @@ export default function DebriefingPage() {
                         </CardHeader>
                         <CardContent className="space-y-2">
                             {teamLeaderTasks.map(task => (
-                                <InteractiveTaskCard
-                                    key={task.id}
-                                    ref={taskRefs.current[getTaskRefIndex(task.id)]}
-                                    task={task}
-                                    allTasks={tasks}
-                                    isActive={activeTaskId === task.id}
-                                    onToggle={() => setActiveTaskId(activeTaskId === task.id ? null : task.id)}
-                                    onUpdate={handleTaskUpdate}
-                                    onFindNext={(id) => handleFindNextTask(id, teamLeaderTasks)}
-                                />
+                                <div key={task.id} className="relative pt-6">
+                                    <InteractiveTaskCard
+                                        ref={taskRefs.current[getTaskRefIndex(task.id)]}
+                                        task={task}
+                                        allTasks={tasks}
+                                        isActive={activeTaskId === task.id}
+                                        onToggle={() => setActiveTaskId(activeTaskId === task.id ? null : task.id)}
+                                        onUpdate={handleTaskUpdate}
+                                        onFindNext={(id) => handleFindNextTask(id, teamLeaderTasks)}
+                                    />
+                                </div>
                             ))}
                         </CardContent>
                     </Card>
@@ -165,48 +155,30 @@ export default function DebriefingPage() {
                     <Card>
                         <CardHeader>
                             <div className="flex items-center gap-3">
-                                <ListTodo className="h-6 w-6" />
+                                <FileText className="h-6 w-6" />
                                 <div>
-                                    <CardTitle>Forecasting Tasks (MD61)</CardTitle>
-                                    <CardDescription>Execute forecasting tasks.</CardDescription>
+                                    <CardTitle className="font-headline text-3xl">Forecasting (MD61)</CardTitle>
+                                    <CardDescription>Calculate and set the total sales forecast for MD61. This will be pushed to the LIT.</CardDescription>
                                 </div>
                             </div>
                         </CardHeader>
                         <CardContent className="space-y-2">
                             {forecastingTasks.map(task => (
-                                <InteractiveTaskCard
-                                    key={task.id}
-                                    ref={taskRefs.current[getTaskRefIndex(task.id)]}
-                                    task={task}
-                                    allTasks={tasks}
-                                    isActive={activeTaskId === task.id}
-                                    onToggle={() => setActiveTaskId(activeTaskId === task.id ? null : task.id)}
-                                    onUpdate={handleTaskUpdate}
-                                    onFindNext={(id) => handleFindNextTask(id, forecastingTasks)}
-                                />
+                                <div key={task.id} className="relative pt-6">
+                                    <InteractiveTaskCard
+                                        ref={taskRefs.current[getTaskRefIndex(task.id)]}
+                                        task={task}
+                                        allTasks={tasks}
+                                        isActive={activeTaskId === task.id}
+                                        onToggle={() => setActiveTaskId(activeTaskId === task.id ? null : task.id)}
+                                        onUpdate={handleTaskUpdate}
+                                        onFindNext={(id) => handleFindNextTask(id, forecastingTasks)}
+                                    />
+                                </div>
                             ))}
                         </CardContent>
                     </Card>
                 )}
-
-                <Card>
-                    <CardHeader>
-                        <div className="flex items-center gap-3">
-                            <FileText className="h-6 w-6" />
-                            <div>
-                                <CardTitle className="font-headline text-3xl">Forecasting (MD61)</CardTitle>
-                                <CardDescription>Calculate and set the total sales forecast for MD61. This will be pushed to the LIT.</CardDescription>
-                            </div>
-                        </div>
-                    </CardHeader>
-                    <CardContent className="space-y-4">
-                            <div className="space-y-2">
-                            <Label htmlFor="forecastUnits">R-N Total Forecast (Units)</Label>
-                            <Input id="forecastUnits" type="number" step="1000" {...register("forecastUnits", { valueAsNumber: true })} />
-                        </div>
-                        <Button>Push Forecast to LIT</Button>
-                    </CardContent>
-                </Card>
             </div>
         </>
     );

@@ -11,6 +11,7 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Label } from '@/components/ui/label';
 import { Truck } from 'lucide-react';
+import { ContextualTaskCard } from '@/components/tasks/contextual-task-card';
 
 const FINISHED_GOODS = [
     { dc: 'DC10', currentStock: 15000, forecast: 40000, salesPerDay: 8000 },
@@ -70,6 +71,11 @@ export default function LogisticsPage() {
                 </CardHeader>
             </Card>
 
+            <ContextualTaskCard 
+                transactionCode="ZFF7B/ZME2N"
+                title="Monitoring Tasks"
+                description="Monitor cash flow, deliveries, and stock status."
+            />
             <Card>
                 <CardHeader>
                     <div className="flex items-center gap-3">
@@ -95,6 +101,11 @@ export default function LogisticsPage() {
                 </CardContent>
             </Card>
 
+            <ContextualTaskCard 
+                transactionCode="ZMB1B"
+                title="Stock Transfer Tasks"
+                description="Calculate and plan stock transfers to DCs."
+            />
             <Card>
                 <CardHeader>
                      <div className="flex items-center gap-3">

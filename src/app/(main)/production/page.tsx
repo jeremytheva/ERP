@@ -11,6 +11,7 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Factory } from 'lucide-react';
+import { ContextualTaskCard } from '@/components/tasks/contextual-task-card';
 
 const CAPACITY_PER_DAY = 60000; // Units
 
@@ -85,6 +86,11 @@ export default function ProductionPage() {
                 </CardContent>
             </Card>
 
+            <ContextualTaskCard
+                transactionCode="MD01"
+                title="MRP Run Tasks"
+                description="Execute the MRP run after the forecast is finalized."
+            />
             <Card>
                 <CardHeader>
                     <div className="flex items-center gap-3">
@@ -102,6 +108,12 @@ export default function ProductionPage() {
                     </div>
                 </CardContent>
             </Card>
+
+             <ContextualTaskCard
+                transactionCode="CO41 (Production Release)"
+                title="Production Release Tasks"
+                description="Final step to release production orders."
+            />
             <Card>
                 <CardHeader>
                     <div className="flex items-center gap-3">
@@ -122,6 +134,12 @@ export default function ProductionPage() {
                     </div>
                 </CardContent>
             </Card>
+
+             <ContextualTaskCard
+                transactionCode="ZCS02"
+                title="BOM Review Tasks"
+                description="Track and apply recipe changes."
+            />
             <Card>
                 <CardHeader>
                     <div className="flex items-center gap-3">

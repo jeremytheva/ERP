@@ -4,13 +4,15 @@
 
 import { useForm, Controller, useFieldArray } from 'react-hook-form';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Package, Users, Truck, Leaf, AlertTriangle, ShoppingCart } from "lucide-react";
+import { Package, Users, Truck, Leaf, AlertTriangle } from "lucide-react";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Label } from '@/components/ui/label';
-import { Separator } from '@/components/ui/separator';
+import { ShoppingCart } from 'lucide-react';
+import { ContextualTaskCard } from '@/components/tasks/contextual-task-card';
+
 
 const RAW_MATERIALS = [
     { id: 'RM-01', name: 'Wheat', stock: 6000, required: 12000, vendor: 'v01' },
@@ -63,6 +65,11 @@ export default function ProcurementPage() {
                 </CardHeader>
             </Card>
 
+             <ContextualTaskCard 
+                transactionCode="ZMB52"
+                title="Inventory Check Tasks"
+                description="Review current raw material stock and status."
+            />
             <Card>
                 <CardHeader>
                     <div className="flex items-center gap-3">
@@ -97,6 +104,11 @@ export default function ProcurementPage() {
                 </CardContent>
             </Card>
 
+             <ContextualTaskCard 
+                transactionCode="ZME12"
+                title="Sourcing Tasks"
+                description="Set the order strategy and vendor selection for each material."
+            />
             <Card>
                 <CardHeader>
                     <div className="flex items-center gap-3">
@@ -171,6 +183,11 @@ export default function ProcurementPage() {
                 </CardContent>
             </Card>
 
+            <ContextualTaskCard 
+                transactionCode="ME59N"
+                title="Order Calculation Tasks"
+                description="Calculate and create purchase orders."
+            />
             <Card>
                 <CardHeader>
                     <div className="flex items-center gap-3">
@@ -200,6 +217,11 @@ export default function ProcurementPage() {
                 </CardContent>
             </Card>
 
+            <ContextualTaskCard 
+                transactionCode="ZFB50"
+                title="Sustainability Tasks"
+                description="Track sustainability goals and investment amounts."
+            />
             <Card>
                 <CardHeader>
                     <div className="flex items-center gap-3">

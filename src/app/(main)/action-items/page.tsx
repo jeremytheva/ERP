@@ -46,6 +46,26 @@ export default function ActionItemsPage() {
   const handleTaskUpdate = (updatedTask: Task) => {
     updateTask(updatedTask);
   };
+  
+  const handleFindNextTask = (currentTaskId: string) => {
+    const currentIndex = relevantTasks.findIndex(t => t.id === currentTaskId);
+    if (currentIndex === -1) {
+      setActiveTaskId(null);
+      return;
+    }
+
+    // Find the next incomplete task after the current one
+    const nextTask = relevantTasks.slice(currentIndex + 1).find(t => !t.completed);
+    
+    if (nextTask) {
+        setActiveTaskId(nextTask.id);
+    } else {
+        // If no next task, try from the beginning (for looping or if last task was completed)
+        const firstIncompleteTask = relevantTasks.find(t => !t.completed && t.id !== currentTaskId);
+        setActiveTaskId(firstIncompleteTask ? firstIncompleteTask.id : null);
+    }
+  };
+
 
   if (!profile) {
     return null;
@@ -76,6 +96,7 @@ export default function ActionItemsPage() {
                   isActive={activeTaskId === task.id}
                   onToggle={() => setActiveTaskId(activeTaskId === task.id ? null : task.id)}
                   onUpdate={handleTaskUpdate}
+                  onFindNext={handleFindNextTask}
                 />
               ))}
             </div>

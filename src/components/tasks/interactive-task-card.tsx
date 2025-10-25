@@ -16,7 +16,7 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "
 import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
 import type { Task, TaskDataField, TaskPriority } from "@/types";
-import { Clock, Code, ChevronDown, CheckCircle, Circle, AlertTriangle, Info } from "lucide-react";
+import { Clock, Code, ChevronDown, CheckCircle, Circle, AlertTriangle, Info, SkipForward } from "lucide-react";
 import { Separator } from "../ui/separator";
 import { Card } from "../ui/card";
 
@@ -26,6 +26,7 @@ interface InteractiveTaskCardProps {
   isActive: boolean;
   onToggle: () => void;
   onUpdate: (task: Task) => void;
+  onFindNext: (taskId: string) => void;
 }
 
 const priorityVariant: { [key in TaskPriority]: "destructive" | "default" | "secondary" | "outline" } = {
@@ -46,7 +47,7 @@ const completionIcon = (task: Task) => {
 };
 
 
-export function InteractiveTaskCard({ task, allTasks, isActive, onToggle, onUpdate }: InteractiveTaskCardProps) {
+export function InteractiveTaskCard({ task, allTasks, isActive, onToggle, onUpdate, onFindNext }: InteractiveTaskCardProps) {
     const isCompleted = task.completed;
     const dependencies = task.dependencyIDs?.map(depId => allTasks.find(t => t.id === depId)).filter(Boolean) as Task[] | undefined;
     const areDependenciesMet = !dependencies || dependencies.every(dep => dep.completed);
@@ -185,7 +186,13 @@ export function InteractiveTaskCard({ task, allTasks, isActive, onToggle, onUpda
                         </Form>
                     )}
 
-                    <div className="flex justify-end">
+                    <div className="flex justify-end gap-2">
+                        {isCompleted && (
+                            <Button variant="outline" onClick={() => onFindNext(task.id)}>
+                                <SkipForward className="mr-2 h-4 w-4" />
+                                Next Task
+                            </Button>
+                        )}
                         <Button onClick={() => handleMarkComplete(!isCompleted)} disabled={!areDependenciesMet}>
                             {isCompleted ? "Mark as Incomplete" : "Mark as Complete"}
                         </Button>

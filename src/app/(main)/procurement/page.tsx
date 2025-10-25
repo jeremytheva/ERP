@@ -2,8 +2,7 @@
 
 "use client";
 
-import { useState, useEffect } from 'react';
-import { useSearchParams } from 'next/navigation';
+import { useState } from 'react';
 import { useForm, Controller, useFieldArray } from 'react-hook-form';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -38,9 +37,7 @@ type ProcurementFormData = {
 };
 
 export default function ProcurementPage() {
-    const searchParams = useSearchParams();
-    const defaultSection = searchParams.get('section') || 'inventory-check';
-    const [activeTab, setActiveTab] = useState(defaultSection);
+    const [activeTab, setActiveTab] = useState('inventory-check');
 
     const { register, control, watch } = useForm<ProcurementFormData>({
         defaultValues: {

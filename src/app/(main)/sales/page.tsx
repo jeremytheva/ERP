@@ -12,7 +12,6 @@ type SalesFormData = {
 };
 
 export default function SalesPage() {
-
     const { register } = useForm<SalesFormData>({
         defaultValues: {
             competitorAvgPrice: 15.50,

@@ -30,7 +30,7 @@ type SalesFormData = {
 };
 
 export default function StrategicAdvisorPage() {
-    const { control, watch, setValue } = useForm<SalesFormData>({
+    const { control, watch, setValue, register } = useForm<SalesFormData>({
         defaultValues: {
             competitorAvgPrice: 15.50,
             priceStrategy: 'below',
@@ -94,18 +94,24 @@ export default function StrategicAdvisorPage() {
                     <CardContent className="grid sm:grid-cols-3 gap-4 items-end">
                         <div className="space-y-2">
                             <Label>Strategy</Label>
-                            <Select value={watchedPriceStrategy} onValueChange={(val) => setValue('priceStrategy', val)}>
-                                <SelectTrigger><SelectValue /></SelectTrigger>
-                                <SelectContent>
-                                    <SelectItem value="below">Price Below</SelectItem>
-                                    <SelectItem value="match">Match</SelectItem>
-                                    <SelectItem value="above">Price Above</SelectItem>
-                                </SelectContent>
-                            </Select>
+                            <Controller
+                                control={control}
+                                name="priceStrategy"
+                                render={({ field }) => (
+                                <Select onValueChange={field.onChange} value={field.value}>
+                                    <SelectTrigger><SelectValue /></SelectTrigger>
+                                    <SelectContent>
+                                        <SelectItem value="below">Price Below</SelectItem>
+                                        <SelectItem value="match">Match</SelectItem>
+                                        <SelectItem value="above">Price Above</SelectItem>
+                                    </SelectContent>
+                                </Select>
+                                )}
+                            />
                         </div>
                         <div className="space-y-2">
                             <Label htmlFor="priceOffset">Offset (€)</Label>
-                            <Input id="priceOffset" type="number" step="0.01" {...control.register("priceOffset", { valueAsNumber: true })} />
+                            <Input id="priceOffset" type="number" step="0.01" {...register("priceOffset", { valueAsNumber: true })} />
                         </div>
                         <Button onClick={handleBulkPriceUpdate}>Apply Strategy</Button>
                     </CardContent>
@@ -125,10 +131,13 @@ export default function StrategicAdvisorPage() {
                                 return (
                                         <TableRow key={product.id}>
                                         <TableCell className="font-medium">{product.name}</TableCell>
-                                        {productFields.map((field) => {
-                                            const fieldIndex = priceFields.findIndex(f => f.id === field.id);
-                                            return(
-                                                <TableCell key={field.id}>
+                                        {DCS.map(dc => {
+                                            const field = productFields.find(f => f.dc === dc);
+                                            const fieldIndex = priceFields.findIndex(f => f.id === field?.id);
+                                            
+                                            return (
+                                                 <TableCell key={`${product.id}-${dc}`}>
+                                                    {fieldIndex !== -1 ? (
                                                         <Controller
                                                         control={control}
                                                         name={`prices.${fieldIndex}.price`}
@@ -136,6 +145,9 @@ export default function StrategicAdvisorPage() {
                                                             <Input type="number" step="0.01" {...controllerField} />
                                                         )}
                                                     />
+                                                    ) : (
+                                                        <Input type="number" step="0.01" disabled />
+                                                    )}
                                                 </TableCell>
                                             )
                                         })}

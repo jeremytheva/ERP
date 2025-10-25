@@ -39,7 +39,7 @@ const productionMenuItems = [
     { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
     { href: "/key-metrics", label: "Key Metrics", icon: BarChart2 },
     { href: "/action-items", label: "Round Tasks", icon: ListTodo },
-    { href: "/production", label: "Planning & Capacity", icon: Factory },
+    { href: "/production", label: "Production Planning", icon: Factory },
     { href: "/live-inventory", label: "RM Stock Status (LIT)", icon: FileText },
     { href: "/master-data", label: "Master Data", icon: Database },
 ];
@@ -48,7 +48,7 @@ const procurementMenuItems = [
     { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
     { href: "/key-metrics", label: "Key Metrics", icon: BarChart2 },
     { href: "/action-items", label: "Round Tasks", icon: ListTodo },
-    { href: "/procurement", label: "Sourcing & Ordering", icon: Users },
+    { href: "/procurement", label: "Sourcing & Ordering", icon: ShoppingCart },
     { href: "/live-inventory", label: "RM Stock Status (LIT)", icon: FileText },
     { href: "/master-data", label: "Master Data", icon: Database },
 ];

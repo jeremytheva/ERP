@@ -3,13 +3,15 @@
 
 import { useMemo, useState, useRef, useEffect, createRef } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { ListTodo, LocateFixed } from "lucide-react";
+import { ListTodo, LocateFixed, TrendingUp, DollarSign, Percent } from "lucide-react";
 import { InteractiveTaskCard } from '@/components/tasks/interactive-task-card';
 import { useAuth } from '@/hooks/use-auth';
 import { useTasks } from '@/hooks/use-tasks';
 import { useGameState } from '@/hooks/use-game-data';
 import type { Task } from "@/types";
 import { Button } from "@/components/ui/button";
+import { KpiCard } from "@/components/dashboard/kpi-card";
+import { SalesChart } from "@/components/dashboard/role-charts/sales-chart";
 
 export default function SalesPage() {
     const { profile } = useAuth();
@@ -103,6 +105,14 @@ export default function SalesPage() {
                 </div>
             )}
             <div className="space-y-6">
+                 <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+                    <KpiCard title="Market Share" value={gameState.marketShare} icon={TrendingUp} format="percent" tooltip="Your company's sales as a percentage of total market sales." />
+                    <KpiCard title="Average Price Gap" value={gameState.averagePriceGap} icon={DollarSign} format="currency" tooltip="The average difference between your price and the competitor's average price." />
+                    <KpiCard title="Gross Revenue" value={gameState.grossRevenue} icon={Percent} format="currency" tooltip="Total revenue from sales before subtracting costs." />
+                </div>
+                
+                 <SalesChart history={gameState.kpiHistory} />
+                
                  <Card>
                     <CardHeader>
                         <CardTitle className="font-headline text-3xl">Market Analysis (ZMARKET)</CardTitle>

@@ -1,10 +1,9 @@
 
-
 "use client";
 
 import { useMemo, useState, useRef, useEffect, createRef } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Banknote, PackageOpen, Ship, AlertTriangle, LocateFixed } from "lucide-react";
+import { Banknote, PackageOpen, Ship, AlertTriangle, LocateFixed, HandCoins, Warehouse, ShipWheel } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Truck, ListTodo } from 'lucide-react';
 import { InteractiveTaskCard } from '@/components/tasks/interactive-task-card';
@@ -12,15 +11,17 @@ import { useAuth } from '@/hooks/use-auth';
 import { useTasks } from '@/hooks/use-tasks';
 import { useGameState } from '@/hooks/use-game-data';
 import type { Role, Task } from "@/types";
+import { KpiCard } from "@/components/dashboard/kpi-card";
+import { LogisticsChart } from "@/components/dashboard/role-charts/logistics-chart";
 
 
 export default function LogisticsPage() {
-    const cashBalance = 85000; // Mock data from Key Metrics
+    const { gameState } = useGameState();
+    const cashBalance = gameState.cashBalance;
     const isCashAlertActive = cashBalance < 100000;
     
     const { profile } = useAuth();
     const { tasks, updateTask } = useTasks();
-    const { gameState } = useGameState();
     const [openedTaskId, setOpenedTaskId] = useState<string | null>(null);
     const [activeTaskId, setActiveTaskId] = useState<string | null>(null);
 
@@ -122,6 +123,14 @@ export default function LogisticsPage() {
                 </div>
             )}
             <div className="space-y-6">
+                <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+                    <KpiCard title="Cash Balance" value={gameState.cashBalance} icon={HandCoins} format="currency" tooltip="The total amount of cash your company has on hand." />
+                    <KpiCard title="On-Time Delivery Rate" value={gameState.onTimeDeliveryRate} icon={ShipWheel} format="percent" tooltip="The percentage of orders delivered to customers on time." />
+                    <KpiCard title="Warehouse Costs" value={gameState.warehouseCosts} icon={Warehouse} format="currency" tooltip="Total costs associated with storing inventory." />
+                </div>
+                
+                <LogisticsChart history={gameState.kpiHistory} />
+
                 <Card>
                     <CardHeader>
                         <div className="flex items-center gap-4">

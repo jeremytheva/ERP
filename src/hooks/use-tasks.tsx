@@ -204,7 +204,7 @@ const ALL_TASKS: Task[] = [
   {
     id: "P-1",
     title: "Set Target Days of Supply (DOS) Strategy",
-    description: "Input the desired coverage (e.g. 7 days) for each RM. Critical: Ensure your Target DOS is greater than the Lead Time of your chosen vendor (e.g. 4 days) plus a safety buffer (Target DOS ≥ Lead Time + Safety Stock).",
+    description: "Input the desired DOS (e.g., 7 Days) for each RM to drive the PO calculation. New Critical Check: The Target DOS must be >= the planned Lead_Time_Days + Safety Stock (Days).",
     role: "Procurement",
     transactionCode: "Dashboard Input / ZMB52",
     priority: "High",
@@ -223,7 +223,7 @@ const ALL_TASKS: Task[] = [
   {
     id: "P-2",
     title: "Sourcing Decision & Sustainability Check",
-    description: "Select the appropriate vendor (Fast/Slow) based on the RM Stock Status and the Lead Time Plan you set in task P-1. If stock is sufficient, select the Slow/Low-Carbon Vendor (V11/V12) to improve sustainability.",
+    description: "Action: If the RM Stock Status (LIT) is 🟢 Sufficient, select the Slow/Low-Carbon Vendor (V11/V12). Only use Fast Vendor (V01/V02) if Stock Status is 🔴 OUT or 🟠 LOW. Base this decision on the Lead Time Plan you set in task P-1.",
     role: "Procurement",
     transactionCode: "ZME12",
     priority: "High",
@@ -238,7 +238,7 @@ const ALL_TASKS: Task[] = [
   {
     id: "P-3",
     title: "PO Viability Check & Create PO",
-    description: "Check: DO NOT release a PO (ME59N) for an RM if the quantity ordered is insufficient to support at least two max-size production runs (e.g., 2 x 48,000 units). Consolidate small orders to save on transaction costs.",
+    description: "Check: DO NOT release a PO (ME59N) for an RM if the quantity ordered is insufficient to support at least 2x48,000 units of production. Consolidate small orders.",
     role: "Procurement",
     transactionCode: "ME59N",
     priority: "High",
@@ -253,7 +253,7 @@ const ALL_TASKS: Task[] = [
   {
     id: "P-4",
     title: "Sustainability Investment Post",
-    description: "Action: Post the pre-determined, required investment amount (set by TL or formula) into ZFB50 to manage the Cumulative CO2e Emissions. Action: ZFB50 Posting = Required Investment.",
+    description: "Action: Post the pre-determined, required investment amount (set by TL or formula) into ZFB50 to manage the Cumulative CO2e Emissions.",
     role: "Procurement",
     transactionCode: "ZFB50",
     priority: "Medium",

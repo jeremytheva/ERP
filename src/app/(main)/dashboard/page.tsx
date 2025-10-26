@@ -4,20 +4,24 @@
 import { KpiCard } from "@/components/dashboard/kpi-card";
 import { KpiCharts } from "@/components/dashboard/kpi-charts";
 import { useGameState } from "@/hooks/use-game-data";
-import { DollarSign, Factory, HandCoins, Package, TrendingUp, Ship, Percent } from "lucide-react";
+import { DollarSign, Factory, HandCoins, Package, TrendingUp, Ship, Percent, Target, Leaf } from "lucide-react";
+import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
+import { StrategicAdvisor } from "@/components/ai/strategic-advisor";
+import { Lightbulb } from "lucide-react";
+
 
 export default function DashboardPage() {
   const { gameState } = useGameState();
 
   return (
     <div className="space-y-6">
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-7">
+      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6">
         <KpiCard
-          title="Cash Balance"
-          value={gameState.cashBalance}
-          icon={HandCoins}
+          title="Company Valuation"
+          value={gameState.companyValuation}
+          icon={Target}
           format="currency"
-          tooltip="The total amount of cash your company has on hand."
+          tooltip="The total estimated value of your company."
         />
         <KpiCard
           title="Net Income"
@@ -25,6 +29,13 @@ export default function DashboardPage() {
           icon={DollarSign}
           format="currency"
           tooltip="Your company's total profit after all expenses."
+        />
+         <KpiCard
+          title="Cash Balance"
+          value={gameState.cashBalance}
+          icon={HandCoins}
+          format="currency"
+          tooltip="The total amount of cash your company has on hand."
         />
         <KpiCard
           title="Gross Margin"
@@ -40,35 +51,38 @@ export default function DashboardPage() {
           format="percent"
           tooltip="Your company's sales as a percentage of total market sales."
         />
-        <KpiCard
-          title="Inventory Turnover"
-          value={gameState.inventoryTurnover}
-          icon={Package}
+         <KpiCard
+          title="CO₂e Emissions"
+          value={gameState.cumulativeCO2eEmissions}
+          icon={Leaf}
           format="number"
-           unit="x"
-          tooltip="How many times inventory is sold and replaced over a period."
-        />
-        <KpiCard
-          title="Capacity Utilization"
-          value={gameState.capacityUtilization}
-          icon={Factory}
-          format="percent"
-          tooltip="The extent to which production capacity is being used."
-        />
-        <KpiCard
-          title="On-Time Delivery"
-          value={gameState.onTimeDeliveryRate}
-          icon={Ship}
-          format="percent"
-          tooltip="The percentage of customer orders delivered on schedule."
+          unit="kg"
+          tooltip="Cumulative CO₂ equivalent emissions from operations."
         />
       </div>
       
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <div className="lg:col-span-3">
+        <div className="lg:col-span-2">
             <KpiCharts history={gameState.kpiHistory} />
+        </div>
+         <div className="lg:col-span-1">
+            <Card>
+                <CardHeader>
+                    <div className="flex items-center gap-3">
+                        <Lightbulb className="h-6 w-6" />
+                        <div>
+                            <CardTitle>AI Strategic Advisor</CardTitle>
+                            <CardDescription>AI-powered recommendations based on your current state.</CardDescription>
+                        </div>
+                    </div>
+                </CardHeader>
+                <CardContent>
+                    <StrategicAdvisor />
+                </CardContent>
+            </Card>
         </div>
       </div>
     </div>
   );
 }
+

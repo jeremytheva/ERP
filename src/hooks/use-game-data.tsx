@@ -109,7 +109,7 @@ export const GameStateProvider = ({ children }: { children: ReactNode }) => {
         const data = docSnap.data() as GameState;
         // Ensure timerState has all properties
         const timerState = { ...INITIAL_GAME_STATE.timerState, ...data.timerState };
-        const fullGameState = { ...INITIAL_GAME_STATE, ...data, timerState };
+        const fullGameState = { ...INITIAL_GAME_state, ...data, timerState };
         setGameState(fullGameState);
         setTimeLeft(fullGameState.timerState.timeLeft);
       } else {
@@ -166,8 +166,9 @@ export const GameStateProvider = ({ children }: { children: ReactNode }) => {
     batch.update(gameDocRef, {
         kpiHistory: newKpiHistory,
         // Also update top-level KPIs to reflect the latest entry
-        cashBalance: newHistoryEntry.cashBalance,
+        companyValuation: newHistoryEntry.companyValuation,
         netIncome: newHistoryEntry.netIncome,
+        cashBalance: newHistoryEntry.cashBalance,
         marketShare: newHistoryEntry.marketShare,
         averageSellingPrice: newHistoryEntry.averageSellingPrice,
         competitorAvgPrice: newHistoryEntry.competitorAvgPrice,
@@ -357,3 +358,4 @@ export const useGameState = () => {
   }
   return context;
 };
+

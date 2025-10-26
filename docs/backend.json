@@ -37,7 +37,21 @@
           "type": "array",
           "items": { "$ref": "#/entities/KpiHistoryEntry" }
         },
-        "timerState": { "$ref": "#/entities/TimerState" }
+        "timerState": { "$ref": "#/entities/TimerState" },
+        "cashBalance": { "type": "number" },
+        "grossMargin": { "type": "number" },
+        "marketShare": { "type": "number" },
+        "averageSellingPrice": { "type": "number" },
+        "inventoryTurnover": { "type": "number" },
+        "capacityUtilization": { "type": "number" },
+        "averagePriceGap": { "type": "number" },
+        "warehouseCosts": { "type": "number" },
+        "onTimeDeliveryRate": { "type": "number" },
+        "cumulativeCO2eEmissions": { "type": "number" },
+        "competitorAvgPrice": { "type": "number" },
+        "grossRevenue": { "type": "number" },
+        "cogs": { "type": "number" },
+        "sustainabilityInvestment": { "type": "number" }
       }
     },
     "KpiHistoryEntry": {
@@ -49,7 +63,21 @@
         "companyValuation": {"type": "number"},
         "netIncome": {"type": "number"},
         "inventoryValue": {"type": "number"},
-        "totalEmissions": {"type": "number"}
+        "totalEmissions": {"type": "number"},
+        "cashBalance": { "type": "number" },
+        "grossMargin": { "type": "number" },
+        "marketShare": { "type": "number" },
+        "averageSellingPrice": { "type": "number" },
+        "inventoryTurnover": { "type": "number" },
+        "capacityUtilization": { "type": "number" },
+        "averagePriceGap": { "type": "number" },
+        "warehouseCosts": { "type": "number" },
+        "onTimeDeliveryRate": { "type": "number" },
+        "cumulativeCO2eEmissions": { "type": "number" },
+        "competitorAvgPrice": { "type": "number" },
+        "grossRevenue": { "type": "number" },
+        "cogs": { "type": "number" },
+        "sustainabilityInvestment": { "type": "number" }
       }
     },
     "TimerState": {
@@ -150,3 +178,4 @@
     }
   }
 }
+

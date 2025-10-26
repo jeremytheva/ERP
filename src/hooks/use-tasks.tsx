@@ -27,7 +27,7 @@ const ALL_TASKS: Task[] = [
   {
     id: "TL-2",
     title: "Cash Runway & Loan Management",
-    description: "Calculation: Determine Cash Runway (Days) = Current Cash Balance / Avg. Daily Outflow. If < 5 days, instruct Logistics/Procurement to hold spending.",
+    description: "Strategy: Minimize interest expense while avoiding a liquidity crisis (<€100k). Key Calculation: Cash Runway (Days) = Current Cash Balance / Avg. Daily Outflow. Action: Only make large loan payments (25-50%) after high-profit rounds (R3+) and when the remaining cash balance will be >€200k.",
     role: "Team Leader",
     transactionCode: "Dashboard / ZFF7B",
     priority: "High",
@@ -68,6 +68,22 @@ const ALL_TASKS: Task[] = [
     completionType: "Manual-Tick",
     taskType: "Standard",
     completed: false
+  },
+  {
+    id: "TL-5",
+    title: "Strategic Investment: Setup Time Reduction",
+    description: "Strategy: This investment permanently lowers production setup time, increasing capacity and lowering COGS. ROI is highest when made early (R3/R4) and when pursuing a flexible product strategy. ROI Calculation: Savings = (Old Setup Time - New Setup Time) * (Cost/Hour + Carbon Value/Hour) * Total Future Setups.",
+    role: "Team Leader",
+    transactionCode: "ZFB50 (Investment)",
+    priority: "Medium",
+    estimatedTime: 10,
+    roundRecurrence: "Once",
+    startRound: 3,
+    dependencyIDs: [],
+    completionType: "Data-Confirmed",
+    taskType: "Standard",
+    completed: false,
+    dataFields: [{ fieldName: "Setup_Time_Reduction_Investment", dataType: "Currency" }]
   },
 
   // --- SALES MANAGER TASKS ---
@@ -119,7 +135,7 @@ const ALL_TASKS: Task[] = [
   },
   {
     id: "S-4",
-    title: "Set Budget & Channel Allocation",
+    title: "Set Marketing Budget & Channel Allocation",
     description: "Action: Instead of just entering total budget, strategically allocate the majority of the ZADS spend to the DCs with the highest historical ROI. Calculation: Channel Allocation = Budget * DC ROI (%).",
     role: "Sales",
     transactionCode: "ZADS",
@@ -133,7 +149,7 @@ const ALL_TASKS: Task[] = [
     completed: false,
     dataFields: [
       { fieldName: "Marketing_Budget", dataType: "Currency", suggestedValue: 50000 },
-      { fieldName: "Channel_Allocation_Note", dataType: "String", suggestedValue: "Focus on DC12 and DC14" }
+      { fieldName: "Channel_Focus_Note", dataType: "String", suggestedValue: "Focus on DC12 and DC14" }
     ]
   },
 
@@ -253,7 +269,7 @@ const ALL_TASKS: Task[] = [
   {
     id: "P-4",
     title: "Sustainability Investment Post",
-    description: "Model the ROI of sustainability investments. Predict the minimum investment to keep Cumulative CO₂e Emissions below a target threshold, preventing over- or under-spending. Action: Post the required investment amount into ZFB50.",
+    description: "Model the ROI of sustainability investments to predict the minimum investment to keep Cumulative CO₂e Emissions below the target. Action: Post the required investment amount into ZFB50.",
     role: "Procurement",
     transactionCode: "ZFB50",
     priority: "Medium",

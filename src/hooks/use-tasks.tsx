@@ -204,7 +204,7 @@ const ALL_TASKS: Task[] = [
   {
     id: "P-1",
     title: "Set Target Days of Supply (DOS) Strategy",
-    description: "Input: Input the desired DOS (e.g., 7 Days) for each RM to drive the PO calculation, ensuring a buffer against the vendor Lead Time. Calculation: Target Stock = Daily Usage Rate * Target DOS.",
+    description: "Input: Set the desired DOS (e.g., 7 Days) and planned Lead Time for each RM to drive the PO calculation, ensuring a buffer against delivery variance. Calculation: Target DOS >= Lead Time (Days) + Safety Stock (Days).",
     role: "Procurement",
     transactionCode: "Dashboard Input / ZMB52",
     priority: "High",
@@ -215,12 +215,15 @@ const ALL_TASKS: Task[] = [
     completionType: "Data-Confirmed",
     taskType: "ERPsim Input Data",
     completed: false,
-    dataFields: [{ fieldName: "Target_Days_of_Supply", dataType: "Integer", suggestedValue: 7 }]
+    dataFields: [
+        { fieldName: "Target_Days_of_Supply", dataType: "Integer", suggestedValue: 7 },
+        { fieldName: "Lead_Time_Days", dataType: "Integer", suggestedValue: 4, aiRationale: "Default for slow/green vendor. Change to 2 for fast vendor." }
+    ]
   },
   {
     id: "P-2",
     title: "Sourcing Decision & Sustainability Check",
-    description: "Action: If the RM Stock Status (LIT) is Sufficient, select the Slow/Low-Carbon Vendor (V11/V12). Only use Fast Vendor (V01/V02) if Stock Status is OUT or LOW. Decision Rule: IF(RM Status=OUT/LOW, Use V01/V02).",
+    description: "Action: If RM Stock is sufficient, select the Slow/Low-Carbon Vendor (V11/V12) to improve sustainability. Only use the Fast Vendor (V01/V02) if stock is critical, and ensure your planned Lead Time in the DOS task reflects this choice.",
     role: "Procurement",
     transactionCode: "ZME12",
     priority: "High",
@@ -235,7 +238,7 @@ const ALL_TASKS: Task[] = [
   {
     id: "P-3",
     title: "PO Viability Check & Create PO",
-    description: "Check: DO NOT release a PO (ME59N) for an RM if the quantity ordered is insufficient to support at least 2 x 48,000 units of production. Consolidate small orders. Calculation: RM for N Units = Product Count * N Units * RM per Unit (g).",
+    description: "Check: DO NOT release a PO (ME59N) for an RM if the quantity ordered is insufficient to support at least two max-size production runs (e.g., 2 x 48,000 units). Consolidate small orders to save on transaction costs.",
     role: "Procurement",
     transactionCode: "ME59N",
     priority: "High",

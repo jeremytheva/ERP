@@ -3,7 +3,6 @@
 
 import { KpiCard } from "@/components/dashboard/kpi-card";
 import { KpiCharts } from "@/components/dashboard/kpi-charts";
-import { PeerComparisonChart } from "@/components/dashboard/peer-comparison-chart";
 import { useGameState } from "@/hooks/use-game-data";
 import { DollarSign, Factory, HandCoins, Package, TrendingUp, Ship, Percent } from "lucide-react";
 
@@ -66,11 +65,8 @@ export default function DashboardPage() {
       </div>
       
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <div className="lg:col-span-2">
+        <div className="lg:col-span-3">
             <KpiCharts history={gameState.kpiHistory} />
-        </div>
-        <div className="lg:col-span-1">
-             <PeerComparisonChart peerData={gameState.peerData} currentUserValuation={gameState.companyValuation} />
         </div>
       </div>
     </div>

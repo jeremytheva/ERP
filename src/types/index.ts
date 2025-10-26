@@ -43,7 +43,6 @@ export type TimerState = {
 export type GameState = Kpi & {
   kpiHistory: KpiHistory;
   teamStrategy: string;
-  peerData: PeerData[];
   timerState: TimerState;
 };
 
@@ -59,13 +58,6 @@ export type CompetitorLogEntry = {
   text: string;
   author: string;
   createdAt: Date | Timestamp;
-};
-
-export type PeerData = {
-  name: string;
-  companyValuation: number;
-  netIncome: number;
-  cumulativeCO2eEmissions: number;
 };
 
 export type RoleActionItems = {

@@ -204,7 +204,7 @@ const ALL_TASKS: Task[] = [
   {
     id: "P-1",
     title: "Set Target Days of Supply (DOS) Strategy",
-    description: "Input: Set the desired DOS (e.g., 7 Days) and planned Lead Time for each RM to drive the PO calculation, ensuring a buffer against delivery variance. Calculation: Target DOS >= Lead Time (Days) + Safety Stock (Days).",
+    description: "Input the desired coverage (e.g. 7 days) for each RM. Critical: Ensure your Target DOS is greater than the Lead Time of your chosen vendor (e.g. 4 days) plus a safety buffer (Target DOS ≥ Lead Time + Safety Stock).",
     role: "Procurement",
     transactionCode: "Dashboard Input / ZMB52",
     priority: "High",
@@ -223,7 +223,7 @@ const ALL_TASKS: Task[] = [
   {
     id: "P-2",
     title: "Sourcing Decision & Sustainability Check",
-    description: "Action: If RM Stock is sufficient, select the Slow/Low-Carbon Vendor (V11/V12) to improve sustainability. Only use the Fast Vendor (V01/V02) if stock is critical, and ensure your planned Lead Time in the DOS task reflects this choice.",
+    description: "Select the appropriate vendor (Fast/Slow) based on the RM Stock Status and the Lead Time Plan you set in task P-1. If stock is sufficient, select the Slow/Low-Carbon Vendor (V11/V12) to improve sustainability.",
     role: "Procurement",
     transactionCode: "ZME12",
     priority: "High",

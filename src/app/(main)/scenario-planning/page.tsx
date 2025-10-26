@@ -14,7 +14,7 @@ export default function ScenarioPlanningPage() {
     const { profile } = useAuth();
     const { tasks, updateTask } = useTasks();
     const { gameState } = useGameState();
-    const { activeTaskId, openedTaskId, setOpenedTaskId, taskRefs } = useTaskNavigation();
+    const { activeTaskId, openedTaskId, setOpenedTaskId, getTaskRef } = useTaskNavigation();
     
     const currentRound = gameState.kpiHistory[gameState.kpiHistory.length - 1]?.round || 1;
 
@@ -27,8 +27,6 @@ export default function ScenarioPlanningPage() {
         ).sort((a,b) => a.priority.localeCompare(b.priority));
     }, [tasks, profile, currentRound]);
     
-    const getTaskRefIndex = (taskId: string) => marketingTasks.findIndex(t => t.id === taskId);
-
     const handleFindNextTask = (currentTaskId: string, taskGroup: Task[]) => {
         const currentIndex = taskGroup.findIndex(t => t.id === currentTaskId);
         if (currentIndex === -1) {
@@ -39,8 +37,7 @@ export default function ScenarioPlanningPage() {
 
         if (nextIncompleteTask) {
             setOpenedTaskId(nextIncompleteTask.id);
-            const nextTaskIndex = taskGroup.findIndex(t => t.id === nextIncompleteTask.id);
-            const taskRef = taskRefs.current[nextTaskIndex];
+            const taskRef = getTaskRef(nextIncompleteTask.id);
             if(taskRef?.current) {
                 taskRef.current.scrollIntoView({ behavior: 'smooth', block: 'center' });
             }
@@ -67,7 +64,7 @@ export default function ScenarioPlanningPage() {
                     {marketingTasks.map((task, index) => (
                         <div key={task.id} className="relative pt-6">
                             <InteractiveTaskCard
-                                ref={taskRefs.current[getTaskRefIndex(task.id)]}
+                                ref={getTaskRef(task.id)}
                                 task={task}
                                 allTasks={tasks}
                                 isActive={openedTaskId === task.id}

@@ -220,7 +220,7 @@ const ALL_TASKS: Task[] = [
   {
     id: "P-1",
     title: "Set Target Days of Supply (DOS) Strategy",
-    description: "Input the desired DOS (e.g., 7 Days) for each RM to drive the PO calculation. New Critical Check: The Target DOS must be >= the planned Lead_Time_Days + Safety Stock (Days).",
+    description: "Input: Input the desired DOS (e.g., 7 Days) for each RM to drive the PO calculation. New Critical Check: The Target DOS must be >= the planned Lead_Time_Days + Safety Stock (Days).",
     role: "Procurement",
     transactionCode: "Dashboard Input / ZMB52",
     priority: "High",

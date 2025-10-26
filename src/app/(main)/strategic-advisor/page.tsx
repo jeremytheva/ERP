@@ -17,7 +17,7 @@ export default function StrategicAdvisorPage() {
     const { tasks, updateTask } = useTasks();
     const { gameState } = useGameState();
     const { teamLeader } = useTeamSettings();
-    const { activeTaskId, openedTaskId, setOpenedTaskId, taskRefs } = useTaskNavigation();
+    const { activeTaskId, openedTaskId, setOpenedTaskId, getTaskRef } = useTaskNavigation();
     
     const currentRound = gameState.kpiHistory[gameState.kpiHistory.length - 1]?.round || 1;
     const isTeamLeader = profile?.id === teamLeader;
@@ -44,14 +44,12 @@ export default function StrategicAdvisorPage() {
         if (!isTeamLeader) return [];
         return tasks.filter(task =>
             task.role === "Team Leader" &&
-            (task.transactionCode === "N/A" || task.transactionCode.includes("F.01")) && // Team leader strategy tasks
+            (task.transactionCode === "N/A (Team Coordination)" || task.transactionCode.includes("F.01") || task.transactionCode.includes("Dashboard")) &&
             (task.roundRecurrence === "Continuous" || (task.startRound ?? 1) <= currentRound)
         ).sort((a, b) => a.priority.localeCompare(b.priority));
     }, [tasks, isTeamLeader, currentRound]);
     
     const allTasksForPage = useMemo(() => [...strategyTasks, ...pricingTasks], [strategyTasks, pricingTasks]);
-    
-    const getTaskRefIndex = (taskId: string) => allTasksForPage.findIndex(t => t.id === taskId);
     
     const handleFindNextTask = (currentTaskId: string, taskGroup: Task[]) => {
         const currentIndex = taskGroup.findIndex(t => t.id === currentTaskId);
@@ -63,8 +61,7 @@ export default function StrategicAdvisorPage() {
 
         if (nextIncompleteTask) {
             setOpenedTaskId(nextIncompleteTask.id);
-            const nextTaskIndexInPage = allTasksForPage.findIndex(t => t.id === nextIncompleteTask.id);
-            const taskRef = taskRefs.current[nextTaskIndexInPage];
+            const taskRef = getTaskRef(nextIncompleteTask.id);
             if (taskRef?.current) {
                 taskRef.current.scrollIntoView({ behavior: 'smooth', block: 'center' });
             }
@@ -97,7 +94,7 @@ export default function StrategicAdvisorPage() {
                         {strategyTasks.map(task => (
                             <div key={task.id} className="relative pt-6">
                                 <InteractiveTaskCard
-                                    ref={taskRefs.current[getTaskRefIndex(task.id)]}
+                                    ref={getTaskRef(task.id)}
                                     task={task}
                                     allTasks={tasks}
                                     isActive={openedTaskId === task.id}
@@ -126,7 +123,7 @@ export default function StrategicAdvisorPage() {
                     {pricingTasks.map(task => (
                         <div key={task.id} className="relative pt-6">
                             <InteractiveTaskCard
-                                ref={taskRefs.current[getTaskRefIndex(task.id)]}
+                                ref={getTaskRef(task.id)}
                                 task={task}
                                 allTasks={tasks}
                                 isActive={openedTaskId === task.id}

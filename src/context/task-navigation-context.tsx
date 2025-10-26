@@ -6,7 +6,7 @@ import { usePathname, useRouter } from 'next/navigation';
 import { useAuth } from '@/hooks/use-auth';
 import { useTasks } from '@/hooks/use-tasks';
 import { useGameState } from '@/hooks/use-game-data';
-import type { Task, Role } from '@/types';
+import type { Task, Role } from "@/types";
 import { useTeamSettings } from '@/hooks/use-team-settings';
 import { Button } from '@/components/ui/button';
 import { LocateFixed } from 'lucide-react';
@@ -23,7 +23,7 @@ interface TaskNavigationContextType {
     activeTaskId: string | null;
     openedTaskId: string | null;
     setOpenedTaskId: (id: string | null) => void;
-    taskRefs: React.MutableRefObject<React.RefObject<HTMLDivElement>[]>;
+    getTaskRef: (taskId: string) => React.RefObject<HTMLDivElement>;
     activeTaskUrl: string | null;
 }
 
@@ -69,21 +69,19 @@ export const TaskNavigationProvider = ({ children }: { children: React.ReactNode
                 setOpenedTaskId(firstIncomplete.id);
             }
             const taskRole = firstIncomplete.role;
-            const pageUrl = ROLE_PAGE_MAP[taskRole] || '/dashboard';
+            let pageUrl = ROLE_PAGE_MAP[taskRole] || '/dashboard';
             
             // Special handling for some roles/t-codes that map to different pages
             if(taskRole === 'Sales' && firstIncomplete.transactionCode.includes('MD61')) {
-                setActiveTaskUrl('/debriefing');
+                pageUrl = '/debriefing';
             } else if (taskRole === 'Sales' && firstIncomplete.transactionCode.includes('ZADS')) {
-                 setActiveTaskUrl('/scenario-planning');
+                 pageUrl = '/scenario-planning';
             } else if (taskRole === 'Sales' && firstIncomplete.transactionCode.includes('VK32')) {
-                 setActiveTaskUrl('/strategic-advisor');
+                 pageUrl = '/strategic-advisor';
             } else if (taskRole === 'Team Leader' && firstIncomplete.transactionCode.includes('ZFB50')) {
-                setActiveTaskUrl('/debriefing');
+                pageUrl = '/debriefing';
             }
-            else {
-                setActiveTaskUrl(pageUrl);
-            }
+            setActiveTaskUrl(pageUrl);
 
         } else {
             setActiveTaskId(null);
@@ -93,14 +91,21 @@ export const TaskNavigationProvider = ({ children }: { children: React.ReactNode
     }, [allUserTasks, openedTaskId]);
 
 
-    const taskRefs = useRef<React.RefObject<HTMLDivElement>[]>([]);
-    taskRefs.current = allUserTasks.map((_, i) => taskRefs.current[i] ?? createRef());
+    const taskRefs = useRef<Map<string, React.RefObject<HTMLDivElement>>>(new Map());
+
+    const getTaskRef = (taskId: string) => {
+        if (!taskRefs.current.has(taskId)) {
+            taskRefs.current.set(taskId, createRef<HTMLDivElement>());
+        }
+        return taskRefs.current.get(taskId)!;
+    };
+
 
     const value = {
         activeTaskId,
         openedTaskId,
         setOpenedTaskId,
-        taskRefs,
+        getTaskRef,
         activeTaskUrl
     };
 
@@ -121,50 +126,50 @@ export const useTaskNavigation = () => {
 
 
 export const GoToCurrentTaskButton = () => {
-    const { activeTaskId, activeTaskUrl, taskRefs } = useTaskNavigation();
-    const allUserTasks = useTasks().tasks;
+    const { activeTaskId, activeTaskUrl, getTaskRef } = useTaskNavigation();
     const router = useRouter();
     const pathname = usePathname();
     const [activeTaskIsVisible, setActiveTaskIsVisible] = useState(true);
 
-    const activeTaskIndex = useMemo(() => {
-        if (!activeTaskId) return -1;
-        // This needs to be a findIndex on the globally sorted list of tasks
-        return allUserTasks.findIndex(t => t.id === activeTaskId);
-    }, [activeTaskId, allUserTasks]);
-    
     useEffect(() => {
-        if (!activeTaskId || !activeTaskUrl || pathname !== activeTaskUrl) {
-            setActiveTaskIsVisible(true); // Hide button if not on the correct page or no active task
+        if (!activeTaskId || !activeTaskUrl) {
+            // No active task, button should not be shown.
+            // Setting visibility to true will hide it.
+            setActiveTaskIsVisible(true);
+            return;
+        }
+        
+        // If we are not on the page of the active task, the element doesn't exist, so the button should be visible.
+        if (pathname !== activeTaskUrl) {
+            setActiveTaskIsVisible(false);
             return;
         }
 
+        const activeTaskRef = getTaskRef(activeTaskId);
         const observer = new IntersectionObserver(([entry]) => {
             setActiveTaskIsVisible(entry.isIntersecting);
         }, { threshold: 0.5 });
         
-        const activeTaskRef = taskRefs.current[activeTaskIndex];
-
-        if (activeTaskRef?.current) {
-            observer.observe(activeTaskRef.current);
+        const currentRef = activeTaskRef?.current;
+        if (currentRef) {
+            observer.observe(currentRef);
         }
         
         return () => {
-            if (activeTaskRef?.current) {
-                observer.unobserve(activeTaskRef.current);
+            if (currentRef) {
+                observer.unobserve(currentRef);
             }
         };
-    }, [activeTaskId, activeTaskIndex, taskRefs, activeTaskUrl, pathname]);
+    }, [activeTaskId, getTaskRef, activeTaskUrl, pathname]);
     
     const handleGoToTask = () => {
         if (!activeTaskId || !activeTaskUrl) return;
 
         if (pathname !== activeTaskUrl) {
             router.push(activeTaskUrl);
-            // We can't scroll immediately, need to wait for navigation.
-            // A more complex solution could store the task ID and scroll after page load.
+            // Scrolling will be handled by the useEffect on the destination page
         } else {
-            const taskRef = taskRefs.current[activeTaskIndex];
+            const taskRef = getTaskRef(activeTaskId);
             if (taskRef?.current) {
                 taskRef.current.scrollIntoView({ behavior: 'smooth', block: 'center' });
             }

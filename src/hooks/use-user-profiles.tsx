@@ -5,7 +5,13 @@ import { useState, useEffect, createContext, useContext, ReactNode } from "react
 import { collection, onSnapshot, writeBatch, doc, FirestoreError } from "firebase/firestore";
 import { useFirestore, errorEmitter, FirestorePermissionError, useAuth as useFirebaseAuth } from "@/firebase";
 import type { UserProfile } from "@/types";
-import { USER_PROFILES } from "@/lib/mock-data";
+
+export const USER_PROFILES: UserProfile[] = [
+  { id: 'procurement', name: 'Procurement', avatarUrl: 'https://picsum.photos/seed/procurement/100/100' },
+  { id: 'production', name: 'Production', avatarUrl: 'https://picsum.photos/seed/production/100/100' },
+  { id: 'logistics', name: 'Logistics', avatarUrl: 'https://picsum.photos/seed/logistics/100/100' },
+  { id: 'sales', name: 'Sales', avatarUrl: 'https://picsum.photos/seed/sales/100/100' },
+];
 
 interface UserProfilesContextType {
   profiles: UserProfile[];

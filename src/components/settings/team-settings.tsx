@@ -6,7 +6,7 @@ import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { useUserProfiles } from "@/hooks/use-user-profiles";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
-import { USER_PROFILES } from "@/lib/mock-data";
+import { USER_PROFILES } from "@/hooks/use-user-profiles";
 
 export function TeamSettings() {
   const { teamLeader, setTeamLeader } = useTeamSettings();

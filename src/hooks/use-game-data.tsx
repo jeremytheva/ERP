@@ -5,10 +5,43 @@ import { useState, useEffect, useCallback, createContext, useContext, ReactNode 
 import { doc, onSnapshot, writeBatch, FirestoreError } from "firebase/firestore";
 import { useAuth } from "./use-auth";
 import type { GameState, KpiHistoryEntry } from "@/types";
-import { INITIAL_GAME_STATE } from "@/lib/mock-data";
 import { useFirestore, errorEmitter, FirestorePermissionError } from "@/firebase";
 
 const GAME_ID = "default_game"; // For now, we use a single game document
+
+const INITIAL_GAME_STATE: GameState = {
+  companyValuation: 50000000,
+  netIncome: 0,
+  inventoryValue: 0,
+  cashBalance: 500000,
+  grossMargin: 0,
+  marketShare: 0,
+  averageSellingPrice: 0,
+  inventoryTurnover: 0,
+  capacityUtilization: 0,
+  averagePriceGap: 0,
+  warehouseCosts: 0,
+  onTimeDeliveryRate: 0,
+  cumulativeCO2eEmissions: 0,
+  competitorAvgPrice: 0,
+  grossRevenue: 0,
+  cogs: 0,
+  sustainabilityInvestment: 0,
+  teamStrategy: "Focus on high-margin products and expand market share in Europe.",
+  kpiHistory: [
+    { round: 1, companyValuation: 50000000, netIncome: 0, inventoryValue: 0, cumulativeCO2eEmissions: 0, cashBalance: 500000, grossMargin: 0, marketShare: 0, averageSellingPrice: 0, inventoryTurnover: 0, capacityUtilization: 0, averagePriceGap: 0, warehouseCosts: 0, onTimeDeliveryRate: 0, competitorAvgPrice: 0, grossRevenue: 0, cogs: 0, sustainabilityInvestment: 0 },
+  ],
+  timerState: {
+    timeLeft: 1200,
+    isPaused: true,
+    isBreakActive: false,
+    isBreakEnabled: true,
+    roundDuration: 1200, // 20 minutes
+    breakDuration: 300, // 5 minutes
+    confirmNextRound: true,
+  }
+};
+
 
 interface GameStateContextType {
   gameState: GameState;

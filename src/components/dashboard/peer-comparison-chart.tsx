@@ -1,3 +1,4 @@
+
 "use client";
 
 import {
@@ -39,7 +40,7 @@ export function PeerComparisonChart({ peerData, currentUserValuation }: PeerComp
       name: userName,
       companyValuation: currentUserValuation,
       netIncome: 0, // Placeholder, not used in this chart
-      totalEmissions: 0, // Placeholder, not used in this chart
+      cumulativeCO2eEmissions: 0, // Placeholder, not used in this chart
     };
     const combined = [...peerData, currentUserData].sort(
       (a, b) => b.companyValuation - a.companyValuation

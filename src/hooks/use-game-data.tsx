@@ -4,10 +4,17 @@
 import { useState, useEffect, useCallback, createContext, useContext, ReactNode } from "react";
 import { doc, onSnapshot, writeBatch, FirestoreError } from "firebase/firestore";
 import { useAuth } from "./use-auth";
-import type { GameState, KpiHistoryEntry } from "@/types";
+import type { GameState, KpiHistoryEntry, PeerData } from "@/types";
 import { useFirestore, errorEmitter, FirestorePermissionError, useMemoFirebase } from "@/firebase";
 
 const GAME_ID = "default_game"; // For now, we use a single game document
+
+const MOCK_PEER_DATA: PeerData[] = [
+    { name: "Team Alpha", companyValuation: 62000000, netIncome: 2500000, cumulativeCO2eEmissions: 120 },
+    { name: "Team Bravo", companyValuation: 55000000, netIncome: 1800000, cumulativeCO2eEmissions: 150 },
+    { name: "Team Charlie", companyValuation: 48000000, netIncome: 1200000, cumulativeCO2eEmissions: 180 },
+    { name: "Team Delta", companyValuation: 71000000, netIncome: 3200000, cumulativeCO2eEmissions: 90 },
+];
 
 const INITIAL_GAME_STATE: GameState = {
   companyValuation: 50000000,
@@ -31,6 +38,7 @@ const INITIAL_GAME_STATE: GameState = {
   kpiHistory: [
     { round: 1, companyValuation: 50000000, netIncome: 0, inventoryValue: 0, cumulativeCO2eEmissions: 0, cashBalance: 500000, grossMargin: 0, marketShare: 0, averageSellingPrice: 0, inventoryTurnover: 0, capacityUtilization: 0, averagePriceGap: 0, warehouseCosts: 0, onTimeDeliveryRate: 0, competitorAvgPrice: 0, grossRevenue: 0, cogs: 0, sustainabilityInvestment: 0 },
   ],
+  peerData: MOCK_PEER_DATA,
   timerState: {
     timeLeft: 1200,
     isPaused: true,
@@ -109,7 +117,7 @@ export const GameStateProvider = ({ children }: { children: ReactNode }) => {
         const data = docSnap.data() as GameState;
         // Ensure timerState has all properties
         const timerState = { ...INITIAL_GAME_STATE.timerState, ...data.timerState };
-        const fullGameState = { ...INITIAL_GAME_STATE, ...data, timerState };
+        const fullGameState = { ...INITIAL_GAME_STATE, ...data, timerState, peerData: MOCK_PEER_DATA };
         setGameState(fullGameState);
         setTimeLeft(fullGameState.timerState.timeLeft);
       } else {
@@ -212,25 +220,11 @@ export const GameStateProvider = ({ children }: { children: ReactNode }) => {
     const change = (Math.random() - 0.5) * 100000;
     const newNetIncome = lastRound.netIncome + change;
     const newHistoryEntry: KpiHistoryEntry = {
+        ...lastRound,
         round: lastRound.round + 1,
         companyValuation: lastRound.companyValuation + change * 2,
         netIncome: newNetIncome,
         inventoryValue: lastRound.inventoryValue + (Math.random() - 0.5) * 50000,
-        totalEmissions: Math.max(0, lastRound.totalEmissions + (Math.random() - 0.5) * 10),
-        cashBalance: lastRound.cashBalance,
-        grossMargin: lastRound.grossMargin,
-        marketShare: lastRound.marketShare,
-        averageSellingPrice: lastRound.averageSellingPrice,
-        inventoryTurnover: lastRound.inventoryTurnover,
-        capacityUtilization: lastRound.capacityUtilization,
-        averagePriceGap: lastRound.averagePriceGap,
-        warehouseCosts: lastRound.warehouseCosts,
-        onTimeDeliveryRate: lastRound.onTimeDeliveryRate,
-        cumulativeCO2eEmissions: lastRound.cumulativeCO2eEmissions,
-        competitorAvgPrice: lastRound.competitorAvgPrice,
-        grossRevenue: lastRound.grossRevenue,
-        cogs: lastRound.cogs,
-        sustainabilityInvestment: lastRound.sustainabilityInvestment,
     };
 
     const newKpiHistory = [...gameState.kpiHistory, newHistoryEntry].slice(-10);
@@ -240,7 +234,6 @@ export const GameStateProvider = ({ children }: { children: ReactNode }) => {
         companyValuation: latestKpis.companyValuation,
         netIncome: latestKpis.netIncome,
         inventoryValue: latestKpis.inventoryValue,
-        totalEmissions: latestKpis.totalEmissions,
         kpiHistory: newKpiHistory,
         'timerState.isBreakActive': false,
         'timerState.timeLeft': roundDuration,

@@ -3,7 +3,7 @@
 
 import { useState, useEffect, createContext, useContext, ReactNode } from "react";
 import { collection, doc, onSnapshot, writeBatch, FirestoreError, setDoc, deleteDoc, getDocs } from "firebase/firestore";
-import { useFirestore, errorEmitter, FirestorePermissionError } from "@/firebase";
+import { useFirestore, errorEmitter, FirestorePermissionError, useMemoFirebase } from "@/firebase";
 import { useAuth } from "./use-auth";
 import type { Task, Role, TaskPriority, RoundRecurrence, CompletionType, TaskType } from "@/types";
 
@@ -12,7 +12,7 @@ const ALL_TASKS: Task[] = [
   {
     id: "TL-1",
     title: "Round Start Review & Strategic Alignment",
-    description: "Check: Gross Margin (%) must exceed 20%. Ensure all roles align their decisions to this target (e.g., Sales pricing, Procurement costs).",
+    description: "Check: Gross Margin (%) must exceed 20%. TL must ensure all roles align their decisions to this target (e.g., Sales pricing, Procurement costs).",
     role: "Team Leader",
     transactionCode: "F.01 / ZVC2 (Reports)",
     priority: "High",
@@ -344,15 +344,19 @@ export const TasksProvider = ({ children }: { children: ReactNode }) => {
   const [tasks, setTasks] = useState<Task[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
+  const tasksColRef = useMemoFirebase(() => {
+    if (!user || !firestore) return null;
+    return collection(firestore, "tasks");
+  }, [user, firestore]);
+
   useEffect(() => {
-    if (!user || !firestore) {
+    if (!tasksColRef) {
       setTasks([]);
       setIsLoading(false);
       return;
     }
     
     setIsLoading(true);
-    const tasksColRef = collection(firestore, "tasks");
 
     const unsubscribe = onSnapshot(tasksColRef, async (querySnapshot) => {
       if (querySnapshot.empty) {
@@ -410,7 +414,7 @@ export const TasksProvider = ({ children }: { children: ReactNode }) => {
     });
 
     return () => unsubscribe();
-  }, [user, firestore]);
+  }, [tasksColRef, firestore]);
 
   const addTask = async (task: Task) => {
     if (!firestore) return;
@@ -452,7 +456,3 @@ export const useTasks = () => {
   }
   return context;
 };
-
-    
-
-    

@@ -5,7 +5,7 @@ import { useState, useEffect, useCallback, createContext, useContext, ReactNode 
 import { doc, onSnapshot, writeBatch, FirestoreError } from "firebase/firestore";
 import { useAuth } from "./use-auth";
 import type { GameState, KpiHistoryEntry } from "@/types";
-import { useFirestore, errorEmitter, FirestorePermissionError } from "@/firebase";
+import { useFirestore, errorEmitter, FirestorePermissionError, useMemoFirebase } from "@/firebase";
 
 const GAME_ID = "default_game"; // For now, we use a single game document
 
@@ -74,6 +74,11 @@ export const GameStateProvider = ({ children }: { children: ReactNode }) => {
   const [isLoading, setIsLoading] = useState(true);
   const [isAwaitingConfirmation, setIsAwaitingConfirmation] = useState(false);
 
+  const gameDocRef = useMemoFirebase(() => {
+      if (!user || !firestore) return null;
+      return doc(firestore, "games", GAME_ID);
+  }, [user, firestore]);
+
   const {
     isPaused,
     isBreakActive,
@@ -91,14 +96,13 @@ export const GameStateProvider = ({ children }: { children: ReactNode }) => {
   };
 
   useEffect(() => {
-    if (!user || !firestore) {
+    if (!gameDocRef) {
       setGameState(INITIAL_GAME_STATE);
       setTimeLeft(INITIAL_GAME_STATE.timerState.timeLeft);
       setIsLoading(false);
       return;
     };
     setIsLoading(true);
-    const gameDocRef = doc(firestore, "games", GAME_ID);
 
     const unsubscribe = onSnapshot(gameDocRef, (docSnap) => {
       if (docSnap.exists()) {
@@ -129,11 +133,10 @@ export const GameStateProvider = ({ children }: { children: ReactNode }) => {
     });
 
     return () => unsubscribe();
-  }, [user, firestore]);
+  }, [gameDocRef, firestore]);
   
   const updateTimerState = async (updates: Partial<GameState["timerState"]>) => {
-      if (!firestore) return;
-      const gameDocRef = doc(firestore, "games", GAME_ID);
+      if (!gameDocRef) return;
       const batch = writeBatch(firestore);
       const currentTimerState = gameState.timerState;
       batch.update(gameDocRef, { timerState: { ...currentTimerState, ...updates } });
@@ -148,8 +151,7 @@ export const GameStateProvider = ({ children }: { children: ReactNode }) => {
   }
 
   const addKpiHistoryEntry = async (data: Omit<KpiHistoryEntry, 'round'>) => {
-    if (!firestore) return;
-    const gameDocRef = doc(firestore, "games", GAME_ID);
+    if (!gameDocRef) return;
     const batch = writeBatch(firestore);
 
     const newRoundNumber = (gameState.kpiHistory[gameState.kpiHistory.length - 1]?.round || 0) + 1;
@@ -203,8 +205,7 @@ export const GameStateProvider = ({ children }: { children: ReactNode }) => {
   };
 
   const advanceRound = useCallback(async () => {
-    if (!firestore) return;
-    const gameDocRef = doc(firestore, "games", GAME_ID);
+    if (!gameDocRef) return;
     const batch = writeBatch(firestore);
 
     const lastRound = gameState.kpiHistory[gameState.kpiHistory.length - 1];
@@ -248,7 +249,7 @@ export const GameStateProvider = ({ children }: { children: ReactNode }) => {
     
     await batch.commit();
 
-  }, [gameState, roundDuration, firestore]);
+  }, [gameState, roundDuration, firestore, gameDocRef]);
 
   const startBreak = useCallback(async () => {
     await updateTimerState({ isBreakActive: true, timeLeft: breakDuration, isPaused: false });
@@ -287,9 +288,8 @@ export const GameStateProvider = ({ children }: { children: ReactNode }) => {
   };
 
   const setRound = async (newRound: number) => {
-    if (newRound < 1 || !firestore) return;
+    if (newRound < 1 || !gameDocRef) return;
     
-    const gameDocRef = doc(firestore, "games", GAME_ID);
     const batch = writeBatch(firestore);
 
     let newKpiHistory: KpiHistoryEntry[];

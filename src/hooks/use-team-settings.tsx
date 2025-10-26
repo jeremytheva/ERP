@@ -4,7 +4,7 @@
 import { useState, useEffect, createContext, useContext, ReactNode } from "react";
 import { doc, onSnapshot, setDoc, FirestoreError } from "firebase/firestore";
 import { useAuth } from "./use-auth";
-import { useFirestore, errorEmitter, FirestorePermissionError } from "@/firebase";
+import { useFirestore, errorEmitter, FirestorePermissionError, useMemoFirebase } from "@/firebase";
 
 const SETTINGS_ID = "default_settings";
 
@@ -20,9 +20,13 @@ export const TeamSettingsProvider = ({ children }: { children: ReactNode }) => {
   const firestore = useFirestore();
   const [teamLeader, setTeamLeaderState] = useState<string | null>(null);
 
+  const settingsDocRef = useMemoFirebase(() => {
+    if (!user || !firestore) return null;
+    return doc(firestore, "settings", SETTINGS_ID);
+  }, [user, firestore]);
+
   useEffect(() => {
-    if (!user || !firestore) return;
-    const settingsDocRef = doc(firestore, "settings", SETTINGS_ID);
+    if (!settingsDocRef) return;
 
     const unsubscribe = onSnapshot(settingsDocRef, (docSnap) => {
       if (docSnap.exists()) {
@@ -49,11 +53,10 @@ export const TeamSettingsProvider = ({ children }: { children: ReactNode }) => {
     });
 
     return () => unsubscribe();
-  }, [user, firestore]);
+  }, [settingsDocRef]);
 
   const setTeamLeader = (roleId: string) => {
-    if (!user || !firestore) return;
-    const settingsDocRef = doc(firestore, "settings", SETTINGS_ID);
+    if (!settingsDocRef) return;
     const data = { teamLeader: roleId };
     setDoc(settingsDocRef, data, { merge: true }).catch(error => {
         const contextualError = new FirestorePermissionError({

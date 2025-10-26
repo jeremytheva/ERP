@@ -5,7 +5,7 @@ import { useState, useEffect, createContext, useContext, ReactNode } from "react
 import { collection, onSnapshot, addDoc, serverTimestamp, query, orderBy, FirestoreError } from "firebase/firestore";
 import { useAuth } from "./use-auth";
 import type { CompetitorLogEntry } from "@/types";
-import { useFirestore, errorEmitter, FirestorePermissionError } from "@/firebase";
+import { useFirestore, errorEmitter, FirestorePermissionError, useMemoFirebase } from "@/firebase";
 
 interface CompetitorLogContextType {
   logEntries: CompetitorLogEntry[];
@@ -19,12 +19,19 @@ export const CompetitorLogProvider = ({ children }: { children: ReactNode }) => 
   const firestore = useFirestore();
   const [logEntries, setLogEntries] = useState<CompetitorLogEntry[]>([]);
 
-  useEffect(() => {
-    if (!user || !firestore) return;
+  const competitorLogQuery = useMemoFirebase(() => {
+    if (!user || !firestore) return null;
     const logColRef = collection(firestore, "competitor_log");
-    const q = query(logColRef, orderBy("createdAt", "desc"));
+    return query(logColRef, orderBy("createdAt", "desc"));
+  }, [user, firestore]);
 
-    const unsubscribe = onSnapshot(q, (querySnapshot) => {
+  useEffect(() => {
+    if (!competitorLogQuery) {
+        setLogEntries([]);
+        return;
+    }
+
+    const unsubscribe = onSnapshot(competitorLogQuery, (querySnapshot) => {
       const entries = querySnapshot.docs.map(doc => ({
         id: doc.id,
         ...doc.data(),
@@ -41,7 +48,7 @@ export const CompetitorLogProvider = ({ children }: { children: ReactNode }) => 
     });
 
     return () => unsubscribe();
-  }, [user, firestore]);
+  }, [competitorLogQuery]);
 
   const addLogEntry = async (text: string, author: string) => {
     if (!user || !firestore) return;

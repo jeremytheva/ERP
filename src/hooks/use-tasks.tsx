@@ -74,7 +74,7 @@ const ALL_TASKS: Task[] = [
   {
     id: "S-1",
     title: "Market Analysis & Price Strategy",
-    description: "Focus: Prioritize products with the highest Product Gross Margin Rate for marketing and aggressive pricing. Use Price Alert to stay competitive. Calculation: Product Gross Margin Rate = (Selling Price - Final Cost) / Selling Price.",
+    description: "Model Price Elasticity of Demand (PED) to predict how demand reacts to price changes. Goal: Find the optimal price to maximize Gross Revenue. Key Calculation: Qty Sold = f(Price Gap, Ad Spend, Previous Qty Sold). Prioritize products with the highest Product Gross Margin Rate.",
     role: "Sales",
     transactionCode: "ZMARKET / VK32",
     priority: "High",
@@ -141,7 +141,7 @@ const ALL_TASKS: Task[] = [
   {
     id: "PM-1",
     title: "Lot Size Strategy & BOM Alignment",
-    description: "Goal: Lock in a 48,000 Unit Lot Size for all planned products (or multiples thereof) to minimize Setup Cost per Unit. Calculation: Setup Cost per Unit = (Setup Time * Setup Cost/Hour) / Lot Size (Units).",
+    description: "Goal: Find the Economic Production Quantity (EPQ) that minimizes total costs. Lock in a 48,000 Unit Lot Size to minimize Setup Cost per Unit. Key Calculation: EPQ = sqrt((2 * Annual Demand * Setup Cost) / Holding Cost per Unit).",
     role: "Production",
     transactionCode: "ZCS02 (BOM) / Dashboard",
     priority: "High",
@@ -253,7 +253,7 @@ const ALL_TASKS: Task[] = [
   {
     id: "P-4",
     title: "Sustainability Investment Post",
-    description: "Action: Post the pre-determined, required investment amount (set by TL or formula) into ZFB50 to manage the Cumulative CO2e Emissions.",
+    description: "Model the ROI of sustainability investments. Predict the minimum investment to keep Cumulative CO₂e Emissions below a target threshold, preventing over- or under-spending. Action: Post the required investment amount into ZFB50.",
     role: "Procurement",
     transactionCode: "ZFB50",
     priority: "Medium",

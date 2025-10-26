@@ -109,7 +109,7 @@ export const GameStateProvider = ({ children }: { children: ReactNode }) => {
         const data = docSnap.data() as GameState;
         // Ensure timerState has all properties
         const timerState = { ...INITIAL_GAME_STATE.timerState, ...data.timerState };
-        const fullGameState = { ...INITIAL_GAME_state, ...data, timerState };
+        const fullGameState = { ...INITIAL_GAME_STATE, ...data, timerState };
         setGameState(fullGameState);
         setTimeLeft(fullGameState.timerState.timeLeft);
       } else {

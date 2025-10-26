@@ -1,24 +1,23 @@
 
 "use client";
 
-import { useMemo, useState, useRef, useEffect, createRef } from 'react';
+import { useMemo } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { FileBox, Wrench, PackageCheck, FileSignature, LocateFixed, Factory, RefreshCw, Package } from "lucide-react";
-import { Button } from '@/components/ui/button';
+import { FileBox, Wrench, PackageCheck, FileSignature, Factory, RefreshCw, Package } from "lucide-react";
 import { InteractiveTaskCard } from '@/components/tasks/interactive-task-card';
 import { useAuth } from '@/hooks/use-auth';
 import { useTasks } from '@/hooks/use-tasks';
 import { useGameState } from '@/hooks/use-game-data';
-import type { Role, Task } from "@/types";
+import type { Task } from "@/types";
 import { KpiCard } from "@/components/dashboard/kpi-card";
 import { ProductionChart } from "@/components/dashboard/role-charts/production-chart";
+import { useTaskNavigation } from '@/context/task-navigation-context';
 
 export default function ProductionPage() {
     const { profile } = useAuth();
     const { tasks, updateTask } = useTasks();
     const { gameState } = useGameState();
-    const [openedTaskId, setOpenedTaskId] = useState<string | null>(null);
-    const [activeTaskId, setActiveTaskId] = useState<string | null>(null);
+    const { activeTaskId, openedTaskId, setOpenedTaskId, taskRefs } = useTaskNavigation();
 
     const currentRound = gameState.kpiHistory[gameState.kpiHistory.length - 1]?.round || 1;
 
@@ -60,46 +59,7 @@ export default function ProductionPage() {
 
     const allTasksForPage = useMemo(() => [...planningTasks, ...mrpTasks, ...releaseTasks, ...bomTasks], [planningTasks, mrpTasks, releaseTasks, bomTasks]);
     
-    useEffect(() => {
-        const firstIncomplete = allTasksForPage.find(t => !t.completed);
-        if (firstIncomplete) {
-            setActiveTaskId(firstIncomplete.id);
-            if (!openedTaskId) {
-                setOpenedTaskId(firstIncomplete.id);
-            }
-        } else {
-            setActiveTaskId(null);
-        }
-    }, [allTasksForPage, openedTaskId]);
-
-    const taskRefs = useRef<React.RefObject<HTMLDivElement>[]>([]);
-    taskRefs.current = allTasksForPage.map((_, i) => taskRefs.current[i] ?? createRef());
-    
-    const [activeTaskIsVisible, setActiveTaskIsVisible] = useState(true);
-
-    useEffect(() => {
-        if (!activeTaskId) {
-            setActiveTaskIsVisible(true);
-            return;
-        }
-
-        const observer = new IntersectionObserver(([entry]) => setActiveTaskIsVisible(entry.isIntersecting), { threshold: 0.5 });
-        const activeTaskIndex = allTasksForPage.findIndex(t => t.id === activeTaskId);
-        const activeTaskRef = taskRefs.current[activeTaskIndex];
-
-        if (activeTaskRef?.current) observer.observe(activeTaskRef.current);
-        return () => {
-            if (activeTaskRef?.current) observer.unobserve(activeTaskRef.current);
-        };
-    }, [activeTaskId, allTasksForPage]);
-
-
-    const handleTaskUpdate = (updatedTask: Task) => {
-        updateTask(updatedTask);
-        if (updatedTask.completed && updatedTask.id === activeTaskId) {
-            handleFindNextTask(updatedTask.id, allTasksForPage);
-        }
-    };
+    const getTaskRefIndex = (taskId: string) => allTasksForPage.findIndex(t => t.id === taskId);
 
     const handleFindNextTask = (currentTaskId: string, taskGroup: Task[]) => {
         const currentIndex = taskGroup.findIndex(t => t.id === currentTaskId);
@@ -112,165 +72,156 @@ export default function ProductionPage() {
         if (nextIncompleteTask) {
             setOpenedTaskId(nextIncompleteTask.id);
             const nextTaskIndexInPage = allTasksForPage.findIndex(t => t.id === nextIncompleteTask.id);
-            taskRefs.current[nextTaskIndexInPage]?.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            const taskRef = taskRefs.current[nextTaskIndexInPage];
+            if (taskRef?.current) {
+                taskRef.current.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            }
         } else {
             setOpenedTaskId(null);
         }
     };
     
-    const handleGoToTask = () => {
-        if (!activeTaskId) return;
-        const activeTaskIndex = allTasksForPage.findIndex(t => t.id === activeTaskId);
-        taskRefs.current[activeTaskIndex]?.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    const handleTaskUpdate = (updatedTask: Task) => {
+        updateTask(updatedTask);
+        if (updatedTask.completed && updatedTask.id === activeTaskId) {
+            handleFindNextTask(updatedTask.id, allTasksForPage);
+        }
     };
 
-    const getTaskRefIndex = (taskId: string) => allTasksForPage.findIndex(t => t.id === taskId);
-
-
     return (
-        <>
-            {activeTaskId && !activeTaskIsVisible && (
-                <div className="fixed bottom-6 right-6 z-50">
-                    <Button size="lg" className="shadow-lg" onClick={handleGoToTask}>
-                        <LocateFixed className="mr-2 h-5 w-5" />
-                        Go to Current Task
-                    </Button>
-                </div>
-            )}
-            <div className="space-y-6">
-                 <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-                    <KpiCard title="Capacity Utilization" value={gameState.capacityUtilization} icon={Factory} format="percent" tooltip="Percentage of total production capacity being used." />
-                    <KpiCard title="Inventory Turnover" value={gameState.inventoryTurnover} icon={RefreshCw} format="number" tooltip="How many times inventory is sold and replaced over a period." />
-                    <KpiCard title="Inventory Value" value={gameState.inventoryValue} icon={Package} format="currency" tooltip="The total value of inventory on hand." />
-                </div>
-                
-                <ProductionChart history={gameState.kpiHistory} />
+        <div className="space-y-6">
+             <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+                <KpiCard title="Capacity Utilization" value={gameState.capacityUtilization} icon={Factory} format="percent" tooltip="Percentage of total production capacity being used." />
+                <KpiCard title="Inventory Turnover" value={gameState.inventoryTurnover} icon={RefreshCw} format="number" tooltip="How many times inventory is sold and replaced over a period." />
+                <KpiCard title="Inventory Value" value={gameState.inventoryValue} icon={Package} format="currency" tooltip="The total value of inventory on hand." />
+            </div>
+            
+            <ProductionChart history={gameState.kpiHistory} />
 
+            <Card>
+                <CardHeader>
+                    <div className="flex items-center gap-4">
+                        <Factory className="h-8 w-8 text-primary" />
+                        <div>
+                        <CardTitle className="font-headline text-3xl">Production Manager</CardTitle>
+                        <CardDescription>Capacity, efficiency, BOM, and production release management.</CardDescription>
+                        </div>
+                    </div>
+                </CardHeader>
+            </Card>
+
+            {planningTasks.length > 0 && (
                 <Card>
                     <CardHeader>
-                        <div className="flex items-center gap-4">
-                            <Factory className="h-8 w-8 text-primary" />
-                            <div>
-                            <CardTitle className="font-headline text-3xl">Production Manager</CardTitle>
-                            <CardDescription>Capacity, efficiency, BOM, and production release management.</CardDescription>
-                            </div>
+                        <div className="flex items-center gap-3">
+                            <FileBox className="h-6 w-6" />
+                            <CardTitle>Planning & Capacity</CardTitle>
                         </div>
+                        <CardDescription>Confirm capacity, set lot size strategy, and check for overstock.</CardDescription>
                     </CardHeader>
+                    <CardContent className="space-y-2">
+                        {planningTasks.map(task => (
+                             <div key={task.id} className="relative pt-6">
+                                <InteractiveTaskCard
+                                    ref={taskRefs.current[getTaskRefIndex(task.id)]}
+                                    task={task}
+                                    allTasks={tasks}
+                                    isActive={openedTaskId === task.id}
+                                    isCurrent={activeTaskId === task.id}
+                                    onToggle={() => setOpenedTaskId(openedTaskId === task.id ? null : task.id)}
+                                    onUpdate={handleTaskUpdate}
+                                    onFindNext={(id) => handleFindNextTask(id, planningTasks)}
+                                />
+                             </div>
+                        ))}
+                    </CardContent>
                 </Card>
+            )}
+            
 
-                {planningTasks.length > 0 && (
-                    <Card>
-                        <CardHeader>
-                            <div className="flex items-center gap-3">
-                                <FileBox className="h-6 w-6" />
-                                <CardTitle>Planning & Capacity</CardTitle>
-                            </div>
-                            <CardDescription>Confirm capacity, set lot size strategy, and check for overstock.</CardDescription>
-                        </CardHeader>
-                        <CardContent className="space-y-2">
-                            {planningTasks.map(task => (
-                                 <div key={task.id} className="relative pt-6">
-                                    <InteractiveTaskCard
-                                        ref={taskRefs.current[getTaskRefIndex(task.id)]}
-                                        task={task}
-                                        allTasks={tasks}
-                                        isActive={openedTaskId === task.id}
-                                        isCurrent={activeTaskId === task.id}
-                                        onToggle={() => setOpenedTaskId(openedTaskId === task.id ? null : task.id)}
-                                        onUpdate={handleTaskUpdate}
-                                        onFindNext={(id) => handleFindNextTask(id, planningTasks)}
-                                    />
-                                 </div>
-                            ))}
-                        </CardContent>
-                    </Card>
-                )}
-                
+            {mrpTasks.length > 0 && (
+                 <Card>
+                    <CardHeader>
+                        <div className="flex items-center gap-3">
+                            <Wrench className="h-6 w-6" />
+                            <CardTitle>MRP (MD01)</CardTitle>
+                        </div>
+                        <CardDescription>Execute the MRP run after the forecast is finalized.</CardDescription>
+                    </CardHeader>
+                    <CardContent className="space-y-2">
+                        {mrpTasks.map(task => (
+                             <div key={task.id} className="relative pt-6">
+                                <InteractiveTaskCard
+                                    ref={taskRefs.current[getTaskRefIndex(task.id)]}
+                                    task={task}
+                                    allTasks={tasks}
+                                    isActive={openedTaskId === task.id}
+                                    isCurrent={activeTaskId === task.id}
+                                    onToggle={() => setOpenedTaskId(openedTaskId === task.id ? null : task.id)}
+                                    onUpdate={handleTaskUpdate}
+                                    onFindNext={(id) => handleFindNextTask(id, mrpTasks)}
+                                />
+                             </div>
+                        ))}
+                    </CardContent>
+                </Card>
+            )}
+            
+            {releaseTasks.length > 0 && (
+                <Card>
+                    <CardHeader>
+                        <div className="flex items-center gap-3">
+                            <PackageCheck className="h-6 w-6" />
+                            <CardTitle>Production Release (CO41)</CardTitle>
+                        </div>
+                        <CardDescription>Final step to release production orders. The output will be logged to the LIT.</CardDescription>
+                    </CardHeader>
+                    <CardContent className="space-y-2">
+                        {releaseTasks.map(task => (
+                             <div key={task.id} className="relative pt-6">
+                                <InteractiveTaskCard
+                                    ref={taskRefs.current[getTaskRefIndex(task.id)]}
+                                    task={task}
+                                    allTasks={tasks}
+                                    isActive={openedTaskId === task.id}
+                                    isCurrent={activeTaskId === task.id}
+                                    onToggle={() => setOpenedTaskId(openedTaskId === task.id ? null : task.id)}
+                                    onUpdate={handleTaskUpdate}
+                                    onFindNext={(id) => handleFindNextTask(id, releaseTasks)}
+                                />
+                             </div>
+                        ))}
+                    </CardContent>
+                </Card>
+            )}
 
-                {mrpTasks.length > 0 && (
-                     <Card>
-                        <CardHeader>
-                            <div className="flex items-center gap-3">
-                                <Wrench className="h-6 w-6" />
-                                <CardTitle>MRP (MD01)</CardTitle>
-                            </div>
-                            <CardDescription>Execute the MRP run after the forecast is finalized.</CardDescription>
-                        </CardHeader>
-                        <CardContent className="space-y-2">
-                            {mrpTasks.map(task => (
-                                 <div key={task.id} className="relative pt-6">
-                                    <InteractiveTaskCard
-                                        ref={taskRefs.current[getTaskRefIndex(task.id)]}
-                                        task={task}
-                                        allTasks={tasks}
-                                        isActive={openedTaskId === task.id}
-                                        isCurrent={activeTaskId === task.id}
-                                        onToggle={() => setOpenedTaskId(openedTaskId === task.id ? null : task.id)}
-                                        onUpdate={handleTaskUpdate}
-                                        onFindNext={(id) => handleFindNextTask(id, mrpTasks)}
-                                    />
-                                 </div>
-                            ))}
-                        </CardContent>
-                    </Card>
-                )}
-                
-                {releaseTasks.length > 0 && (
-                    <Card>
-                        <CardHeader>
-                            <div className="flex items-center gap-3">
-                                <PackageCheck className="h-6 w-6" />
-                                <CardTitle>Production Release (CO41)</CardTitle>
-                            </div>
-                            <CardDescription>Final step to release production orders. The output will be logged to the LIT.</CardDescription>
-                        </CardHeader>
-                        <CardContent className="space-y-2">
-                            {releaseTasks.map(task => (
-                                 <div key={task.id} className="relative pt-6">
-                                    <InteractiveTaskCard
-                                        ref={taskRefs.current[getTaskRefIndex(task.id)]}
-                                        task={task}
-                                        allTasks={tasks}
-                                        isActive={openedTaskId === task.id}
-                                        isCurrent={activeTaskId === task.id}
-                                        onToggle={() => setOpenedTaskId(openedTaskId === task.id ? null : task.id)}
-                                        onUpdate={handleTaskUpdate}
-                                        onFindNext={(id) => handleFindNextTask(id, releaseTasks)}
-                                    />
-                                 </div>
-                            ))}
-                        </CardContent>
-                    </Card>
-                )}
-
-                {bomTasks.length > 0 && (
-                    <Card>
-                        <CardHeader>
-                            <div className="flex items-center gap-3">
-                                <FileSignature className="h-6 w-6" />
-                                <CardTitle>BOM Review (ZCS02)</CardTitle>
-                            </div>
-                            <CardDescription>Track recipe changes for cost or sustainability.</CardDescription>
-                        </CardHeader>
-                        <CardContent className="space-y-2">
-                            {bomTasks.map(task => (
-                                 <div key={task.id} className="relative pt-6">
-                                     <InteractiveTaskCard
-                                        ref={taskRefs.current[getTaskRefIndex(task.id)]}
-                                        task={task}
-                                        allTasks={tasks}
-                                        isActive={openedTaskId === task.id}
-                                        isCurrent={activeTaskId === task.id}
-                                        onToggle={() => setOpenedTaskId(openedTaskId === task.id ? null : task.id)}
-                                        onUpdate={handleTaskUpdate}
-                                        onFindNext={(id) => handleFindNextTask(id, bomTasks)}
-                                    />
-                                 </div>
-                            ))}
-                        </CardContent>
-                    </Card>
-                )}
-            </div>
-        </>
+            {bomTasks.length > 0 && (
+                <Card>
+                    <CardHeader>
+                        <div className="flex items-center gap-3">
+                            <FileSignature className="h-6 w-6" />
+                            <CardTitle>BOM Review (ZCS02)</CardTitle>
+                        </div>
+                        <CardDescription>Track recipe changes for cost or sustainability.</CardDescription>
+                    </CardHeader>
+                    <CardContent className="space-y-2">
+                        {bomTasks.map(task => (
+                             <div key={task.id} className="relative pt-6">
+                                 <InteractiveTaskCard
+                                    ref={taskRefs.current[getTaskRefIndex(task.id)]}
+                                    task={task}
+                                    allTasks={tasks}
+                                    isActive={openedTaskId === task.id}
+                                    isCurrent={activeTaskId === task.id}
+                                    onToggle={() => setOpenedTaskId(openedTaskId === task.id ? null : task.id)}
+                                    onUpdate={handleTaskUpdate}
+                                    onFindNext={(id) => handleFindNextTask(id, bomTasks)}
+                                />
+                             </div>
+                        ))}
+                    </CardContent>
+                </Card>
+            )}
+        </div>
     );
 }

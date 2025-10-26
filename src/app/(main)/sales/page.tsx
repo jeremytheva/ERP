@@ -1,24 +1,23 @@
 
 "use client";
 
-import { useMemo, useState, useRef, useEffect, createRef } from "react";
+import { useMemo } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { ListTodo, LocateFixed, TrendingUp, DollarSign, Percent } from "lucide-react";
+import { TrendingUp, DollarSign, Percent } from "lucide-react";
 import { InteractiveTaskCard } from '@/components/tasks/interactive-task-card';
 import { useAuth } from '@/hooks/use-auth';
 import { useTasks } from '@/hooks/use-tasks';
 import { useGameState } from '@/hooks/use-game-data';
 import type { Task } from "@/types";
-import { Button } from "@/components/ui/button";
 import { KpiCard } from "@/components/dashboard/kpi-card";
 import { SalesChart } from "@/components/dashboard/role-charts/sales-chart";
+import { useTaskNavigation } from "@/context/task-navigation-context";
 
 export default function SalesPage() {
     const { profile } = useAuth();
     const { tasks, updateTask } = useTasks();
     const { gameState } = useGameState();
-    const [openedTaskId, setOpenedTaskId] = useState<string | null>(null);
-    const [activeTaskId, setActiveTaskId] = useState<string | null>(null);
+    const { activeTaskId, openedTaskId, setOpenedTaskId, taskRefs } = useTaskNavigation();
     
     const currentRound = gameState.kpiHistory[gameState.kpiHistory.length - 1]?.round || 1;
 
@@ -31,45 +30,7 @@ export default function SalesPage() {
         ).sort((a,b) => a.priority.localeCompare(b.priority));
     }, [tasks, profile, currentRound]);
 
-    useEffect(() => {
-        const firstIncomplete = marketAnalysisTasks.find(t => !t.completed);
-        if (firstIncomplete) {
-            setActiveTaskId(firstIncomplete.id);
-            if (!openedTaskId) {
-                setOpenedTaskId(firstIncomplete.id);
-            }
-        } else {
-            setActiveTaskId(null);
-        }
-    }, [marketAnalysisTasks, openedTaskId]);
-
-    const taskRefs = useRef<React.RefObject<HTMLDivElement>[]>([]);
-    taskRefs.current = marketAnalysisTasks.map((_, i) => taskRefs.current[i] ?? createRef());
-
-    const [activeTaskIsVisible, setActiveTaskIsVisible] = useState(true);
-
-    useEffect(() => {
-        if (!activeTaskId) {
-        setActiveTaskIsVisible(true);
-        return;
-        }
-
-        const observer = new IntersectionObserver(([entry]) => setActiveTaskIsVisible(entry.isIntersecting), { threshold: 0.5 });
-        const activeTaskIndex = marketAnalysisTasks.findIndex(t => t.id === activeTaskId);
-        const activeTaskRef = taskRefs.current[activeTaskIndex];
-
-        if (activeTaskRef?.current) observer.observe(activeTaskRef.current);
-        return () => {
-            if (activeTaskRef?.current) observer.unobserve(activeTaskRef.current);
-        };
-    }, [activeTaskId, marketAnalysisTasks]);
-
-    const handleTaskUpdate = (updatedTask: Task) => {
-        updateTask(updatedTask);
-         if (updatedTask.completed && updatedTask.id === activeTaskId) {
-            handleFindNextTask(updatedTask.id, marketAnalysisTasks);
-        }
-    };
+    const getTaskRefIndex = (taskId: string) => marketAnalysisTasks.findIndex(t => t.id === taskId);
 
     const handleFindNextTask = (currentTaskId: string, taskGroup: Task[]) => {
         const currentIndex = taskGroup.findIndex(t => t.id === currentTaskId);
@@ -81,61 +42,55 @@ export default function SalesPage() {
 
         if (nextIncompleteTask) {
             setOpenedTaskId(nextIncompleteTask.id);
-            const nextTaskIndex = taskGroup.findIndex(t => t.id === nextIncompleteTask.id);
-            taskRefs.current[nextTaskIndex]?.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            const nextTaskIndexInPage = marketAnalysisTasks.findIndex(t => t.id === nextIncompleteTask.id);
+            const taskRef = taskRefs.current[nextTaskIndexInPage];
+            if (taskRef?.current) {
+                taskRef.current.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            }
         } else {
             setOpenedTaskId(null);
         }
     };
     
-    const handleGoToTask = () => {
-        if (!activeTaskId) return;
-        const activeTaskIndex = marketAnalysisTasks.findIndex(t => t.id === activeTaskId);
-        taskRefs.current[activeTaskIndex]?.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    const handleTaskUpdate = (updatedTask: Task) => {
+        updateTask(updatedTask);
+         if (updatedTask.completed && updatedTask.id === activeTaskId) {
+            handleFindNextTask(updatedTask.id, marketAnalysisTasks);
+        }
     };
 
     return (
-        <>
-            {activeTaskId && !activeTaskIsVisible && (
-                <div className="fixed bottom-6 right-6 z-50">
-                    <Button size="lg" className="shadow-lg" onClick={handleGoToTask}>
-                        <LocateFixed className="mr-2 h-5 w-5" />
-                        Go to Current Task
-                    </Button>
-                </div>
-            )}
-            <div className="space-y-6">
-                 <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-                    <KpiCard title="Market Share" value={gameState.marketShare} icon={TrendingUp} format="percent" tooltip="Your company's sales as a percentage of total market sales." />
-                    <KpiCard title="Average Price Gap" value={gameState.averagePriceGap} icon={DollarSign} format="currency" tooltip="The average difference between your price and the competitor's average price." />
-                    <KpiCard title="Gross Revenue" value={gameState.grossRevenue} icon={Percent} format="currency" tooltip="Total revenue from sales before subtracting costs." />
-                </div>
-                
-                 <SalesChart history={gameState.kpiHistory} />
-                
-                 <Card>
-                    <CardHeader>
-                        <CardTitle className="font-headline text-3xl">Market Analysis (ZMARKET)</CardTitle>
-                        <CardDescription>Extract key market data from ZMARKET to drive pricing decisions.</CardDescription>
-                    </CardHeader>
-                    <CardContent className="space-y-2">
-                        {marketAnalysisTasks.map((task, index) => (
-                            <div key={task.id} className="relative pt-6">
-                                <InteractiveTaskCard
-                                    ref={taskRefs.current[index]}
-                                    task={task}
-                                    allTasks={tasks}
-                                    isActive={openedTaskId === task.id}
-                                    isCurrent={activeTaskId === task.id}
-                                    onToggle={() => setOpenedTaskId(openedTaskId === task.id ? null : task.id)}
-                                    onUpdate={handleTaskUpdate}
-                                    onFindNext={(id) => handleFindNextTask(id, marketAnalysisTasks)}
-                                />
-                            </div>
-                        ))}
-                    </CardContent>
-                </Card>
+        <div className="space-y-6">
+             <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+                <KpiCard title="Market Share" value={gameState.marketShare} icon={TrendingUp} format="percent" tooltip="Your company's sales as a percentage of total market sales." />
+                <KpiCard title="Average Price Gap" value={gameState.averagePriceGap} icon={DollarSign} format="currency" tooltip="The average difference between your price and the competitor's average price." />
+                <KpiCard title="Gross Revenue" value={gameState.grossRevenue} icon={Percent} format="currency" tooltip="Total revenue from sales before subtracting costs." />
             </div>
-        </>
+            
+             <SalesChart history={gameState.kpiHistory} />
+            
+             <Card>
+                <CardHeader>
+                    <CardTitle className="font-headline text-3xl">Market Analysis (ZMARKET)</CardTitle>
+                    <CardDescription>Extract key market data from ZMARKET to drive pricing decisions.</CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-2">
+                    {marketAnalysisTasks.map((task, index) => (
+                        <div key={task.id} className="relative pt-6">
+                            <InteractiveTaskCard
+                                ref={taskRefs.current[getTaskRefIndex(task.id)]}
+                                task={task}
+                                allTasks={tasks}
+                                isActive={openedTaskId === task.id}
+                                isCurrent={activeTaskId === task.id}
+                                onToggle={() => setOpenedTaskId(openedTaskId === task.id ? null : task.id)}
+                                onUpdate={handleTaskUpdate}
+                                onFindNext={(id) => handleFindNextTask(id, marketAnalysisTasks)}
+                            />
+                        </div>
+                    ))}
+                </CardContent>
+            </Card>
+        </div>
     )
 }

@@ -9,6 +9,7 @@ import { MainSidebar } from "@/components/layout/main-sidebar";
 import { Header } from "@/components/layout/header";
 import { AiCopilot } from "@/components/ai/ai-copilot";
 import { ConfirmRoundStartDialog } from "@/components/game/confirm-round-start-dialog";
+import { GoToCurrentTaskButton } from "@/context/task-navigation-context";
 
 const AUTH_PAGES = ["/"]; // Add any other auth-related pages here
 
@@ -44,6 +45,7 @@ export default function MainLayout({ children }: { children: React.ReactNode }) 
       </div>
       <AiCopilot />
       <ConfirmRoundStartDialog />
+      <GoToCurrentTaskButton />
     </SidebarProvider>
   );
 }

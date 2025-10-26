@@ -1,19 +1,16 @@
 
 "use client";
 
-import { useMemo, useState, useRef, useEffect, createRef } from "react";
-import { useForm } from "react-hook-form";
+import { useMemo, useState, useRef, createRef } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Button } from "@/components/ui/button";
-import { ListTodo, FileText, LocateFixed } from 'lucide-react';
+import { ListTodo, FileText } from 'lucide-react';
 import { InteractiveTaskCard } from '@/components/tasks/interactive-task-card';
 import { useAuth } from '@/hooks/use-auth';
 import { useTasks } from '@/hooks/use-tasks';
 import { useGameState } from '@/hooks/use-game-data';
 import type { Task, Role } from "@/types";
 import { useTeamSettings } from "@/hooks/use-team-settings";
+import { useTaskNavigation } from "@/context/task-navigation-context";
 
 export default function DebriefingPage() {
     const { profile } = useAuth();
@@ -21,20 +18,10 @@ export default function DebriefingPage() {
     const { gameState } = useGameState();
     const { teamLeader } = useTeamSettings();
     
-    const [openedTaskId, setOpenedTaskId] = useState<string | null>(null);
-    const [activeTaskId, setActiveTaskId] = useState<string | null>(null);
+    const { activeTaskId, openedTaskId, setOpenedTaskId, taskRefs } = useTaskNavigation();
 
     const currentRound = gameState.kpiHistory[gameState.kpiHistory.length - 1]?.round || 1;
     const isTeamLeader = profile?.id === teamLeader;
-
-    const userRoles = useMemo(() => {
-        if (!profile) return [];
-        const roles: Role[] = [profile.name as Role];
-        if (isTeamLeader) {
-            roles.push("Team Leader");
-        }
-        return roles;
-    }, [profile, isTeamLeader]);
 
     const forecastingTasks = useMemo(() => {
         if (!profile) return [];
@@ -56,45 +43,7 @@ export default function DebriefingPage() {
 
     const allTasksForPage = useMemo(() => [...teamLeaderTasks, ...forecastingTasks], [teamLeaderTasks, forecastingTasks]);
     
-    useEffect(() => {
-        const firstIncomplete = allTasksForPage.find(t => !t.completed);
-        if (firstIncomplete) {
-            setActiveTaskId(firstIncomplete.id);
-            if (!openedTaskId) {
-                setOpenedTaskId(firstIncomplete.id);
-            }
-        } else {
-            setActiveTaskId(null);
-        }
-    }, [allTasksForPage, openedTaskId]);
-
-    const taskRefs = useRef<React.RefObject<HTMLDivElement>[]>([]);
-    taskRefs.current = allTasksForPage.map((_, i) => taskRefs.current[i] ?? createRef());
-
-    const [activeTaskIsVisible, setActiveTaskIsVisible] = useState(true);
-
-    useEffect(() => {
-        if (!activeTaskId) {
-            setActiveTaskIsVisible(true);
-            return;
-        }
-
-        const observer = new IntersectionObserver(([entry]) => setActiveTaskIsVisible(entry.isIntersecting), { threshold: 0.5 });
-        const activeTaskIndex = allTasksForPage.findIndex(t => t.id === activeTaskId);
-        const activeTaskRef = taskRefs.current[activeTaskIndex];
-
-        if (activeTaskRef?.current) observer.observe(activeTaskRef.current);
-        return () => {
-            if (activeTaskRef?.current) observer.unobserve(activeTaskRef.current);
-        };
-    }, [activeTaskId, allTasksForPage]);
-
-    const handleTaskUpdate = (updatedTask: Task) => {
-        updateTask(updatedTask);
-        if (updatedTask.completed && updatedTask.id === activeTaskId) {
-            handleFindNextTask(updatedTask.id, allTasksForPage);
-        }
-    };
+    const getTaskRefIndex = (taskId: string) => allTasksForPage.findIndex(t => t.id === taskId);
 
     const handleFindNextTask = (currentTaskId: string, taskGroup: Task[]) => {
         const currentIndex = taskGroup.findIndex(t => t.id === currentTaskId);
@@ -107,92 +56,83 @@ export default function DebriefingPage() {
         if (nextIncompleteTask) {
             setOpenedTaskId(nextIncompleteTask.id);
             const nextTaskIndexInPage = allTasksForPage.findIndex(t => t.id === nextIncompleteTask.id);
-            taskRefs.current[nextTaskIndexInPage]?.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            const taskRef = taskRefs.current[nextTaskIndexInPage];
+            if (taskRef?.current) {
+                taskRef.current.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            }
         } else {
             setOpenedTaskId(null);
         }
     };
-    
-    const handleGoToTask = () => {
-        if (!activeTaskId) return;
-        const activeTaskIndex = allTasksForPage.findIndex(t => t.id === activeTaskId);
-        taskRefs.current[activeTaskIndex]?.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+
+    const handleTaskUpdate = (updatedTask: Task) => {
+        updateTask(updatedTask);
+        if (updatedTask.completed && updatedTask.id === activeTaskId) {
+            handleFindNextTask(updatedTask.id, allTasksForPage);
+        }
     };
 
-    const getTaskRefIndex = (taskId: string) => allTasksForPage.findIndex(t => t.id === taskId);
-
-
     return (
-        <>
-            {activeTaskId && !activeTaskIsVisible && (
-                <div className="fixed bottom-6 right-6 z-50">
-                    <Button size="lg" className="shadow-lg" onClick={handleGoToTask}>
-                        <LocateFixed className="mr-2 h-5 w-5" />
-                        Go to Current Task
-                    </Button>
-                </div>
+        <div className="space-y-6">
+             {isTeamLeader && teamLeaderTasks.length > 0 && (
+                <Card>
+                    <CardHeader>
+                        <div className="flex items-center gap-3">
+                            <ListTodo className="h-6 w-6" />
+                            <div>
+                                <CardTitle>Team Leader: Investment Tasks</CardTitle>
+                                <CardDescription>Finalize and confirm investment decisions.</CardDescription>
+                            </div>
+                        </div>
+                    </CardHeader>
+                    <CardContent className="space-y-2">
+                        {teamLeaderTasks.map(task => (
+                            <div key={task.id} className="relative pt-6">
+                                <InteractiveTaskCard
+                                    ref={taskRefs.current[getTaskRefIndex(task.id)]}
+                                    task={task}
+                                    allTasks={tasks}
+                                    isActive={openedTaskId === task.id}
+                                    isCurrent={activeTaskId === task.id}
+                                    onToggle={() => setOpenedTaskId(openedTaskId === task.id ? null : task.id)}
+                                    onUpdate={handleTaskUpdate}
+                                    onFindNext={(id) => handleFindNextTask(id, teamLeaderTasks)}
+                                />
+                            </div>
+                        ))}
+                    </CardContent>
+                </Card>
             )}
-            <div className="space-y-6">
-                 {isTeamLeader && teamLeaderTasks.length > 0 && (
-                    <Card>
-                        <CardHeader>
-                            <div className="flex items-center gap-3">
-                                <ListTodo className="h-6 w-6" />
-                                <div>
-                                    <CardTitle>Team Leader: Investment Tasks</CardTitle>
-                                    <CardDescription>Finalize and confirm investment decisions.</CardDescription>
-                                </div>
-                            </div>
-                        </CardHeader>
-                        <CardContent className="space-y-2">
-                            {teamLeaderTasks.map(task => (
-                                <div key={task.id} className="relative pt-6">
-                                    <InteractiveTaskCard
-                                        ref={taskRefs.current[getTaskRefIndex(task.id)]}
-                                        task={task}
-                                        allTasks={tasks}
-                                        isActive={openedTaskId === task.id}
-                                        isCurrent={activeTaskId === task.id}
-                                        onToggle={() => setOpenedTaskId(openedTaskId === task.id ? null : task.id)}
-                                        onUpdate={handleTaskUpdate}
-                                        onFindNext={(id) => handleFindNextTask(id, teamLeaderTasks)}
-                                    />
-                                </div>
-                            ))}
-                        </CardContent>
-                    </Card>
-                )}
 
-                {forecastingTasks.length > 0 && (
-                    <Card>
-                        <CardHeader>
-                            <div className="flex items-center gap-3">
-                                <FileText className="h-6 w-6" />
-                                <div>
-                                    <CardTitle className="font-headline text-3xl">Forecasting (MD61)</CardTitle>
-                                    <CardDescription>Calculate and set the total sales forecast for MD61. This will be pushed to the LIT.</CardDescription>
-                                </div>
+            {forecastingTasks.length > 0 && (
+                <Card>
+                    <CardHeader>
+                        <div className="flex items-center gap-3">
+                            <FileText className="h-6 w-6" />
+                            <div>
+                                <CardTitle className="font-headline text-3xl">Forecasting (MD61)</CardTitle>
+                                <CardDescription>Calculate and set the total sales forecast for MD61. This will be pushed to the LIT.</CardDescription>
                             </div>
-                        </CardHeader>
-                        <CardContent className="space-y-2">
-                            {forecastingTasks.map(task => (
-                                <div key={task.id} className="relative pt-6">
-                                    <InteractiveTaskCard
-                                        ref={taskRefs.current[getTaskRefIndex(task.id)]}
-                                        task={task}
-                                        allTasks={tasks}
-                                        isActive={openedTaskId === task.id}
-                                        isCurrent={activeTaskId === task.id}
-                                        onToggle={() => setOpenedTaskId(openedTaskId === task.id ? null : task.id)}
-                                        onUpdate={handleTaskUpdate}
-                                        onFindNext={(id) => handleFindNextTask(id, forecastingTasks)}
-                                    />
-                                </div>
-                            ))}
-                        </CardContent>
-                    </Card>
-                )}
-            </div>
-        </>
+                        </div>
+                    </CardHeader>
+                    <CardContent className="space-y-2">
+                        {forecastingTasks.map(task => (
+                            <div key={task.id} className="relative pt-6">
+                                <InteractiveTaskCard
+                                    ref={taskRefs.current[getTaskRefIndex(task.id)]}
+                                    task={task}
+                                    allTasks={tasks}
+                                    isActive={openedTaskId === task.id}
+                                    isCurrent={activeTaskId === task.id}
+                                    onToggle={() => setOpenedTaskId(openedTaskId === task.id ? null : task.id)}
+                                    onUpdate={handleTaskUpdate}
+                                    onFindNext={(id) => handleFindNextTask(id, forecastingTasks)}
+                                />
+                            </div>
+                        ))}
+                    </CardContent>
+                </Card>
+            )}
+        </div>
     );
 }

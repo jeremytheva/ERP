@@ -252,15 +252,22 @@ export const InteractiveTaskCard = React.forwardRef<HTMLDivElement, InteractiveT
               )}
 
               <div className="flex justify-end gap-2">
-                {isCompleted && (
-                  <Button
+                 {isCompleted ? (
+                   <Button
                     variant="outline"
                     onClick={() => onFindNext(task.id)}
                   >
                     <SkipForward className="mr-2 h-4 w-4" />
                     Next Task
                   </Button>
-                )}
+                 ) : (
+                    <Button
+                        variant="ghost"
+                        onClick={() => onFindNext(task.id)}
+                    >
+                        Skip to Next
+                    </Button>
+                 )}
                 <Button
                   onClick={() => handleMarkComplete(!isCompleted)}
                   disabled={!areDependenciesMet}

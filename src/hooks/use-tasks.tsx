@@ -27,7 +27,7 @@ const ALL_TASKS: Task[] = [
   {
     id: "TL-2",
     title: "Cash Runway & Loan Management",
-    description: "Calculation: Determine Cash Runway (Days): Current Cash Balance / Avg. Daily Outflow. If < 5 days, instruct Logistics/Procurement to hold spending.",
+    description: "Calculation: Determine Cash Runway (Days) = Current Cash Balance / Avg. Daily Outflow. If < 5 days, instruct Logistics/Procurement to hold spending.",
     role: "Team Leader",
     transactionCode: "Dashboard / ZFF7B",
     priority: "High",
@@ -64,7 +64,7 @@ const ALL_TASKS: Task[] = [
     estimatedTime: 5,
     roundRecurrence: "RoundStart",
     startRound: 2,
-    dependencyIDs: ["P-4", "S-4", "L-4", "PM-4"], // Dependency on final confirmation tasks of other roles
+    dependencyIDs: ["P-4"],
     completionType: "Manual-Tick",
     taskType: "Standard",
     completed: false
@@ -74,7 +74,7 @@ const ALL_TASKS: Task[] = [
   {
     id: "S-1",
     title: "Market Analysis & Price Strategy",
-    description: "Focus: Prioritize products with the highest Product Gross Margin Rate for marketing and aggressive pricing. Use Price Alert to stay competitive.",
+    description: "Focus: Prioritize products with the highest Product Gross Margin Rate for marketing and aggressive pricing. Use Price Alert to stay competitive. Calculation: Product Gross Margin Rate = (Selling Price - Final Cost) / Selling Price.",
     role: "Sales",
     transactionCode: "ZMARKET / VK32",
     priority: "High",
@@ -89,7 +89,7 @@ const ALL_TASKS: Task[] = [
   {
     id: "S-2",
     title: "Capacity & Inventory Constraint Check",
-    description: "Critical Check: Compare R-N Total Forecast (Units) against Production Capacity (Max 250,000 units) and current Finished Goods Stock (FG).",
+    description: "Critical Check: Compare R-N Total Forecast (Units) against Production Capacity (Max 250,000 units) and current Finished Goods Stock (FG). Calculation: R-N Forecast (Units) <= Production Capacity + FG Stock.",
     role: "Sales",
     transactionCode: "ZMB52 / Dashboard",
     priority: "High",
@@ -120,7 +120,7 @@ const ALL_TASKS: Task[] = [
   {
     id: "S-4",
     title: "Set Budget & Channel Allocation",
-    description: "Action: Instead of just entering total budget, strategically allocate the majority of the ZADS spend to the DCs with the highest historical ROI.",
+    description: "Action: Instead of just entering total budget, strategically allocate the majority of the ZADS spend to the DCs with the highest historical ROI. Calculation: Channel Allocation = Budget * DC ROI (%).",
     role: "Sales",
     transactionCode: "ZADS",
     priority: "Medium",
@@ -141,7 +141,7 @@ const ALL_TASKS: Task[] = [
   {
     id: "PM-1",
     title: "Lot Size Strategy & BOM Alignment",
-    description: "Goal: Lock in a 48,000 Unit Lot Size for all planned products (or multiples thereof) to minimize Setup Cost per Unit.",
+    description: "Goal: Lock in a 48,000 Unit Lot Size for all planned products (or multiples thereof) to minimize Setup Cost per Unit. Calculation: Setup Cost per Unit = (Setup Time * Setup Cost/Hour) / Lot Size (Units).",
     role: "Production",
     transactionCode: "ZCS02 (BOM) / Dashboard",
     priority: "High",
@@ -156,7 +156,7 @@ const ALL_TASKS: Task[] = [
   {
     id: "PM-2",
     title: "Confirm RM Availability & Run MRP",
-    description: "Dependency Check: Before running MD01, confirm with Procurement that all Raw Materials required for the 48,000 unit run are either in stock or have confirmed incoming POs (check ZME2N).",
+    description: "Dependency Check: Before running MD01, confirm with Procurement that all Raw Materials required for the 48,000 unit run are either in stock or have confirmed incoming POs (check ZME2N). Condition: MRP Run = Ready AND Procurement DOS Set.",
     role: "Production",
     transactionCode: "LIT / MD01",
     priority: "High",
@@ -171,7 +171,7 @@ const ALL_TASKS: Task[] = [
   {
     id: "PM-3",
     title: "Quantify Setup Cost Penalty",
-    description: "Calculation: If the lot size is forced below 48,000 units, calculate the Setup Cost per Unit to justify the resulting high COGS.",
+    description: "Calculation: If the lot size is forced below 48,000 units, calculate the Setup Cost per Unit to justify the resulting high COGS. Calculation: Cost Viability Threshold = Setup Cost per Unit / Product Final Cost.",
     role: "Production",
     transactionCode: "CO41 (Output) / Dashboard",
     priority: "High",
@@ -187,7 +187,7 @@ const ALL_TASKS: Task[] = [
   {
     id: "PM-4",
     title: "Release Production Order",
-    description: "Action: Release the Production Order only for products where the RM are confirmed available to avoid blocking the line with unfulfillable orders.",
+    description: "Action: Release the Production Order only for products where the RM are confirmed available to avoid blocking the line with unfulfillable orders. Check: RM Stock Status = Sufficient before CO41.",
     role: "Production",
     transactionCode: "CO41",
     priority: "High",
@@ -204,7 +204,7 @@ const ALL_TASKS: Task[] = [
   {
     id: "P-1",
     title: "Set Target Days of Supply (DOS) Strategy",
-    description: "Input: Input the desired DOS (e.g., 7 Days) for each RM to drive the PO calculation, ensuring a buffer against the vendor Lead Time.",
+    description: "Input: Input the desired DOS (e.g., 7 Days) for each RM to drive the PO calculation, ensuring a buffer against the vendor Lead Time. Calculation: Target Stock = Daily Usage Rate * Target DOS.",
     role: "Procurement",
     transactionCode: "Dashboard Input / ZMB52",
     priority: "High",
@@ -220,7 +220,7 @@ const ALL_TASKS: Task[] = [
   {
     id: "P-2",
     title: "Sourcing Decision & Sustainability Check",
-    description: "Action: If the RM Stock Status (LIT) is 'Sufficient', select the Slow/Low-Carbon Vendor (V11/V12). Only use Fast Vendor (V01/V02) if Stock Status is 'OUT' or 'LOW'.",
+    description: "Action: If the RM Stock Status (LIT) is Sufficient, select the Slow/Low-Carbon Vendor (V11/V12). Only use Fast Vendor (V01/V02) if Stock Status is OUT or LOW. Decision Rule: IF(RM Status=OUT/LOW, Use V01/V02).",
     role: "Procurement",
     transactionCode: "ZME12",
     priority: "High",
@@ -235,7 +235,7 @@ const ALL_TASKS: Task[] = [
   {
     id: "P-3",
     title: "PO Viability Check & Create PO",
-    description: "Check: DO NOT release a PO (ME59N) for an RM if the quantity ordered is insufficient to support at least 2 x 48,000 units of production. Consolidate small orders.",
+    description: "Check: DO NOT release a PO (ME59N) for an RM if the quantity ordered is insufficient to support at least 2 x 48,000 units of production. Consolidate small orders. Calculation: RM for N Units = Product Count * N Units * RM per Unit (g).",
     role: "Procurement",
     transactionCode: "ME59N",
     priority: "High",
@@ -250,7 +250,7 @@ const ALL_TASKS: Task[] = [
   {
     id: "P-4",
     title: "Sustainability Investment Post",
-    description: "Action: Post the pre-determined, required investment amount (set by TL or formula) into ZFB50 to manage the Cumulative CO2e Emissions.",
+    description: "Action: Post the pre-determined, required investment amount (set by TL or formula) into ZFB50 to manage the Cumulative CO2e Emissions. Action: ZFB50 Posting = Required Investment.",
     role: "Procurement",
     transactionCode: "ZFB50",
     priority: "Medium",
@@ -268,7 +268,7 @@ const ALL_TASKS: Task[] = [
   {
     id: "L-1",
     title: "DC Target Days of Supply (DOS) Strategy",
-    description: "Input: Set the Target DOS for each DC (e.g., 7 days) based on their demand volatility. Critical: Ensure DC Stock >= 5,000 units to prevent stock-outs.",
+    description: "Input: Set the Target DOS for each DC (e.g., 7 days) based on their demand volatility. Critical: Ensure DC Stock >= 5,000 units to prevent stock-outs. Calculation: Target Stock = DC Sales Forecast * Target DOS.",
     role: "Logistics",
     transactionCode: "Dashboard Input / ZMB1B",
     priority: "High",
@@ -284,7 +284,7 @@ const ALL_TASKS: Task[] = [
   {
     id: "L-2",
     title: "Transfer Consolidation & Execution",
-    description: "Action: Calculate Required Transfer Qty for all DCs. Execute only 1 ZMB1B posting (if possible) to save €500 in Transfer Cost and 750 kg CO2e per transfer.",
+    description: "Action: Calculate Required Transfer Qty for all DCs. Execute only 1 ZMB1B posting (if possible) to save €500 in Transfer Cost and 750 kg CO2e per transfer. Calculation: Total Transfer Cost = Number of Transfers Executed * €500.",
     role: "Logistics",
     transactionCode: "ZMB1B",
     priority: "High",
@@ -300,7 +300,7 @@ const ALL_TASKS: Task[] = [
   {
     id: "L-3",
     title: "Monitor Cash Flow & Delivery Status",
-    description: "Action: Check for the Cash Alert (Cash Balance < €100,000). If active, immediately contact the TL and P to place a hold on all non-essential spending.",
+    description: "Action: Check for the Cash Alert (Cash Balance < €100,000). If active, immediately contact the TL and P to place a hold on all non-essential spending. Condition: Cash Balance < €100,000 = Transfer Hold.",
     role: "Logistics",
     transactionCode: "ZFF7B / ZME2N",
     priority: "High",
@@ -315,7 +315,7 @@ const ALL_TASKS: Task[] = [
   {
     id: "L-4",
     title: "Final Transfer Save Confirmation",
-    description: "Action: Manually confirm that the final DC transfers were successfully executed and saved in the system.",
+    description: "Action: Manually confirm that the final DC transfers were successfully executed and saved in the system. Check: ZMB1B Save Status = Confirmed.",
     role: "Logistics",
     transactionCode: "ZMB1B",
     priority: "Low",
@@ -381,6 +381,12 @@ export const TasksProvider = ({ children }: { children: ReactNode }) => {
         if (dbTasks.length !== ALL_TASKS.length) {
             console.log("Task mismatch detected, re-seeding database...");
              const batch = writeBatch(firestore);
+            // First, delete existing tasks
+            const existingTasksSnapshot = await getDocs(tasksColRef);
+            existingTasksSnapshot.forEach(doc => {
+                batch.delete(doc.ref);
+            });
+            // Then, add the new tasks
             ALL_TASKS.forEach((task) => {
               const taskDocRef = doc(firestore, "tasks", task.id);
               batch.set(taskDocRef, task);
@@ -446,5 +452,7 @@ export const useTasks = () => {
   }
   return context;
 };
+
+    
 
     

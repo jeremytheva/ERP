@@ -2,7 +2,7 @@
 "use client";
 
 import { useState, useEffect, createContext, useContext, ReactNode } from "react";
-import { collection, onSnapshot, writeBatch, doc, FirestoreError } from "firebase/firestore";
+import { collection, onSnapshot, writeBatch, doc, FirestoreError, getDocs } from "firebase/firestore";
 import { useFirestore, errorEmitter, FirestorePermissionError, useAuth as useFirebaseAuth, useMemoFirebase } from "@/firebase";
 import type { UserProfile } from "@/types";
 
@@ -22,24 +22,24 @@ const UserProfilesContext = createContext<UserProfilesContextType | undefined>(u
 
 export const UserProfilesProvider = ({ children }: { children: ReactNode }) => {
   const firestore = useFirestore();
-  const auth = useFirebaseAuth();
+  const { user, isUserLoading } = useFirebaseAuth();
   const [profiles, setProfiles] = useState<UserProfile[]>([]);
   const [loading, setLoading] = useState(true);
 
-  const profilesColRef = useMemoFirebase(() => {
-    // Only create the query if both firestore and auth are ready.
-    if (!firestore || !auth) return null;
-    return collection(firestore, "users");
-  }, [firestore, auth]);
-
   useEffect(() => {
-    // We check for firestore readiness, but not auth, as auth can be null initially.
-    if (!profilesColRef) {
+    if (isUserLoading) {
+        setLoading(true);
+        return;
+    }
+    
+    if (!user || !firestore) {
       setProfiles(USER_PROFILES);
       setLoading(false);
       return;
     }
+    
     setLoading(true);
+    const profilesColRef = collection(firestore, "users");
 
     const unsubscribe = onSnapshot(profilesColRef, async (querySnapshot) => {
         const firestoreProfiles = querySnapshot.docs.map(doc => doc.data() as UserProfile);
@@ -77,7 +77,7 @@ export const UserProfilesProvider = ({ children }: { children: ReactNode }) => {
     });
 
     return () => unsubscribe();
-  }, [profilesColRef, firestore]);
+  }, [user, isUserLoading, firestore]);
   
   const value = { profiles, loading };
 

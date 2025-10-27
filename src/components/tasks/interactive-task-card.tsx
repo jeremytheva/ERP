@@ -15,10 +15,13 @@ import { Button } from "@/components/ui/button";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
-import type { Task, TaskDataField, TaskPriority } from "@/types";
-import { Clock, Code, ChevronDown, CheckCircle, Circle, AlertTriangle, Info, SkipForward } from "lucide-react";
+import type { Task, TaskDataField, TaskPriority, GameState } from "@/types";
+import { Clock, Code, ChevronDown, CheckCircle, Circle, AlertTriangle, Info, SkipForward, Sparkles, Loader2 } from "lucide-react";
 import { Separator } from "../ui/separator";
 import { Card } from "../ui/card";
+import { suggestOptimizedTaskInputsAction } from "@/lib/actions";
+import { useGameState } from "@/hooks/use-game-data";
+import { useToast } from "@/hooks/use-toast";
 
 interface InteractiveTaskCardProps {
   task: Task;
@@ -47,30 +50,34 @@ const completionIcon = (task: Task) => {
     return task.completed ? <CheckCircle className="h-5 w-5 text-green-500" /> : <Circle className="h-5 w-5 text-muted-foreground" />;
 };
 
+const generateFormSchema = (dataFields: TaskDataField[]) => {
+    const schemaShape: { [key: string]: z.ZodType<any, any> } = {};
+    dataFields.forEach(field => {
+        switch (field.dataType) {
+            case "Currency":
+            case "Integer":
+                schemaShape[field.fieldName] = z.coerce.number().min(0, "Value must be positive.");
+                break;
+            case "String":
+                schemaShape[field.fieldName] = z.string().min(1, "This field is required.");
+                break;
+            default:
+                schemaShape[field.fieldName] = z.any();
+        }
+    });
+    return z.object(schemaShape);
+};
+
 
 export const InteractiveTaskCard = React.forwardRef<HTMLDivElement, InteractiveTaskCardProps>(
     ({ task, allTasks, isActive, isCurrent, onToggle, onUpdate, onFindNext }, ref) => {
+    const { gameState } = useGameState();
+    const { toast } = useToast();
+    const [isAiLoading, setIsAiLoading] = React.useState(false);
+
     const isCompleted = task.completed;
     const dependencies = task.dependencyIDs?.map(depId => allTasks.find(t => t.id === depId)).filter(Boolean) as Task[] | undefined;
     const areDependenciesMet = !dependencies || dependencies.every(dep => dep.completed);
-
-    const generateFormSchema = (dataFields: TaskDataField[]) => {
-        const schemaShape: { [key: string]: z.ZodType<any, any> } = {};
-        dataFields.forEach(field => {
-            switch (field.dataType) {
-                case "Currency":
-                case "Integer":
-                    schemaShape[field.fieldName] = z.coerce.number().min(0, "Value must be positive.");
-                    break;
-                case "String":
-                    schemaShape[field.fieldName] = z.string().min(1, "This field is required.");
-                    break;
-                default:
-                    schemaShape[field.fieldName] = z.any();
-            }
-        });
-        return z.object(schemaShape);
-    };
 
     const form = useForm({
         resolver: task.dataFields ? zodResolver(generateFormSchema(task.dataFields)) : undefined,
@@ -79,6 +86,17 @@ export const InteractiveTaskCard = React.forwardRef<HTMLDivElement, InteractiveT
             return acc;
         }, {} as Record<string, any>)
     });
+
+    React.useEffect(() => {
+        if (task.dataFields) {
+            const defaultValues = task.dataFields.reduce((acc, field) => {
+                acc[field.fieldName] = field.value ?? field.suggestedValue ?? '';
+                return acc;
+            }, {} as Record<string, any>);
+            form.reset(defaultValues);
+        }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [task, form.reset]);
 
     const handleMarkComplete = (completed: boolean) => {
         let updatedDataFields = task.dataFields;
@@ -90,12 +108,32 @@ export const InteractiveTaskCard = React.forwardRef<HTMLDivElement, InteractiveT
                     updatedDataFields = task.dataFields?.map(df => ({...df, value: values[df.fieldName]}));
                     onUpdate({ ...task, completed, dataFields: updatedDataFields });
                 } else if (!completed) {
-                    // Allow marking as incomplete even if form is invalid
                     onUpdate({ ...task, completed });
                 }
              });
         } else {
             onUpdate({ ...task, completed });
+        }
+    };
+    
+    const handleAiSuggest = async () => {
+        setIsAiLoading(true);
+        const result = await suggestOptimizedTaskInputsAction({ task, gameState });
+        setIsAiLoading(false);
+
+        if (result.success && result.data) {
+            const updatedTaskWithAISuggestions = result.data.updatedTask;
+            onUpdate(updatedTaskWithAISuggestions); // This will cause a re-render and useEffect will update the form
+             toast({
+                title: "AI Suggestions Applied",
+                description: "The input fields have been updated with AI-powered suggestions.",
+            });
+        } else {
+            toast({
+                variant: "destructive",
+                title: "AI Suggestion Failed",
+                description: result.error,
+            });
         }
     };
 
@@ -251,29 +289,39 @@ export const InteractiveTaskCard = React.forwardRef<HTMLDivElement, InteractiveT
                 </Form>
               )}
 
-              <div className="flex justify-end gap-2">
-                 {isCompleted ? (
-                   <Button
-                    variant="outline"
-                    onClick={() => onFindNext(task.id)}
-                  >
-                    <SkipForward className="mr-2 h-4 w-4" />
-                    Next Task
-                  </Button>
-                 ) : (
+              <div className="flex justify-between items-center gap-2">
+                 <div>
+                    {task.dataFields && task.dataFields.length > 0 && (
+                        <Button variant="outline" size="sm" onClick={handleAiSuggest} disabled={isAiLoading}>
+                            {isAiLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Sparkles className="mr-2 h-4 w-4" />}
+                            AI Suggest
+                        </Button>
+                    )}
+                 </div>
+                 <div className="flex justify-end gap-2">
+                    {isCompleted ? (
                     <Button
-                        variant="ghost"
+                        variant="outline"
                         onClick={() => onFindNext(task.id)}
                     >
-                        Skip to Next
+                        <SkipForward className="mr-2 h-4 w-4" />
+                        Next Task
                     </Button>
-                 )}
-                <Button
-                  onClick={() => handleMarkComplete(!isCompleted)}
-                  disabled={!areDependenciesMet}
-                >
-                  {isCompleted ? "Mark as Incomplete" : "Mark as Complete"}
-                </Button>
+                    ) : (
+                        <Button
+                            variant="ghost"
+                            onClick={() => onFindNext(task.id)}
+                        >
+                            Skip to Next
+                        </Button>
+                    )}
+                    <Button
+                    onClick={() => handleMarkComplete(!isCompleted)}
+                    disabled={!areDependenciesMet}
+                    >
+                    {isCompleted ? "Mark as Incomplete" : "Mark as Complete"}
+                    </Button>
+                 </div>
               </div>
             </div>
           </CollapsibleContent>

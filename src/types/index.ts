@@ -77,8 +77,8 @@ export type Role = "Procurement" | "Production" | "Logistics" | "Sales" | "Team 
 export type TaskDataField = {
   fieldName: string;
   dataType: "Currency" | "Integer" | "String";
-  value?: number | string; // User-entered value
-  suggestedValue?: number | string;
+  value?: number | string | null; // User-entered value
+  suggestedValue?: number | string | null;
   aiRationale?: string;
 };
 

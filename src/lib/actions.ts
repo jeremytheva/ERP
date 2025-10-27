@@ -1,3 +1,4 @@
+
 "use server";
 
 import {
@@ -16,6 +17,10 @@ import {
   answerQuestionsWithAICopilot,
   AnswerQuestionsWithAICopilotInput,
 } from "@/ai/flows/answer-questions-with-ai-copilot";
+import {
+    suggestOptimizedTaskInputs,
+    SuggestOptimizedTaskInputsInput,
+} from "@/ai/flows/suggest-optimized-task-inputs";
 
 export const simulateScenarioAction = async (
   input: SimulateScenarioInput
@@ -64,3 +69,15 @@ export const answerCopilotQuestionAction = async (
     return { success: false, error: "Failed to get an answer." };
   }
 };
+
+export const suggestOptimizedTaskInputsAction = async (
+    input: SuggestOptimizedTaskInputsInput
+) => {
+    try {
+        const result = await suggestOptimizedTaskInputs(input);
+        return { success: true, data: result };
+    } catch (error) {
+        console.error(error);
+        return { success: false, error: "Failed to get AI suggestions." };
+    }
+}

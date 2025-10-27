@@ -55,6 +55,7 @@ interface GameStateContextType {
   confirmNextRound: boolean;
   togglePause: () => void;
   resetTimer: () => void;
+  resetGame: () => Promise<void>;
   confirmAndAdvance: () => void;
   setRound: (newRound: number) => Promise<void>;
   setRoundDuration: (duration: number) => void;
@@ -273,6 +274,19 @@ export const GameStateProvider = ({ children }: { children: ReactNode }) => {
     updateTimerState({ timeLeft: newTimeLeft });
   };
 
+  const resetGame = async () => {
+    if (!gameDocRef) return;
+    const batch = writeBatch(firestore);
+    batch.set(gameDocRef, INITIAL_GAME_STATE);
+    await batch.commit().catch(error => {
+      errorEmitter.emit('permission-error', new FirestorePermissionError({
+          path: gameDocRef.path,
+          operation: 'write',
+          requestResourceData: INITIAL_GAME_STATE,
+      }));
+    });
+  };
+
   const setRound = async (newRound: number) => {
     if (newRound < 1 || !gameDocRef) return;
     
@@ -297,9 +311,8 @@ export const GameStateProvider = ({ children }: { children: ReactNode }) => {
         }
     } else {
         if (newRound === 0) {
-            batch.set(gameDocRef, INITIAL_GAME_STATE);
-            await batch.commit();
-            return;
+           await resetGame();
+           return;
         }
         newKpiHistory = gameState.kpiHistory.filter(entry => entry.round <= newRound);
     }
@@ -335,6 +348,7 @@ export const GameStateProvider = ({ children }: { children: ReactNode }) => {
       confirmNextRound,
       togglePause,
       resetTimer,
+      resetGame,
       confirmAndAdvance,
       setRound,
       setRoundDuration: (duration: number) => updateTimerState({ roundDuration: duration, timeLeft: duration }),

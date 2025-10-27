@@ -1,6 +1,7 @@
 
 "use client";
 
+import React from "react";
 import { useAuth } from "@/hooks/use-auth";
 import {
   DropdownMenu,
@@ -12,9 +13,19 @@ import {
   DropdownMenuRadioItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { ChevronsUpDown, LogOut, Clock, Settings, Play, Pause, RefreshCw, ChevronLeft, ChevronRight, Coffee, ShieldQuestion } from "lucide-react";
+import { ChevronsUpDown, LogOut, Clock, Settings, Play, Pause, RefreshCw, ChevronLeft, ChevronRight, Coffee, ShieldQuestion, RotateCcw } from "lucide-react";
 import { usePathname } from "next/navigation";
 import { SidebarTrigger } from "../ui/sidebar";
 import { useGameState } from "@/hooks/use-game-data";
@@ -68,6 +79,7 @@ export function Header() {
     confirmNextRound,
     togglePause, 
     resetTimer, 
+    resetGame,
     setRound,
     setRoundDuration,
     setBreakDuration,
@@ -75,6 +87,8 @@ export function Header() {
     setConfirmNextRound
   } = useGameState();
   const pathname = usePathname();
+  const [isResetDialogOpen, setIsResetDialogOpen] = React.useState(false);
+
   const pageTitle = getPageTitle(pathname);
   const currentRound = gameState.kpiHistory[gameState.kpiHistory.length - 1]?.round || 1;
 
@@ -98,8 +112,14 @@ export function Header() {
     }
   }
 
+  const handleResetGame = async () => {
+    await resetGame();
+    setIsResetDialogOpen(false);
+  }
+
 
   return (
+    <>
     <header className="sticky top-0 z-10 flex h-16 items-center gap-4 border-b bg-background/80 backdrop-blur-sm px-4 md:px-6">
        <div className="md:hidden">
           <SidebarTrigger />
@@ -129,6 +149,10 @@ export function Header() {
                 <DropdownMenuItem onClick={resetTimer}>
                     <RefreshCw className="mr-2 h-4 w-4" />
                     <span>Reset Timer</span>
+                </DropdownMenuItem>
+                 <DropdownMenuItem onClick={() => setIsResetDialogOpen(true)} className="text-destructive focus:bg-destructive/10 focus:text-destructive">
+                    <RotateCcw className="mr-2 h-4 w-4" />
+                    <span>Reset Game</span>
                 </DropdownMenuItem>
                 <DropdownMenuSeparator />
                 <DropdownMenuLabel>Round Control</DropdownMenuLabel>
@@ -198,5 +222,23 @@ export function Header() {
         </DropdownMenu>
       </div>
     </header>
+    <AlertDialog open={isResetDialogOpen} onOpenChange={setIsResetDialogOpen}>
+      <AlertDialogContent>
+        <AlertDialogHeader>
+          <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+          <AlertDialogDescription>
+            This action cannot be undone. This will permanently reset all game data,
+            including KPI history, tasks, and settings, to their initial state.
+          </AlertDialogDescription>
+        </AlertDialogHeader>
+        <AlertDialogFooter>
+          <AlertDialogCancel>Cancel</AlertDialogCancel>
+          <AlertDialogAction onClick={handleResetGame} className="bg-destructive hover:bg-destructive/90">
+            Yes, reset game
+          </AlertDialogAction>
+        </AlertDialogFooter>
+      </AlertDialogContent>
+    </AlertDialog>
+    </>
   );
 }

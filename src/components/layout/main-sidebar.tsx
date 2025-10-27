@@ -85,6 +85,19 @@ export function MainSidebar() {
   }, [profile, isTeamLeader]);
 
   const isActive = (href: string) => {
+    // Special case for team leader on debriefing page
+    if (isTeamLeader && pathname === '/debriefing' && href === '/debriefing') {
+        return true;
+    }
+     // For other roles, a direct match is fine
+    if (!isTeamLeader && pathname === href) {
+        return true;
+    }
+    // For team leader, we want to highlight the parent route
+    if (isTeamLeader && href !== '/dashboard' && pathname.startsWith(href)) {
+        return true;
+    }
+    
     return pathname === href;
   }
 

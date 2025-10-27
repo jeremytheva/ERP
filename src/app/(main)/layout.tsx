@@ -10,13 +10,17 @@ import { Header } from "@/components/layout/header";
 import { AiCopilot } from "@/components/ai/ai-copilot";
 import { ConfirmRoundStartDialog } from "@/components/game/confirm-round-start-dialog";
 import { GoToCurrentTaskButton } from "@/context/task-navigation-context";
+import { useTeamSettings } from "@/hooks/use-team-settings";
 
 const AUTH_PAGES = ["/"]; // Add any other auth-related pages here
 
 export default function MainLayout({ children }: { children: React.ReactNode }) {
-  const { user, loading } = useAuth();
+  const { user, profile, loading } = useAuth();
+  const { teamLeader } = useTeamSettings();
   const router = useRouter();
   const pathname = usePathname();
+
+  const isTeamLeader = profile?.id === teamLeader;
 
   useEffect(() => {
     if (!loading && !user && !AUTH_PAGES.includes(pathname)) {
@@ -43,7 +47,7 @@ export default function MainLayout({ children }: { children: React.ReactNode }) 
           </main>
         </div>
       </div>
-      <AiCopilot />
+      {isTeamLeader && <AiCopilot />}
       <ConfirmRoundStartDialog />
       <GoToCurrentTaskButton />
     </SidebarProvider>

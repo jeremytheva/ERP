@@ -19,12 +19,11 @@ export const TaskSchema = z.object({
     estimatedTime: z.number(),
     roundRecurrence: z.enum(["Once", "RoundStart", "Continuous"]),
     startRound: z.number().optional(),
-    timeframeConstraint: z.enum(["None", "StartPhase", "MidPhase", "EndPhase"]).optional(),
     dependencyIDs: z.array(z.string()),
     completionType: z.enum(["Manual-Tick", "Data-Confirmed", "System-Validated"]),
     taskType: z.enum(["ERPsim Input Data", "ERPsim Gather Data", "Standard"]),
     dataFields: z.array(TaskDataFieldSchema).optional(),
-    completed: z.boolean(),
+    completed: z.boolean().default(false),
 });
 
 export const KpiSchema = z.object({
@@ -43,7 +42,7 @@ export const KpiSchema = z.object({
     cumulativeCO2eEmissions: z.number(),
     competitorAvgPrice: z.number(),
     grossRevenue: z.number(),
-    cogs: z.number(),
+cogs: z.number(),
     sustainabilityInvestment: z.number(),
 });
 
@@ -83,3 +82,5 @@ export const SuggestOptimizedTaskInputsOutputSchema = z.object({
     }).describe("The task object with updated suggestedValues and aiRationale for its dataFields."),
 });
 export type SuggestOptimizedTaskInputsOutput = z.infer<typeof SuggestOptimizedTaskInputsOutputSchema>;
+
+    

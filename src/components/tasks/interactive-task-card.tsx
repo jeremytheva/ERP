@@ -78,6 +78,8 @@ export const InteractiveTaskCard = React.forwardRef<HTMLDivElement, InteractiveT
     const isCompleted = task.completed;
     const dependencies = task.dependencyIDs?.map(depId => allTasks.find(t => t.id === depId)).filter(Boolean) as Task[] | undefined;
     const areDependenciesMet = !dependencies || dependencies.every(dep => dep.completed);
+    
+    const hasAiRationale = task.dataFields?.some(df => df.aiRationale);
 
     const form = useForm({
         resolver: task.dataFields ? zodResolver(generateFormSchema(task.dataFields)) : undefined,
@@ -86,6 +88,34 @@ export const InteractiveTaskCard = React.forwardRef<HTMLDivElement, InteractiveT
             return acc;
         }, {} as Record<string, any>)
     });
+
+    React.useEffect(() => {
+        if (isActive && task.dataFields && task.dataFields.length > 0 && !hasAiRationale && !isAiLoading) {
+            const getAiSuggestions = async () => {
+                setIsAiLoading(true);
+                const result = await suggestOptimizedTaskInputsAction({ task, gameState });
+                setIsAiLoading(false);
+
+                if (result.success && result.data) {
+                    const updatedTaskWithAISuggestions = result.data.updatedTask;
+                    onUpdate(updatedTaskWithAISuggestions);
+                    toast({
+                        title: "AI Suggestions Loaded",
+                        description: "Input fields have been pre-filled with AI suggestions.",
+                    });
+                } else {
+                    toast({
+                        variant: "destructive",
+                        title: "AI Suggestion Failed",
+                        description: result.error,
+                    });
+                }
+            };
+            getAiSuggestions();
+        }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [isActive, task.id]);
+
 
     React.useEffect(() => {
         if (task.dataFields) {
@@ -115,28 +145,6 @@ export const InteractiveTaskCard = React.forwardRef<HTMLDivElement, InteractiveT
             onUpdate({ ...task, completed });
         }
     };
-    
-    const handleAiSuggest = async () => {
-        setIsAiLoading(true);
-        const result = await suggestOptimizedTaskInputsAction({ task, gameState });
-        setIsAiLoading(false);
-
-        if (result.success && result.data) {
-            const updatedTaskWithAISuggestions = result.data.updatedTask;
-            onUpdate(updatedTaskWithAISuggestions); // This will cause a re-render and useEffect will update the form
-             toast({
-                title: "AI Suggestions Applied",
-                description: "The input fields have been updated with AI-powered suggestions.",
-            });
-        } else {
-            toast({
-                variant: "destructive",
-                title: "AI Suggestion Failed",
-                description: result.error,
-            });
-        }
-    };
-
 
   return (
     <div ref={ref} className="relative">
@@ -235,7 +243,14 @@ export const InteractiveTaskCard = React.forwardRef<HTMLDivElement, InteractiveT
                 </div>
               )}
 
-              {task.dataFields && (
+              {isAiLoading && (
+                 <div className="flex items-center justify-center gap-2 text-muted-foreground">
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                    <span>Loading AI suggestions...</span>
+                 </div>
+              )}
+              
+              {task.dataFields && !isAiLoading && (
                 <Form {...form}>
                   <form className="space-y-4">
                     {task.dataFields.map((field) => (
@@ -289,15 +304,7 @@ export const InteractiveTaskCard = React.forwardRef<HTMLDivElement, InteractiveT
                 </Form>
               )}
 
-              <div className="flex justify-between items-center gap-2">
-                 <div>
-                    {task.dataFields && task.dataFields.length > 0 && (
-                        <Button variant="outline" size="sm" onClick={handleAiSuggest} disabled={isAiLoading}>
-                            {isAiLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Sparkles className="mr-2 h-4 w-4" />}
-                            AI Suggest
-                        </Button>
-                    )}
-                 </div>
+              <div className="flex justify-end items-center gap-2">
                  <div className="flex justify-end gap-2">
                     {isCompleted ? (
                     <Button
@@ -332,3 +339,5 @@ export const InteractiveTaskCard = React.forwardRef<HTMLDivElement, InteractiveT
 });
 
 InteractiveTaskCard.displayName = 'InteractiveTaskCard';
+
+    

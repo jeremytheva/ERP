@@ -22,13 +22,15 @@ const UserProfilesContext = createContext<UserProfilesContextType | undefined>(u
 
 export const UserProfilesProvider = ({ children }: { children: ReactNode }) => {
   const firestore = useFirestore();
+  const auth = useFirebaseAuth();
   const [profiles, setProfiles] = useState<UserProfile[]>([]);
   const [loading, setLoading] = useState(true);
 
   const profilesColRef = useMemoFirebase(() => {
-    if (!firestore) return null;
+    // Only create the query if both firestore and auth are ready.
+    if (!firestore || !auth) return null;
     return collection(firestore, "users");
-  }, [firestore]);
+  }, [firestore, auth]);
 
   useEffect(() => {
     // We check for firestore readiness, but not auth, as auth can be null initially.

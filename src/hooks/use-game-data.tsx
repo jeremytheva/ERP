@@ -3,7 +3,7 @@
 
 import { useState, useEffect, useCallback, createContext, useContext, ReactNode } from "react";
 import { doc, onSnapshot, writeBatch, FirestoreError } from "firebase/firestore";
-import { useAuth } from "./use-auth";
+import { useAuth as useAppContextAuth } from "./use-auth";
 import type { GameState, KpiHistoryEntry } from "@/types";
 import { useFirestore, errorEmitter, FirestorePermissionError, useMemoFirebase } from "@/firebase";
 
@@ -67,7 +67,7 @@ interface GameStateContextType {
 const GameStateContext = createContext<GameStateContextType | undefined>(undefined);
 
 export const GameStateProvider = ({ children }: { children: ReactNode }) => {
-  const { user } = useAuth();
+  const { user } = useAppContextAuth();
   const firestore = useFirestore();
   const [gameState, setGameState] = useState<GameState>(INITIAL_GAME_STATE);
   const [timeLeft, setTimeLeft] = useState(0);
@@ -358,4 +358,3 @@ export const useGameState = () => {
   }
   return context;
 };
-

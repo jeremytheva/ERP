@@ -3,7 +3,7 @@
 
 import { useState, useEffect, createContext, useContext, ReactNode } from "react";
 import { doc, onSnapshot, setDoc, FirestoreError } from "firebase/firestore";
-import { useAuth } from "./use-auth";
+import { useAuth as useAppContextAuth } from "./use-auth";
 import { useFirestore, errorEmitter, FirestorePermissionError, useMemoFirebase } from "@/firebase";
 
 const SETTINGS_ID = "default_settings";
@@ -16,7 +16,7 @@ interface TeamSettingsContextType {
 const TeamSettingsContext = createContext<TeamSettingsContextType | undefined>(undefined);
 
 export const TeamSettingsProvider = ({ children }: { children: ReactNode }) => {
-  const { user } = useAuth();
+  const { user } = useAppContextAuth();
   const firestore = useFirestore();
   const [teamLeader, setTeamLeaderState] = useState<string | null>(null);
 

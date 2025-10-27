@@ -4,7 +4,7 @@
 import { useState, useEffect, createContext, useContext, ReactNode } from "react";
 import { collection, doc, onSnapshot, writeBatch, FirestoreError, setDoc, deleteDoc, getDocs } from "firebase/firestore";
 import { useFirestore, errorEmitter, FirestorePermissionError, useMemoFirebase } from "@/firebase";
-import { useAuth } from "./use-auth";
+import { useAuth as useAppContextAuth } from "./use-auth";
 import type { Task, Role, TaskPriority, RoundRecurrence, CompletionType, TaskType } from "@/types";
 
 const ALL_TASKS: Task[] = [
@@ -358,7 +358,7 @@ interface TasksContextType {
 const TasksContext = createContext<TasksContextType | undefined>(undefined);
 
 export const TasksProvider = ({ children }: { children: ReactNode }) => {
-  const { user } = useAuth();
+  const { user } = useAppContextAuth();
   const firestore = useFirestore();
   const [tasks, setTasks] = useState<Task[]>([]);
   const [isLoading, setIsLoading] = useState(true);

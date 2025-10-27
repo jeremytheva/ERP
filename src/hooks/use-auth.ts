@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useContext } from "react";
@@ -10,3 +11,5 @@ export const useAuth = () => {
   }
   return context;
 };
+
+export { useAuth as useAppContextAuth };

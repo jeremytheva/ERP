@@ -50,7 +50,7 @@ export function AiCopilot() {
       companyValuation: gameState.companyValuation,
       netIncome: gameState.netIncome,
       inventoryValue: gameState.inventoryValue,
-      totalEmissions: gameState.totalEmissions,
+      totalEmissions: gameState.cumulativeCO2eEmissions,
       teamStrategy: gameState.teamStrategy,
       competitorAnalysisLog: JSON.stringify(logEntries.slice(0, 5)), // Send recent 5 logs
     });

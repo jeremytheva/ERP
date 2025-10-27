@@ -10,27 +10,10 @@
 
 import { ai } from '@/ai/genkit';
 import { z } from 'genkit';
-import { GameStateSchema, TaskSchema, TaskDataFieldSchema } from '@/lib/zod-schemas';
+import { SuggestOptimizedTaskInputsInputSchema, SuggestOptimizedTaskInputsOutputSchema, TaskSchema, OptimizedTaskDataFieldSchema } from '@/lib/zod-schemas';
 import type { Task } from '@/types';
+import type { SuggestOptimizedTaskInputsInput, SuggestOptimizedTaskInputsOutput } from '@/lib/zod-schemas';
 
-
-export const SuggestOptimizedTaskInputsInputSchema = z.object({
-    task: TaskSchema,
-    gameState: GameStateSchema,
-});
-export type SuggestOptimizedTaskInputsInput = z.infer<typeof SuggestOptimizedTaskInputsInputSchema>;
-
-const OptimizedTaskDataFieldSchema = TaskDataFieldSchema.extend({
-    suggestedValue: z.union([z.number(), z.string(), z.null()]).describe("The AI-suggested optimal value for this field."),
-    aiRationale: z.string().optional().describe("A brief explanation for why this value was suggested."),
-});
-
-const SuggestOptimizedTaskInputsOutputSchema = z.object({
-    updatedTask: TaskSchema.extend({
-        dataFields: z.array(OptimizedTaskDataFieldSchema).optional()
-    }).describe("The task object with updated suggestedValues and aiRationale for its dataFields."),
-});
-export type SuggestOptimizedTaskInputsOutput = z.infer<typeof SuggestOptimizedTaskInputsOutputSchema>;
 
 export async function suggestOptimizedTaskInputs(input: SuggestOptimizedTaskInputsInput): Promise<SuggestOptimizedTaskInputsOutput> {
   return suggestOptimizedTaskInputsFlow(input);

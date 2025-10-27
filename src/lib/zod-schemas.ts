@@ -64,3 +64,22 @@ export const GameStateSchema = KpiSchema.extend({
     teamStrategy: z.string(),
     timerState: TimerStateSchema,
 });
+
+
+export const SuggestOptimizedTaskInputsInputSchema = z.object({
+    task: TaskSchema,
+    gameState: GameStateSchema,
+});
+export type SuggestOptimizedTaskInputsInput = z.infer<typeof SuggestOptimizedTaskInputsInputSchema>;
+
+export const OptimizedTaskDataFieldSchema = TaskDataFieldSchema.extend({
+    suggestedValue: z.union([z.number(), z.string(), z.null()]).describe("The AI-suggested optimal value for this field."),
+    aiRationale: z.string().optional().describe("A brief explanation for why this value was suggested."),
+});
+
+export const SuggestOptimizedTaskInputsOutputSchema = z.object({
+    updatedTask: TaskSchema.extend({
+        dataFields: z.array(OptimizedTaskDataFieldSchema).optional()
+    }).describe("The task object with updated suggestedValues and aiRationale for its dataFields."),
+});
+export type SuggestOptimizedTaskInputsOutput = z.infer<typeof SuggestOptimizedTaskInputsOutputSchema>;

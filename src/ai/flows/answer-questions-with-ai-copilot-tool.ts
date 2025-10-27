@@ -12,8 +12,28 @@ export const erpSimGameDocumentSearch = ai.defineTool(
         outputSchema: z.string(),
     },
     async (input) => {
-        // In a real application, you would implement a search over your documents here.
-        // For this example, we'll return a hardcoded answer based on the query.
+        // =================================================================
+        // DEVELOPER ACTION: IMPLEMENT YOUR DOCUMENT SEARCH LOGIC HERE
+        //
+        // This is a placeholder. In a real application, you would replace
+        // this with a call to a document retrieval system, like a vector
+        // database (e.g., Pinecone, ChromaDB, or Firebase Vector Search).
+        //
+        // The process would look like this:
+        // 1. Ingest Documents: Take your PDF/text documents, split them
+        //    into chunks, and generate vector embeddings for each chunk.
+        //    Store these embeddings in your vector database. This is usually
+        //    done offline as a one-time setup.
+        // 2. Query: When this tool is called, take the user's `input.query`,
+        //    generate an embedding for it using the same model.
+        // 3. Search: Use the query embedding to perform a similarity search
+        //    against your vector database to find the most relevant chunks
+        //    of text from your original documents.
+        // 4. Format & Return: Concatenate the relevant text chunks and
+        //    return them as a single string. The LLM will use this string
+        //    as context to answer the user's question.
+        // =================================================================
+
         if (input.query.toLowerCase().includes('muesli sales channels')) {
             return JSON.stringify({
                 "source": "Muesli Sales Channels Documentation",

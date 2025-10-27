@@ -10,6 +10,7 @@
 
 import {ai} from '@/ai/genkit';
 import {z} from 'genkit';
+import { erpSimGameDocumentSearch } from './answer-questions-with-ai-copilot-tool';
 
 const AnswerQuestionsWithAICopilotInputSchema = z.object({
   question: z.string().describe('The question to ask the AI copilot.'),
@@ -35,6 +36,7 @@ const prompt = ai.definePrompt({
   name: 'answerQuestionsWithAICopilotPrompt',
   input: {schema: AnswerQuestionsWithAICopilotInputSchema},
   output: {schema: AnswerQuestionsWithAICopilotOutputSchema},
+  tools: [erpSimGameDocumentSearch],
   prompt: `You are an AI copilot that answers questions about the game, our company\'s performance, or potential strategies.
 
   Here is some information about the game and our company:

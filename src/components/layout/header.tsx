@@ -80,8 +80,6 @@ export function Header() {
   const pageTitle = getPageTitle(pathname);
   const kpiHistory = gameState.kpiHistory ?? [];
   const currentRound = kpiHistory[kpiHistory.length - 1]?.round || 1;
-  const maxRound = kpiHistory.reduce((max, entry) => Math.max(max, entry.round), currentRound);
-  const canIncrementRound = currentRound < maxRound;
   const hasProfiles = userProfiles.length > 0;
 
   const handleRoundDurationChange = (event: ChangeEvent<HTMLInputElement>) => {
@@ -181,11 +179,8 @@ export function Header() {
                       size="icon"
                       className="h-7 w-7"
                       onClick={() => {
-                        if (canIncrementRound) {
-                          void setRound(currentRound + 1);
-                        }
+                        void setRound(currentRound + 1);
                       }}
-                      disabled={!canIncrementRound}
                     >
                         <ChevronRight className="h-4 w-4" />
                     </Button>

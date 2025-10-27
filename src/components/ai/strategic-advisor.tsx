@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState, useEffect } from "react";
@@ -8,11 +9,13 @@ import { useToast } from "@/hooks/use-toast";
 import { Loader2, Sparkles } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import Markdown from 'react-markdown';
+import { useCompetitorLog } from "@/hooks/use-competitor-log";
 
 export function StrategicAdvisor() {
   const [isLoading, setIsLoading] = useState(false);
   const [recommendations, setRecommendations] = useState<string>("");
   const { gameState } = useGameState();
+  const { logEntries } = useCompetitorLog();
   const { toast } = useToast();
 
   const fetchRecommendations = async () => {
@@ -24,8 +27,8 @@ export function StrategicAdvisor() {
       companyValuation: gameState.companyValuation,
       netIncome: gameState.netIncome,
       inventoryValue: gameState.inventoryValue,
-      totalEmissions: gameState.totalEmissions,
-      competitorAnalysisLog: "[]", // No log available here for now
+      totalEmissions: gameState.cumulativeCO2eEmissions,
+      competitorAnalysisLog: JSON.stringify(logEntries.slice(0, 5)),
     });
     setIsLoading(false);
 

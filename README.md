@@ -1,4 +1,4 @@
-# Firebase Studio
+54CB-A078# Firebase Studio
 
 This is a NextJS starter in Firebase Studio.
 

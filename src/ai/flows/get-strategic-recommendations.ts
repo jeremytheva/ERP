@@ -1,3 +1,4 @@
+
 'use server';
 /**
  * @fileOverview This file defines a Genkit flow for providing strategic recommendations based on the current game state and team strategy.
@@ -16,13 +17,13 @@ const StrategicRecommendationsInputSchema = z.object({
   companyValuation: z.number().describe('The company valuation.'),
   netIncome: z.number().describe('The net income.'),
   inventoryValue: z.number().describe('The inventory value.'),
-  totalEmissions: z.number().describe('The total emissions.'),
-  competitorAnalysisLog: z.string().describe('The competitor analysis log.'),
+  totalEmissions: z.number().describe('The total cumulative CO₂e emissions in kg.'),
+  competitorAnalysisLog: z.string().describe('A JSON array of the latest competitor analysis log entries.'),
 });
 export type StrategicRecommendationsInput = z.infer<typeof StrategicRecommendationsInputSchema>;
 
 const StrategicRecommendationsOutputSchema = z.object({
-  recommendations: z.string().describe('Actionable recommendations to improve performance.'),
+  recommendations: z.string().describe('Actionable recommendations to improve performance. The response should be formatted as a markdown list.'),
 });
 export type StrategicRecommendationsOutput = z.infer<typeof StrategicRecommendationsOutputSchema>;
 
@@ -34,7 +35,27 @@ const prompt = ai.definePrompt({
   name: 'strategicRecommendationsPrompt',
   input: {schema: StrategicRecommendationsInputSchema},
   output: {schema: StrategicRecommendationsOutputSchema},
-  prompt: `You are a strategic advisor for a business simulation game. Analyze the current game state and the team's strategy to provide actionable recommendations.\n\nCurrent Game State: {{{gameState}}}\nCompany Valuation: {{{companyValuation}}}\nNet Income: {{{netIncome}}}\nInventory Value: {{{inventoryValue}}}\nTotal Emissions: {{{totalEmissions}}}\nTeam Strategy: {{{teamStrategy}}}\nCompetitor Analysis Log: {{{competitorAnalysisLog}}}\n\nProvide specific and actionable recommendations to improve the team's performance and achieve their goals. Focus on key areas such as resource management, market positioning, and competitive advantage. Consider the competitor analysis log when making recommendations. `,
+  prompt: `You are a strategic advisor for a business simulation game. Analyze the current game state, the team's strategy, and the competitor analysis log to provide actionable recommendations.
+
+Current Game State:
+\`\`\`json
+{{{gameState}}}
+\`\`\`
+
+Key Metrics:
+- Company Valuation: {{{companyValuation}}}
+- Net Income: {{{netIncome}}}
+- Inventory Value: {{{inventoryValue}}}
+- Total Emissions: {{{totalEmissions}}} kg CO₂e
+
+Team Strategy: "{{{teamStrategy}}}"
+
+Recent Competitor Analysis Log:
+\`\`\`json
+{{{competitorAnalysisLog}}}
+\`\`\`
+
+Provide specific and actionable recommendations as a markdown list to improve the team's performance and achieve their goals. Focus on key areas such as resource management, market positioning, and competitive advantage. Consider the competitor analysis log when making recommendations. `,
 });
 
 const getStrategicRecommendationsFlow = ai.defineFlow(

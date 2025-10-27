@@ -1,6 +1,7 @@
 
 "use client";
 
+import { useState, type ChangeEvent } from "react";
 import { useAuth } from "@/hooks/use-auth";
 import {
   DropdownMenu,
@@ -47,19 +48,20 @@ const getPageTitle = (pathname: string): string => {
     }
   };
 
-  const formatTime = (seconds: number): string => {
-    if (isNaN(seconds) || seconds < 0) return "00:00";
-    const minutes = Math.floor(seconds / 60);
-    const remainingSeconds = seconds % 60;
-    return `${minutes.toString().padStart(2, "0")}:${remainingSeconds.toString().padStart(2, "0")}`;
-  }
+const formatTime = (seconds: number): string => {
+  if (isNaN(seconds) || seconds < 0) return "00:00";
+  const minutes = Math.floor(seconds / 60);
+  const remainingSeconds = seconds % 60;
+  return `${minutes.toString().padStart(2, "0")}:${remainingSeconds.toString().padStart(2, "0")}`;
+};
 
 export function Header() {
   const { profile, logout, login } = useAuth();
-  const { profiles: userProfiles } = useUserProfiles();
-  const { 
-    gameState, 
-    timeLeft, 
+  const { profiles: userProfiles, loading: profilesLoading } = useUserProfiles();
+  const [isSwitchingProfile, setIsSwitchingProfile] = useState(false);
+  const {
+    gameState,
+    timeLeft,
     isPaused, 
     isBreakActive,
     isBreakEnabled,
@@ -76,27 +78,54 @@ export function Header() {
   } = useGameState();
   const pathname = usePathname();
   const pageTitle = getPageTitle(pathname);
-  const currentRound = gameState.kpiHistory[gameState.kpiHistory.length - 1]?.round || 1;
+  const kpiHistory = gameState.kpiHistory ?? [];
+  const currentRound = kpiHistory[kpiHistory.length - 1]?.round || 1;
+  const maxRound = kpiHistory.reduce((max, entry) => Math.max(max, entry.round), currentRound);
+  const canIncrementRound = currentRound < maxRound;
+  const hasProfiles = userProfiles.length > 0;
 
-  const handleRoundDurationChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const minutes = parseInt(e.target.value, 10);
-    if (!isNaN(minutes)) {
-        setRoundDuration(minutes * 60);
+  const handleRoundDurationChange = (event: ChangeEvent<HTMLInputElement>) => {
+    const { value } = event.target;
+    if (value === "") {
+      return;
     }
+
+    const minutes = Number(value);
+    if (Number.isNaN(minutes) || minutes <= 0) {
+      return;
+    }
+
+    setRoundDuration(minutes * 60);
   };
 
-  const handleBreakDurationChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const minutes = parseInt(e.target.value, 10);
-    if (!isNaN(minutes)) {
-        setBreakDuration(minutes * 60);
+  const handleBreakDurationChange = (event: ChangeEvent<HTMLInputElement>) => {
+    const { value } = event.target;
+    if (value === "") {
+      return;
     }
+
+    const minutes = Number(value);
+    if (Number.isNaN(minutes) || minutes <= 0) {
+      return;
+    }
+
+    setBreakDuration(minutes * 60);
   };
 
   const handleProfileSwitch = (profileId: string) => {
-    if (profileId && profileId !== profile?.id) {
-        login(profileId);
+    if (!profileId || profileId === profile?.id || isSwitchingProfile) {
+      return;
     }
-  }
+
+    setIsSwitchingProfile(true);
+    void (async () => {
+      try {
+        await login(profileId);
+      } finally {
+        setIsSwitchingProfile(false);
+      }
+    })();
+  };
 
 
   return (
@@ -133,11 +162,31 @@ export function Header() {
                 <DropdownMenuSeparator />
                 <DropdownMenuLabel>Round Control</DropdownMenuLabel>
                  <div className="flex items-center justify-between px-2 py-1.5">
-                    <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => setRound(currentRound - 1)} disabled={currentRound <= 1}>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-7 w-7"
+                      onClick={() => {
+                        if (currentRound > 1) {
+                          void setRound(currentRound - 1);
+                        }
+                      }}
+                      disabled={currentRound <= 1}
+                    >
                         <ChevronLeft className="h-4 w-4" />
                     </Button>
                     <span className="text-sm">Round {currentRound}</span>
-                    <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => setRound(currentRound + 1)}>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-7 w-7"
+                      onClick={() => {
+                        if (canIncrementRound) {
+                          void setRound(currentRound + 1);
+                        }
+                      }}
+                      disabled={!canIncrementRound}
+                    >
                         <ChevronRight className="h-4 w-4" />
                     </Button>
                  </div>
@@ -146,11 +195,28 @@ export function Header() {
                  <div className="grid gap-4 px-2 py-1.5">
                     <div className="grid grid-cols-3 items-center gap-2">
                         <Label htmlFor="round-duration" className="text-sm">Round (m)</Label>
-                        <Input id="round-duration" type="number" className="col-span-2 h-8" value={roundDuration / 60} onChange={handleRoundDurationChange}/>
+                        <Input
+                          id="round-duration"
+                          type="number"
+                          min={1}
+                          step={1}
+                          className="col-span-2 h-8"
+                          value={Math.max(1, Math.round(roundDuration / 60))}
+                          onChange={handleRoundDurationChange}
+                        />
                     </div>
                      <div className="grid grid-cols-3 items-center gap-2">
                         <Label htmlFor="break-duration" className="text-sm">Break (m)</Label>
-                        <Input id="break-duration" type="number" className="col-span-2 h-8" value={breakDuration / 60} onChange={handleBreakDurationChange} disabled={!isBreakEnabled} />
+                        <Input
+                          id="break-duration"
+                          type="number"
+                          min={1}
+                          step={1}
+                          className="col-span-2 h-8"
+                          value={Math.max(1, Math.round(breakDuration / 60))}
+                          onChange={handleBreakDurationChange}
+                          disabled={!isBreakEnabled}
+                        />
                     </div>
                      <div className="flex items-center justify-between">
                          <Label htmlFor="break-enabled" className="text-sm">Enable Breaks</Label>
@@ -171,10 +237,12 @@ export function Header() {
             <Button variant="ghost" className="flex items-center gap-3">
               <Avatar className="h-8 w-8">
                 <AvatarImage src={profile?.avatarUrl} alt={profile?.name} />
-                <AvatarFallback>{profile?.name.charAt(0)}</AvatarFallback>
+                <AvatarFallback>{profile?.name?.charAt(0) ?? ""}</AvatarFallback>
               </Avatar>
               <div className="hidden md:flex flex-col items-start">
-                  <span className="text-sm font-medium">{profile?.name}</span>
+                  <span className="text-sm font-medium">
+                    {isSwitchingProfile ? "Switching…" : profile?.name}
+                  </span>
               </div>
               <ChevronsUpDown className="h-4 w-4 text-muted-foreground hidden md:block" />
             </Button>
@@ -182,13 +250,19 @@ export function Header() {
           <DropdownMenuContent align="end" className="w-56">
             <DropdownMenuLabel>Switch Role</DropdownMenuLabel>
             <DropdownMenuSeparator />
-            <DropdownMenuRadioGroup value={profile?.id} onValueChange={handleProfileSwitch}>
-              {userProfiles.map((p) => (
-                <DropdownMenuRadioItem key={p.id} value={p.id}>
-                  {p.name}
-                </DropdownMenuRadioItem>
-              ))}
-            </DropdownMenuRadioGroup>
+            {hasProfiles ? (
+              <DropdownMenuRadioGroup value={profile?.id} onValueChange={handleProfileSwitch}>
+                {userProfiles.map((p) => (
+                  <DropdownMenuRadioItem key={p.id} value={p.id} disabled={isSwitchingProfile}>
+                    {p.name}
+                  </DropdownMenuRadioItem>
+                ))}
+              </DropdownMenuRadioGroup>
+            ) : (
+              <div className="px-2 py-1.5 text-sm text-muted-foreground">
+                {profilesLoading ? "Loading roles…" : "No roles available yet."}
+              </div>
+            )}
             <DropdownMenuSeparator />
             <DropdownMenuItem onClick={logout}>
               <LogOut className="mr-2 h-4 w-4" />

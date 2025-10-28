@@ -26,7 +26,7 @@ export default function LogisticsPage() {
         if (!profile) return [];
         return tasks.filter(task =>
             task.role === profile.name &&
-            (task.transactionCode === "ZFF7B/ZME2N" || task.transactionCode === "ZME2N (PO Status)") &&
+            (task.transactionCode.includes("ZFF7B") || task.transactionCode.includes("ZME2N")) &&
              (task.roundRecurrence === "Continuous" || (task.startRound ?? 1) <= currentRound)
         ).sort((a,b) => a.priority.localeCompare(b.priority));
     }, [tasks, profile, currentRound]);
@@ -35,7 +35,7 @@ export default function LogisticsPage() {
         if (!profile) return [];
         return tasks.filter(task =>
             task.role === profile.name &&
-            task.transactionCode === "ZMB1B" &&
+            task.transactionCode.includes("ZMB1B") &&
              (task.roundRecurrence === "Continuous" || (task.startRound ?? 1) <= currentRound)
         ).sort((a,b) => a.priority.localeCompare(b.priority));
     }, [tasks, profile, currentRound]);

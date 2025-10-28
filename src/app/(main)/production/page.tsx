@@ -34,7 +34,7 @@ export default function ProductionPage() {
         if (!profile) return [];
         return tasks.filter(task =>
             task.role === profile.name &&
-            task.transactionCode === "MD01" &&
+            task.transactionCode.includes("MD01") &&
              (task.roundRecurrence === "Continuous" || (task.startRound ?? 1) <= currentRound)
         ).sort((a,b) => a.priority.localeCompare(b.priority));
     }, [tasks, profile, currentRound]);
@@ -43,7 +43,7 @@ export default function ProductionPage() {
         if (!profile) return [];
         return tasks.filter(task =>
             task.role === profile.name &&
-            task.transactionCode.startsWith("CO41") &&
+            task.transactionCode.includes("CO41") &&
              (task.roundRecurrence === "Continuous" || (task.startRound ?? 1) <= currentRound)
         ).sort((a,b) => a.priority.localeCompare(b.priority));
     }, [tasks, profile, currentRound]);
@@ -52,7 +52,7 @@ export default function ProductionPage() {
         if (!profile) return [];
         return tasks.filter(task =>
             task.role === profile.name &&
-            task.transactionCode === "ZCS02" &&
+            task.transactionCode.includes("ZCS02") &&
              (task.roundRecurrence === "Continuous" || (task.startRound ?? 1) <= currentRound)
         ).sort((a,b) => a.priority.localeCompare(b.priority));
     }, [tasks, profile, currentRound]);

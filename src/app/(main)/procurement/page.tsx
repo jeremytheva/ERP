@@ -26,7 +26,7 @@ export default function ProcurementPage() {
         if (!profile) return [];
         return tasks.filter(task =>
             task.role === profile.name &&
-            task.transactionCode === "ZMB52" &&
+            task.transactionCode.includes("ZMB52") &&
             (task.roundRecurrence === "Continuous" || (task.startRound ?? 1) <= currentRound)
         ).sort((a,b) => a.priority.localeCompare(b.priority));
     }, [tasks, profile, currentRound]);
@@ -35,7 +35,7 @@ export default function ProcurementPage() {
         if (!profile) return [];
         return tasks.filter(task =>
             task.role === profile.name &&
-            task.transactionCode === "ZME12" &&
+            task.transactionCode.includes("ZME12") &&
             (task.roundRecurrence === "Continuous" || (task.startRound ?? 1) <= currentRound)
         ).sort((a,b) => a.priority.localeCompare(b.priority));
     }, [tasks, profile, currentRound]);
@@ -44,7 +44,7 @@ export default function ProcurementPage() {
         if (!profile) return [];
         return tasks.filter(task =>
             task.role === profile.name &&
-            task.transactionCode === "ME59N" &&
+            task.transactionCode.includes("ME59N") &&
             (task.roundRecurrence === "Continuous" || (task.startRound ?? 1) <= currentRound)
         ).sort((a,b) => a.priority.localeCompare(b.priority));
     }, [tasks, profile, currentRound]);
@@ -53,7 +53,7 @@ export default function ProcurementPage() {
         if (!profile) return [];
         return tasks.filter(task =>
             task.role === profile.name &&
-            task.transactionCode === "ZFB50" &&
+            task.transactionCode.includes("ZFB50") &&
             (task.roundRecurrence === "Continuous" || (task.startRound ?? 1) <= currentRound)
         ).sort((a,b) => a.priority.localeCompare(b.priority));
     }, [tasks, profile, currentRound]);

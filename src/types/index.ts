@@ -60,6 +60,13 @@ export type CompetitorLogEntry = {
   createdAt: Date | Timestamp;
 };
 
+export type PeerData = {
+  name: string;
+  companyValuation: number;
+  netIncome: number;
+  cumulativeCO2eEmissions: number;
+};
+
 export type RoleActionItems = {
   [key: string]: string[];
 }
@@ -78,7 +85,7 @@ export type TaskDataField = {
   fieldName: string;
   dataType: "Currency" | "Integer" | "String";
   value?: number | string | null; // User-entered value
-  suggestedValue?: number | string | null;
+  suggestedValue: number | string | null;
   aiRationale?: string;
 };
 

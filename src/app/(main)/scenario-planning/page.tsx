@@ -9,6 +9,10 @@ import { useTasks } from '@/hooks/use-tasks';
 import { useGameState } from '@/hooks/use-game-data';
 import type { Task } from "@/types";
 import { useTaskNavigation } from "@/context/task-navigation-context";
+import { ScenarioForm } from "@/components/ai/scenario-form";
+import { AdvisorInsights } from "@/components/ai/advisor-insights";
+import { StrategicNotesEditor } from "@/components/ai/strategic-notes-editor";
+import { DebriefReportView } from "@/components/ai/debrief-report-view";
 
 export default function ScenarioPlanningPage() {
     const { profile } = useAuth();
@@ -55,13 +59,33 @@ export default function ScenarioPlanningPage() {
 
     return (
         <div className="space-y-6">
+            <div className="grid gap-6 xl:grid-cols-[1.6fr_1.2fr]">
+                <Card>
+                    <CardHeader>
+                        <CardTitle className="font-headline text-3xl">Sales Scenario Builder</CardTitle>
+                        <CardDescription>Model new sales strategies and capture AI guidance without leaving the page.</CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                        <ScenarioForm />
+                    </CardContent>
+                </Card>
+                <div className="space-y-4">
+                    <AdvisorInsights />
+                </div>
+            </div>
+
+            <div className="grid gap-6 lg:grid-cols-2">
+                <StrategicNotesEditor />
+                <DebriefReportView />
+            </div>
+
             <Card>
                 <CardHeader>
                     <CardTitle className="font-headline text-3xl">Marketing (ZADS)</CardTitle>
                     <CardDescription>Set the advertising spend for each distribution channel for ZADS.</CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-2">
-                    {marketingTasks.map((task, index) => (
+                    {marketingTasks.map((task) => (
                         <div key={task.id} className="relative pt-6">
                             <InteractiveTaskCard
                                 ref={getTaskRef(task.id)}

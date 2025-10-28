@@ -2,9 +2,8 @@
 "use client";
 
 import { useMemo, createRef } from "react";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { ListTodo, FileText } from 'lucide-react';
-import { InteractiveTaskCard } from '@/components/tasks/interactive-task-card';
+import { TaskGroup } from "@/components/tasks/task-group";
 import { useAuth } from '@/hooks/use-auth';
 import { useTasks } from '@/hooks/use-tasks';
 import { useGameState } from '@/hooks/use-game-data';
@@ -71,65 +70,37 @@ export default function DebriefingPage() {
 
     return (
         <div className="space-y-6">
-             {isTeamLeader && teamLeaderTasks.length > 0 && (
-                <Card>
-                    <CardHeader>
-                        <div className="flex items-center gap-3">
-                            <ListTodo className="h-6 w-6" />
-                            <div>
-                                <CardTitle>Team Leader: Investment Tasks</CardTitle>
-                                <CardDescription>Finalize and confirm investment decisions.</CardDescription>
-                            </div>
-                        </div>
-                    </CardHeader>
-                    <CardContent className="space-y-2">
-                        {teamLeaderTasks.map(task => (
-                            <div key={task.id} className="relative pt-6">
-                                <InteractiveTaskCard
-                                    ref={getTaskRef(task.id)}
-                                    task={task}
-                                    allTasks={tasks}
-                                    isActive={openedTaskId === task.id}
-                                    isCurrent={activeTaskId === task.id}
-                                    onToggle={() => setOpenedTaskId(openedTaskId === task.id ? null : task.id)}
-                                    onUpdate={handleTaskUpdate}
-                                    onFindNext={(id) => handleFindNextTask(id, teamLeaderTasks)}
-                                />
-                            </div>
-                        ))}
-                    </CardContent>
-                </Card>
+            {isTeamLeader && (
+                <TaskGroup
+                    title="Team Leader: Investment Tasks"
+                    description="Finalize and confirm investment decisions."
+                    tasks={teamLeaderTasks}
+                    allTasks={tasks}
+                    currentRound={currentRound}
+                    openedTaskId={openedTaskId}
+                    setOpenedTaskId={setOpenedTaskId}
+                    activeTaskId={activeTaskId}
+                    getTaskRef={getTaskRef}
+                    onUpdate={handleTaskUpdate}
+                    onFindNext={handleFindNextTask}
+                    titleIcon={<ListTodo className="h-6 w-6" />}
+                />
             )}
 
-            {forecastingTasks.length > 0 && (
-                <Card>
-                    <CardHeader>
-                        <div className="flex items-center gap-3">
-                            <FileText className="h-6 w-6" />
-                            <div>
-                                <CardTitle className="font-headline text-3xl">Forecasting (MD61)</CardTitle>
-                                <CardDescription>Calculate and set the total sales forecast for MD61. This will be pushed to the LIT.</CardDescription>
-                            </div>
-                        </div>
-                    </CardHeader>
-                    <CardContent className="space-y-2">
-                        {forecastingTasks.map(task => (
-                            <div key={task.id} className="relative pt-6">
-                                <InteractiveTaskCard
-                                    ref={getTaskRef(task.id)}
-                                    task={task}
-                                    allTasks={tasks}
-                                    isActive={openedTaskId === task.id}
-                                    isCurrent={activeTaskId === task.id}
-                                    onToggle={() => setOpenedTaskId(openedTaskId === task.id ? null : task.id)}
-                                    onUpdate={handleTaskUpdate}
-                                    onFindNext={(id) => handleFindNextTask(id, forecastingTasks)}
-                                />
-                            </div>
-                        ))}
-                    </CardContent>
-                </Card>
-            )}
+            <TaskGroup
+                title="Forecasting (MD61)"
+                description="Calculate and set the total sales forecast for MD61. This will be pushed to the LIT."
+                tasks={forecastingTasks}
+                allTasks={tasks}
+                currentRound={currentRound}
+                openedTaskId={openedTaskId}
+                setOpenedTaskId={setOpenedTaskId}
+                activeTaskId={activeTaskId}
+                getTaskRef={getTaskRef}
+                onUpdate={handleTaskUpdate}
+                onFindNext={handleFindNextTask}
+                titleIcon={<FileText className="h-6 w-6" />}
+            />
         </div>
     );
 }

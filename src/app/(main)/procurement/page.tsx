@@ -2,10 +2,10 @@
 "use client";
 
 import { useMemo } from 'react';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Users, Truck, Leaf, DollarSign, Warehouse } from "lucide-react";
 import { ShoppingCart, Package } from 'lucide-react';
-import { InteractiveTaskCard } from '@/components/tasks/interactive-task-card';
+import { TaskGroup } from "@/components/tasks/task-group";
 import { useAuth } from '@/hooks/use-auth';
 import { useTasks } from '@/hooks/use-tasks';
 import { useGameState } from '@/hooks/use-game-data';
@@ -108,117 +108,65 @@ export default function ProcurementPage() {
                 </CardHeader>
             </Card>
 
-            {inventoryTasks.length > 0 && (
-                <Card>
-                    <CardHeader>
-                        <div className="flex items-center gap-3">
-                            <Package className="h-6 w-6" />
-                            <CardTitle>Inventory Check (ZMB52)</CardTitle>
-                        </div>
-                        <CardDescription>Pulls current raw material stock and status from the LIT.</CardDescription>
-                    </CardHeader>
-                    <CardContent className="space-y-2">
-                        {inventoryTasks.map(task => (
-                             <div key={task.id} className="relative pt-6">
-                                 <InteractiveTaskCard
-                                    ref={getTaskRef(task.id)}
-                                    task={task}
-                                    allTasks={tasks}
-                                    isActive={openedTaskId === task.id}
-                                    isCurrent={activeTaskId === task.id}
-                                    onToggle={() => setOpenedTaskId(openedTaskId === task.id ? null : task.id)}
-                                    onUpdate={handleTaskUpdate}
-                                    onFindNext={(id) => handleFindNextTask(id, inventoryTasks)}
-                                />
-                             </div>
-                        ))}
-                    </CardContent>
-                </Card>
-            )}
-            
-            {sourcingTasks.length > 0 && (
-                <Card>
-                    <CardHeader>
-                        <div className="flex items-center gap-3">
-                            <Users className="h-6 w-6" />
-                            <CardTitle>Sourcing (ZME12)</CardTitle>
-                        </div>
-                        <CardDescription>Set the order strategy and vendor selection for each raw material.</CardDescription>
-                    </CardHeader>
-                    <CardContent className="space-y-2">
-                        {sourcingTasks.map(task => (
-                             <div key={task.id} className="relative pt-6">
-                                <InteractiveTaskCard
-                                    ref={getTaskRef(task.id)}
-                                    task={task}
-                                    allTasks={tasks}
-                                    isActive={openedTaskId === task.id}
-                                    isCurrent={activeTaskId === task.id}
-                                    onToggle={() => setOpenedTaskId(openedTaskId === task.id ? null : task.id)}
-                                    onUpdate={handleTaskUpdate}
-                                    onFindNext={(id) => handleFindNextTask(id, sourcingTasks)}
-                                />
-                             </div>
-                        ))}
-                    </CardContent>
-                </Card>
-            )}
-            
-            {orderTasks.length > 0 && (
-                <Card>
-                    <CardHeader>
-                        <div className="flex items-center gap-3">
-                            <Truck className="h-6 w-6" />
-                            <CardTitle>Order Calculation (ME59N)</CardTitle>
-                        </div>
-                        <CardDescription>Calculate the required quantity to order based on MRP forecast and current stock.</CardDescription>
-                    </CardHeader>
-                    <CardContent className="space-y-2">
-                        {orderTasks.map(task => (
-                             <div key={task.id} className="relative pt-6">
-                                <InteractiveTaskCard
-                                    ref={getTaskRef(task.id)}
-                                    task={task}
-                                    allTasks={tasks}
-                                    isActive={openedTaskId === task.id}
-                                    isCurrent={activeTaskId === task.id}
-                                    onToggle={() => setOpenedTaskId(openedTaskId === task.id ? null : task.id)}
-                                    onUpdate={handleTaskUpdate}
-                                    onFindNext={(id) => handleFindNextTask(id, orderTasks)}
-                                />
-                             </div>
-                        ))}
-                    </CardContent>
-                </Card>
-            )}
+            <TaskGroup
+                title="Inventory Check (ZMB52)"
+                description="Pulls current raw material stock and status from the LIT."
+                tasks={inventoryTasks}
+                allTasks={tasks}
+                currentRound={currentRound}
+                openedTaskId={openedTaskId}
+                setOpenedTaskId={setOpenedTaskId}
+                activeTaskId={activeTaskId}
+                getTaskRef={getTaskRef}
+                onUpdate={handleTaskUpdate}
+                onFindNext={handleFindNextTask}
+                titleIcon={<Package className="h-6 w-6" />}
+            />
 
-            {sustainabilityTasks.length > 0 && (
-                 <Card>
-                    <CardHeader>
-                        <div className="flex items-center gap-3">
-                            <Leaf className="h-6 w-6" />
-                            <CardTitle>Sustainability (ZFB50)</CardTitle>
-                        </div>
-                        <CardDescription>Track sustainability goals and investment amounts for ZFB50.</CardDescription>
-                    </CardHeader>
-                    <CardContent className="space-y-2">
-                        {sustainabilityTasks.map(task => (
-                             <div key={task.id} className="relative pt-6">
-                                 <InteractiveTaskCard
-                                    ref={getTaskRef(task.id)}
-                                    task={task}
-                                    allTasks={tasks}
-                                    isActive={openedTaskId === task.id}
-                                    isCurrent={activeTaskId === task.id}
-                                    onToggle={() => setOpenedTaskId(openedTaskId === task.id ? null : task.id)}
-                                    onUpdate={handleTaskUpdate}
-                                    onFindNext={(id) => handleFindNextTask(id, sustainabilityTasks)}
-                                />
-                             </div>
-                        ))}
-                    </CardContent>
-                </Card>
-            )}
+            <TaskGroup
+                title="Sourcing (ZME12)"
+                description="Set the order strategy and vendor selection for each raw material."
+                tasks={sourcingTasks}
+                allTasks={tasks}
+                currentRound={currentRound}
+                openedTaskId={openedTaskId}
+                setOpenedTaskId={setOpenedTaskId}
+                activeTaskId={activeTaskId}
+                getTaskRef={getTaskRef}
+                onUpdate={handleTaskUpdate}
+                onFindNext={handleFindNextTask}
+                titleIcon={<Users className="h-6 w-6" />}
+            />
+
+            <TaskGroup
+                title="Order Calculation (ME59N)"
+                description="Calculate the required quantity to order based on MRP forecast and current stock."
+                tasks={orderTasks}
+                allTasks={tasks}
+                currentRound={currentRound}
+                openedTaskId={openedTaskId}
+                setOpenedTaskId={setOpenedTaskId}
+                activeTaskId={activeTaskId}
+                getTaskRef={getTaskRef}
+                onUpdate={handleTaskUpdate}
+                onFindNext={handleFindNextTask}
+                titleIcon={<Truck className="h-6 w-6" />}
+            />
+
+            <TaskGroup
+                title="Sustainability (ZFB50)"
+                description="Track sustainability goals and investment amounts for ZFB50."
+                tasks={sustainabilityTasks}
+                allTasks={tasks}
+                currentRound={currentRound}
+                openedTaskId={openedTaskId}
+                setOpenedTaskId={setOpenedTaskId}
+                activeTaskId={activeTaskId}
+                getTaskRef={getTaskRef}
+                onUpdate={handleTaskUpdate}
+                onFindNext={handleFindNextTask}
+                titleIcon={<Leaf className="h-6 w-6" />}
+            />
         </div>
     );
 }

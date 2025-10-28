@@ -2,8 +2,7 @@
 "use client";
 
 import { useMemo } from "react";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { InteractiveTaskCard } from '@/components/tasks/interactive-task-card';
+import { TaskGroup } from "@/components/tasks/task-group";
 import { useAuth } from '@/hooks/use-auth';
 import { useTasks } from '@/hooks/use-tasks';
 import { useGameState } from '@/hooks/use-game-data';
@@ -55,28 +54,19 @@ export default function ScenarioPlanningPage() {
 
     return (
         <div className="space-y-6">
-            <Card>
-                <CardHeader>
-                    <CardTitle className="font-headline text-3xl">Marketing (ZADS)</CardTitle>
-                    <CardDescription>Set the advertising spend for each distribution channel for ZADS.</CardDescription>
-                </CardHeader>
-                <CardContent className="space-y-2">
-                    {marketingTasks.map((task, index) => (
-                        <div key={task.id} className="relative pt-6">
-                            <InteractiveTaskCard
-                                ref={getTaskRef(task.id)}
-                                task={task}
-                                allTasks={tasks}
-                                isActive={openedTaskId === task.id}
-                                isCurrent={activeTaskId === task.id}
-                                onToggle={() => setOpenedTaskId(openedTaskId === task.id ? null : task.id)}
-                                onUpdate={handleTaskUpdate}
-                                onFindNext={(id) => handleFindNextTask(id, marketingTasks)}
-                            />
-                        </div>
-                    ))}
-                </CardContent>
-            </Card>
+            <TaskGroup
+                title="Marketing (ZADS)"
+                description="Set the advertising spend for each distribution channel for ZADS."
+                tasks={marketingTasks}
+                allTasks={tasks}
+                currentRound={currentRound}
+                openedTaskId={openedTaskId}
+                setOpenedTaskId={setOpenedTaskId}
+                activeTaskId={activeTaskId}
+                getTaskRef={getTaskRef}
+                onUpdate={handleTaskUpdate}
+                onFindNext={handleFindNextTask}
+            />
         </div>
     )
 }

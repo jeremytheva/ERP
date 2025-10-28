@@ -10,8 +10,7 @@
 
 import { ai } from '@/ai/genkit';
 import { z } from 'genkit';
-import { SuggestOptimizedTaskInputsInputSchema, SuggestOptimizedTaskInputsOutputSchema, TaskSchema, OptimizedTaskDataFieldSchema } from '@/lib/zod-schemas';
-import type { Task } from '@/types';
+import { SuggestOptimizedTaskInputsInputSchema, SuggestOptimizedTaskInputsOutputSchema } from '@/lib/zod-schemas';
 import type { SuggestOptimizedTaskInputsInput, SuggestOptimizedTaskInputsOutput } from '@/lib/zod-schemas';
 
 
@@ -54,7 +53,7 @@ const suggestOptimizedTaskInputsFlow = ai.defineFlow(
     async (input) => {
         // If there are no data fields, there's nothing to optimize. Return the original task.
         if (!input.task.dataFields || input.task.dataFields.length === 0) {
-            return { updatedTask: input.task as Task };
+            return SuggestOptimizedTaskInputsOutputSchema.parse({ updatedTask: input.task });
         }
 
         const { output } = await prompt(input);
@@ -68,8 +67,8 @@ const suggestOptimizedTaskInputsFlow = ai.defineFlow(
             ...input.task,
             ...output.updatedTask,
             dataFields: output.updatedTask.dataFields || input.task.dataFields,
-        } as Task;
+        };
 
-        return { updatedTask: finalTask };
+        return SuggestOptimizedTaskInputsOutputSchema.parse({ updatedTask: finalTask });
     }
 );

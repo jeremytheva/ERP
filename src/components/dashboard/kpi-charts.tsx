@@ -1,24 +1,10 @@
 
 "use client";
 
-import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-  CardDescription,
-} from "@/components/ui/card";
-import {
-  ChartContainer,
-  ChartTooltip,
-  ChartTooltipContent,
-  ChartLegend,
-  ChartLegendContent,
-} from "@/components/ui/chart";
-import { Area, AreaChart, Bar, BarChart, CartesianGrid, XAxis, YAxis, Line, LineChart, ComposedChart } from "recharts";
-import type { KpiHistory, KpiHistoryEntry } from "@/types";
-import type { ChartConfig } from "@/components/ui/chart"
 import { useMemo } from "react";
+
+import type { KpiHistory, KpiHistoryEntry } from "@/types";
+import { TrendChart } from "@/components/trend-chart";
 
 interface KpiChartsProps {
   history: KpiHistory;
@@ -45,43 +31,6 @@ const formatNumber = (value: number) =>
     compactDisplay: "short",
   }).format(value);
 
-
-const chartConfigFinancial: ChartConfig = {
-    cashBalance: {
-      label: "Cash Balance",
-      color: "hsl(var(--chart-2))",
-    },
-    netIncome: {
-        label: "Net Income",
-        color: "hsl(var(--chart-1))",
-    },
-}
-
-const chartConfigMarket: ChartConfig = {
-    marketShare: {
-        label: "Market Share",
-        color: "hsl(var(--chart-4))",
-    },
-    averagePriceGap: {
-        label: "Avg. Price Gap",
-        color: "hsl(var(--chart-5))",
-    },
-}
-
-const chartConfigOperational: ChartConfig = {
-    inventoryTurnover: {
-        label: "Inventory Turnover",
-        color: "hsl(var(--chart-3))",
-    },
-    cumulativeCO2eEmissions: {
-        label: "CO₂e Emissions (kg)",
-        color: "hsl(var(--muted-foreground))",
-    },
-    warehouseCosts: {
-        label: "Warehouse Costs",
-        color: "hsl(var(--chart-1))",
-    }
-}
 
 export function KpiCharts({ history }: KpiChartsProps) {
   const chartData = useMemo(() => {
@@ -111,74 +60,99 @@ export function KpiCharts({ history }: KpiChartsProps) {
         cogs: 0,
         sustainabilityInvestment: 0,
       };
-      return [{...emptyRound, roundLabel: "R0"}, ...data];
+      return [{ ...emptyRound, roundLabel: "R0" }, ...data];
     }
     return data;
   }, [history]);
 
   return (
     <div className="grid gap-4 md:grid-cols-1 lg:grid-cols-3">
-      <Card className="lg:col-span-1">
-        <CardHeader>
-          <CardTitle>Financial Health</CardTitle>
-          <CardDescription>Cash balance and net income over rounds.</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <ChartContainer config={chartConfigFinancial} className="h-[250px] w-full">
-            <LineChart data={chartData}>
-              <CartesianGrid vertical={false} />
-              <XAxis dataKey="roundLabel" tickLine={false} axisLine={false} tickMargin={8} />
-              <YAxis yAxisId="left" tickFormatter={formatCurrency} />
-              <YAxis yAxisId="right" orientation="right" tickFormatter={formatCurrency} />
-              <ChartTooltip content={<ChartTooltipContent indicator="dot" />} />
-              <ChartLegend content={<ChartLegendContent />} />
-              <Line type="monotone" dataKey="cashBalance" yAxisId="left" stroke="var(--color-cashBalance)" strokeWidth={2} dot={false} />
-              <Line type="monotone" dataKey="netIncome" yAxisId="right" stroke="var(--color-netIncome)" strokeWidth={2} dot={false} />
-            </LineChart>
-          </ChartContainer>
-        </CardContent>
-      </Card>
-      <Card className="lg:col-span-1">
-        <CardHeader>
-          <CardTitle>Market Performance</CardTitle>
-          <CardDescription>Market share and average price gap.</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <ChartContainer config={chartConfigMarket} className="h-[250px] w-full">
-             <LineChart data={chartData}>
-                <CartesianGrid vertical={false} />
-                <XAxis dataKey="roundLabel" tickLine={false} axisLine={false} tickMargin={8} />
-                <YAxis yAxisId="left" tickFormatter={formatPercent} />
-                <YAxis yAxisId="right" orientation="right" tickFormatter={formatCurrency} />
-                <ChartTooltip content={<ChartTooltipContent indicator="dot" />} />
-                <ChartLegend content={<ChartLegendContent />} />
-                <Line type="monotone" dataKey="marketShare" yAxisId="left" stroke="var(--color-marketShare)" strokeWidth={2} dot={false} />
-                <Line type="monotone" dataKey="averagePriceGap" yAxisId="right" stroke="var(--color-averagePriceGap)" strokeWidth={2} dot={false} />
-             </LineChart>
-          </ChartContainer>
-        </CardContent>
-      </Card>
-       <Card className="lg:col-span-1">
-        <CardHeader>
-          <CardTitle>Operational & ESG</CardTitle>
-          <CardDescription>Turnover, warehouse costs, and CO₂ emissions.</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <ChartContainer config={chartConfigOperational} className="h-[250px] w-full">
-             <ComposedChart data={chartData}>
-                <CartesianGrid vertical={false} />
-                <XAxis dataKey="roundLabel" tickLine={false} axisLine={false} tickMargin={8} />
-                <YAxis yAxisId="left" tickFormatter={formatNumber} />
-                <YAxis yAxisId="right" orientation="right" tickFormatter={formatCurrency} />
-                <ChartTooltip content={<ChartTooltipContent />} />
-                <ChartLegend content={<ChartLegendContent />} />
-                <Bar dataKey="inventoryTurnover" yAxisId="left" fill="var(--color-inventoryTurnover)" radius={4} />
-                <Line type="monotone" dataKey="warehouseCosts" yAxisId="right" stroke="var(--color-warehouseCosts)" strokeWidth={2} dot={{r: 4}} />
-                <Line type="monotone" dataKey="cumulativeCO2eEmissions" yAxisId="left" stroke="var(--color-cumulativeCO2eEmissions)" strokeWidth={2} strokeDasharray="3 3" dot={false} />
-             </ComposedChart>
-          </ChartContainer>
-        </CardContent>
-      </Card>
+      <TrendChart
+        className="lg:col-span-1"
+        title="Financial Health"
+        description="Cash balance and net income over rounds."
+        data={chartData}
+        index="roundLabel"
+        series={[
+          {
+            dataKey: "cashBalance",
+            name: "Cash Balance",
+            type: "line",
+            color: "hsl(var(--chart-2))",
+            axis: "left",
+          },
+          {
+            dataKey: "netIncome",
+            name: "Net Income",
+            type: "line",
+            color: "hsl(var(--chart-1))",
+            axis: "right",
+          },
+        ]}
+        leftAxisFormatter={formatCurrency}
+        rightAxisFormatter={formatCurrency}
+        height={260}
+      />
+      <TrendChart
+        className="lg:col-span-1"
+        title="Market Performance"
+        description="Market share and average price gap."
+        data={chartData}
+        index="roundLabel"
+        series={[
+          {
+            dataKey: "marketShare",
+            name: "Market Share",
+            type: "line",
+            color: "hsl(var(--chart-4))",
+            axis: "left",
+          },
+          {
+            dataKey: "averagePriceGap",
+            name: "Avg. Price Gap",
+            type: "line",
+            color: "hsl(var(--chart-5))",
+            axis: "right",
+          },
+        ]}
+        leftAxisFormatter={formatPercent}
+        rightAxisFormatter={formatCurrency}
+        height={260}
+      />
+      <TrendChart
+        className="lg:col-span-1"
+        title="Operational & ESG"
+        description="Turnover, warehouse costs, and CO₂ emissions."
+        data={chartData}
+        index="roundLabel"
+        series={[
+          {
+            dataKey: "inventoryTurnover",
+            name: "Inventory Turnover",
+            type: "bar",
+            color: "hsl(var(--chart-3))",
+            axis: "left",
+          },
+          {
+            dataKey: "warehouseCosts",
+            name: "Warehouse Costs",
+            type: "line",
+            color: "hsl(var(--chart-1))",
+            axis: "right",
+          },
+          {
+            dataKey: "cumulativeCO2eEmissions",
+            name: "CO₂e Emissions",
+            type: "line",
+            color: "hsl(var(--muted-foreground))",
+            axis: "left",
+            strokeDasharray: "3 3",
+          },
+        ]}
+        leftAxisFormatter={formatNumber}
+        rightAxisFormatter={formatCurrency}
+        height={260}
+      />
     </div>
   );
 }

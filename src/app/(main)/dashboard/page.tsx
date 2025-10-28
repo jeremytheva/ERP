@@ -1,7 +1,7 @@
 
 "use client";
 
-import { KpiCard } from "@/components/dashboard/kpi-card";
+import { KpiCard } from "@/components/kpi-card";
 import { KpiCharts } from "@/components/dashboard/kpi-charts";
 import { useGameState } from "@/hooks/use-game-data";
 import { DollarSign, Factory, HandCoins, Package, TrendingUp, Ship, Percent, Target, Leaf } from "lucide-react";

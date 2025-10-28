@@ -143,18 +143,25 @@ export const GameStateProvider = ({ children }: { children: ReactNode }) => {
   const updateTimerState = useCallback(async (updates: TimerStateUpdate) => {
       let nextTimerState: GameState["timerState"] | null = null;
       let previousTimerState: GameState["timerState"] | null = null;
+      let shouldUpdateLocalTime = false;
 
       setGameState((prev) => {
         previousTimerState = prev.timerState;
         const computedUpdates =
           typeof updates === "function" ? updates(prev.timerState) : updates;
+        shouldUpdateLocalTime = Object.prototype.hasOwnProperty.call(
+          computedUpdates,
+          "timeLeft"
+        );
         nextTimerState = { ...prev.timerState, ...computedUpdates };
         return { ...prev, timerState: nextTimerState };
       });
 
       if (!nextTimerState) return;
 
-      setTimeLeft(nextTimerState.timeLeft);
+      if (shouldUpdateLocalTime) {
+        setTimeLeft(nextTimerState.timeLeft);
+      }
 
       if (!gameDocRef) return;
 

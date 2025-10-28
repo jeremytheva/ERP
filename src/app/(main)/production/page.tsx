@@ -9,8 +9,7 @@ import { useAuth } from '@/hooks/use-auth';
 import { useTasks } from '@/hooks/use-tasks';
 import { useGameState } from '@/hooks/use-game-data';
 import type { Task } from "@/types";
-import { KpiCard } from "@/components/dashboard/kpi-card";
-import { ProductionChart } from "@/components/dashboard/role-charts/production-chart";
+import { ProductionDashboard } from "@/components/dashboard/role-dashboards";
 import { useTaskNavigation } from '@/context/task-navigation-context';
 
 export default function ProductionPage() {
@@ -87,13 +86,7 @@ export default function ProductionPage() {
 
     return (
         <div className="space-y-6">
-             <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-                <KpiCard title="Capacity Utilization" value={gameState.capacityUtilization} icon={Factory} format="percent" tooltip="Percentage of total production capacity being used." />
-                <KpiCard title="Inventory Turnover" value={gameState.inventoryTurnover} icon={RefreshCw} format="number" tooltip="How many times inventory is sold and replaced over a period." />
-                <KpiCard title="Inventory Value" value={gameState.inventoryValue} icon={Package} format="currency" tooltip="The total value of inventory on hand." />
-            </div>
-            
-            <ProductionChart history={gameState.kpiHistory} />
+             <ProductionDashboard />
 
             <Card>
                 <CardHeader>

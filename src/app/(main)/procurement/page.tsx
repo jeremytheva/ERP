@@ -3,15 +3,14 @@
 
 import { useMemo } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Users, Truck, Leaf, DollarSign, Warehouse } from "lucide-react";
+import { Users, Truck, Leaf } from "lucide-react";
 import { ShoppingCart, Package } from 'lucide-react';
 import { InteractiveTaskCard } from '@/components/tasks/interactive-task-card';
 import { useAuth } from '@/hooks/use-auth';
 import { useTasks } from '@/hooks/use-tasks';
 import { useGameState } from '@/hooks/use-game-data';
 import type { Task } from "@/types";
-import { KpiCard } from "@/components/dashboard/kpi-card";
-import { ProcurementChart } from "@/components/dashboard/role-charts/procurement-chart";
+import { ProcurementDashboard } from "@/components/dashboard/role-dashboards";
 import { useTaskNavigation } from '@/context/task-navigation-context';
 
 export default function ProcurementPage() {
@@ -88,13 +87,7 @@ export default function ProcurementPage() {
 
     return (
         <div className="space-y-6">
-            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-                <KpiCard title="Cost of Goods Sold" value={gameState.cogs} icon={DollarSign} format="currency" tooltip="The direct costs attributable to the production of the goods sold by a company." />
-                <KpiCard title="Warehouse Costs" value={gameState.warehouseCosts} icon={Warehouse} format="currency" tooltip="Total costs associated with storing inventory." />
-                <KpiCard title="CO₂e Emissions" value={gameState.cumulativeCO2eEmissions} icon={Leaf} format="number" unit="kg" tooltip="Cumulative CO₂ equivalent emissions from operations." />
-            </div>
-            
-            <ProcurementChart history={gameState.kpiHistory} />
+            <ProcurementDashboard />
 
             <Card>
                 <CardHeader>

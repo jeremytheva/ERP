@@ -14,53 +14,72 @@ import {
   ChartTooltipContent,
 } from "@/components/ui/chart";
 import { Bar, BarChart, CartesianGrid, XAxis, YAxis, LabelList, Cell } from "recharts";
-import type { PeerData } from "@/types";
+import type { MetricFormat, PeerMetricPoint } from "@/types";
 import { useMemo } from "react";
 import { useAuth } from "@/hooks/use-auth";
 
 interface PeerComparisonChartProps {
-  peerData: PeerData[];
-  currentUserValuation: number;
+  data: PeerMetricPoint[];
+  metricLabel: string;
+  title?: string;
+  description?: string;
+  format?: MetricFormat;
+  highlightName?: string;
 }
 
-const formatCurrency = (value: number) =>
-  new Intl.NumberFormat("en-US", {
-    style: "currency",
-    currency: "USD",
-    notation: "compact",
-    compactDisplay: "short",
-  }).format(value);
+const formatters: Record<MetricFormat, (value: number) => string> = {
+  currency: (value: number) =>
+    new Intl.NumberFormat("en-US", {
+      style: "currency",
+      currency: "USD",
+      notation: "compact",
+      compactDisplay: "short",
+    }).format(value),
+  percent: (value: number) =>
+    new Intl.NumberFormat("en-US", {
+      style: "percent",
+      minimumFractionDigits: 0,
+      maximumFractionDigits: 1,
+    }).format(value),
+  number: (value: number) =>
+    new Intl.NumberFormat("en-US", {
+      notation: "compact",
+      compactDisplay: "short",
+    }).format(value),
+};
 
-export function PeerComparisonChart({ peerData, currentUserValuation }: PeerComparisonChartProps) {
+const formatMetricValue = (value: number, format: MetricFormat = "number") =>
+  formatters[format](value);
+
+export function PeerComparisonChart({
+  data,
+  metricLabel,
+  title = "Peer Comparison",
+  description = "Your performance against other teams.",
+  format = "number",
+  highlightName,
+}: PeerComparisonChartProps) {
   const { profile } = useAuth();
-  const userName = profile?.name || 'You';
+  const resolvedHighlight = highlightName || profile?.name || "You";
 
   const chartData = useMemo(() => {
-    const currentUserData = {
-      name: userName,
-      companyValuation: currentUserValuation,
-      netIncome: 0, // Placeholder, not used in this chart
-      cumulativeCO2eEmissions: 0, // Placeholder, not used in this chart
-    };
-    const combined = [...peerData, currentUserData].sort(
-      (a, b) => b.companyValuation - a.companyValuation
-    );
-    return combined;
-  }, [peerData, currentUserValuation, userName]);
+    if (!data?.length) return [];
+    return [...data].sort((a, b) => b.value - a.value);
+  }, [data]);
+
+  if (!chartData.length) {
+    return null;
+  }
 
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Peer Comparison: Company Valuation</CardTitle>
-        <CardDescription>Your performance against other teams.</CardDescription>
+        <CardTitle>{title}</CardTitle>
+        {description ? <CardDescription>{description}</CardDescription> : null}
       </CardHeader>
       <CardContent className="pl-0">
         <ChartContainer config={{}} className="h-[250px] w-full">
-          <BarChart
-            data={chartData}
-            layout="vertical"
-            margin={{ left: 10, right: 40 }}
-          >
+          <BarChart data={chartData} layout="vertical" margin={{ left: 10, right: 40 }}>
             <CartesianGrid horizontal={false} />
             <YAxis
               dataKey="name"
@@ -68,29 +87,34 @@ export function PeerComparisonChart({ peerData, currentUserValuation }: PeerComp
               tickLine={false}
               axisLine={false}
               tickMargin={10}
-              width={80}
+              width={100}
               stroke="hsl(var(--muted-foreground))"
               tick={{ fontSize: 12 }}
             />
-            <XAxis dataKey="companyValuation" type="number" hide />
+            <XAxis dataKey="value" type="number" hide />
             <ChartTooltip
               cursor={false}
-              content={<ChartTooltipContent indicator="line" formatter={(value) => formatCurrency(value as number)} />}
+              content={
+                <ChartTooltipContent
+                  indicator="line"
+                  formatter={(value) => `${metricLabel}: ${formatMetricValue(value as number, format)}`}
+                />
+              }
             />
-            <Bar dataKey="companyValuation" radius={4}>
+            <Bar dataKey="value" radius={4}>
               {chartData.map((entry) => (
-                <Cell 
-                  key={`cell-${entry.name}`} 
-                  fill={entry.name === userName ? 'hsl(var(--accent))' : 'hsl(var(--chart-2))'} 
+                <Cell
+                  key={`peer-${entry.name}`}
+                  fill={entry.name === resolvedHighlight ? "hsl(var(--accent))" : "hsl(var(--chart-2))"}
                 />
               ))}
               <LabelList
-                dataKey="companyValuation"
+                dataKey="value"
                 position="right"
                 offset={8}
                 className="fill-foreground"
                 fontSize={12}
-                formatter={(value: number) => formatCurrency(value)}
+                formatter={(value: number) => formatMetricValue(value, format)}
               />
             </Bar>
           </BarChart>

@@ -3,14 +3,19 @@ import { z } from 'zod';
 
 export const TaskDataFieldSchema = z.object({
     fieldName: z.string(),
-    dataType: z.enum(["Currency", "Integer", "String"]),
+    dataType: z.enum(["Currency", "Integer", "String", "Percent"]),
     value: z.union([z.number(), z.string(), z.null()]).optional(),
     suggestedValue: z.union([z.number(), z.string(), z.null()]).optional(),
     aiRationale: z.string().optional(),
+    aiHelp: z.string().optional(),
+    calculatedFrom: z.array(z.string()).optional(),
+    formula: z.string().optional(),
 });
 
 export const TaskSchema = z.object({
     id: z.string(),
+    version: z.number().optional(),
+    round: z.number().optional(),
     title: z.string(),
     description: z.string(),
     role: z.enum(["Procurement", "Production", "Logistics", "Sales", "Team Leader"]),
@@ -20,10 +25,13 @@ export const TaskSchema = z.object({
     roundRecurrence: z.enum(["Once", "RoundStart", "Continuous"]),
     startRound: z.number().optional(),
     dependencyIDs: z.array(z.string()),
-    completionType: z.enum(["Manual-Tick", "Data-Confirmed", "System-Validated"]),
+    completionType: z.enum(["Manual-Tick", "Data-Confirmed", "System-Validated", "Ongoing"]),
     taskType: z.enum(["ERPsim Input Data", "ERPsim Gather Data", "Standard"]),
     dataFields: z.array(TaskDataFieldSchema).optional(),
     completed: z.boolean().default(false),
+    impact: z.enum(["Revenue", "Risk", "Capacity", "Sustainability", "Cost"]).optional(),
+    visibility: z.enum(["OnAlert", "Always"]).optional(),
+    alertKey: z.enum(["CASH_LOW", "RM_SHORTAGE", "BACKLOG", "MRP_ISSUES", "DC_STOCKOUT"]).optional(),
 });
 
 export const KpiSchema = z.object({

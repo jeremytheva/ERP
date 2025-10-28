@@ -23,11 +23,13 @@ export function LogisticsDashboard() {
   const { activeTaskId, openedTaskId, setOpenedTaskId, getTaskRef } = useTaskNavigation();
 
   const logisticsMetrics = metrics.roles.logistics;
-  const logisticsHistory = logisticsMetrics?.trend?.length
-    ? logisticsMetrics.trend
+  const logisticsTrendHistory = logisticsMetrics?.trend ?? [];
+  const logisticsHistory = logisticsTrendHistory.length
+    ? logisticsTrendHistory
     : gameState.kpiHistory;
-
-  const currentRound = logisticsHistory[logisticsHistory.length - 1]?.round || 1;
+  const latestMetricsRound = logisticsTrendHistory[logisticsTrendHistory.length - 1]?.round ?? 0;
+  const latestGameRound = gameState.kpiHistory[gameState.kpiHistory.length - 1]?.round ?? 0;
+  const currentRound = Math.max(latestMetricsRound, latestGameRound, 1);
 
   const monitoringTasks = useMemo(() => {
     if (!profile) return [];

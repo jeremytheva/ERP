@@ -73,8 +73,11 @@ export function ExecutiveDashboardView({
   const TeamLeaderIcon = icons.sections.teamLeader;
   const ForecastingIcon = icons.sections.forecasting;
 
-  const trendHistory = metrics?.trend?.length ? metrics.trend : gameState.kpiHistory;
-  const currentRound = trendHistory[trendHistory.length - 1]?.round || 1;
+  const trendHistorySource = metrics?.trend ?? [];
+  const trendHistory = trendHistorySource.length ? trendHistorySource : gameState.kpiHistory;
+  const latestMetricsRound = trendHistorySource[trendHistorySource.length - 1]?.round ?? 0;
+  const latestGameRound = gameState.kpiHistory[gameState.kpiHistory.length - 1]?.round ?? 0;
+  const currentRound = Math.max(latestMetricsRound, latestGameRound, 1);
   const isTeamLeader = profileId === teamLeaderId;
 
   const forecastingTasks = useMemo(() => {

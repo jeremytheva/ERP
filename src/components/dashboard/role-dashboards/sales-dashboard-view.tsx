@@ -53,8 +53,11 @@ export function SalesDashboardView({
   const PriceGapIcon = icons.priceGap;
   const GrossRevenueIcon = icons.grossRevenue;
 
-  const salesHistory = metrics?.trend?.length ? metrics.trend : gameState.kpiHistory;
-  const currentRound = salesHistory[salesHistory.length - 1]?.round || 1;
+  const salesTrendHistory = metrics?.trend?.length ? metrics.trend : [];
+  const salesHistory = salesTrendHistory.length ? salesTrendHistory : gameState.kpiHistory;
+  const latestMetricsRound = salesTrendHistory[salesTrendHistory.length - 1]?.round ?? 0;
+  const latestGameRound = gameState.kpiHistory[gameState.kpiHistory.length - 1]?.round ?? 0;
+  const currentRound = Math.max(latestMetricsRound, latestGameRound, 1);
 
   const marketAnalysisTasks = useMemo(() => {
     if (!profileName) return [];

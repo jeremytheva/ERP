@@ -23,11 +23,13 @@ export function ProcurementDashboard() {
   const { activeTaskId, openedTaskId, setOpenedTaskId, getTaskRef } = useTaskNavigation();
 
   const procurementMetrics = metrics.roles.procurement;
-  const procurementHistory = procurementMetrics?.trend?.length
-    ? procurementMetrics.trend
+  const procurementTrendHistory = procurementMetrics?.trend ?? [];
+  const procurementHistory = procurementTrendHistory.length
+    ? procurementTrendHistory
     : gameState.kpiHistory;
-
-  const currentRound = procurementHistory[procurementHistory.length - 1]?.round || 1;
+  const latestMetricsRound = procurementTrendHistory[procurementTrendHistory.length - 1]?.round ?? 0;
+  const latestGameRound = gameState.kpiHistory[gameState.kpiHistory.length - 1]?.round ?? 0;
+  const currentRound = Math.max(latestMetricsRound, latestGameRound, 1);
 
   const createTaskFilter = (transactionCode: string) =>
     tasks

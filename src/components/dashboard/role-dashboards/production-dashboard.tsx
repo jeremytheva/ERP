@@ -23,11 +23,13 @@ export function ProductionDashboard() {
   const { activeTaskId, openedTaskId, setOpenedTaskId, getTaskRef } = useTaskNavigation();
 
   const productionMetrics = metrics.roles.production;
-  const productionHistory = productionMetrics?.trend?.length
-    ? productionMetrics.trend
+  const productionTrendHistory = productionMetrics?.trend ?? [];
+  const productionHistory = productionTrendHistory.length
+    ? productionTrendHistory
     : gameState.kpiHistory;
-
-  const currentRound = productionHistory[productionHistory.length - 1]?.round || 1;
+  const latestMetricsRound = productionTrendHistory[productionTrendHistory.length - 1]?.round ?? 0;
+  const latestGameRound = gameState.kpiHistory[gameState.kpiHistory.length - 1]?.round ?? 0;
+  const currentRound = Math.max(latestMetricsRound, latestGameRound, 1);
 
   const planningTasks = useMemo(() => {
     if (!profile) return [];

@@ -1,10 +1,13 @@
 
 import { Timestamp } from "firebase/firestore";
+import type { RoleComponentId } from "@/lib/firebase/firestore-schema";
 
 export type UserProfile = {
   id: string;
   name: string;
   avatarUrl: string;
+  defaultComponent: RoleComponentId;
+  permittedComponents: RoleComponentId[];
 };
 
 export type Kpi = {

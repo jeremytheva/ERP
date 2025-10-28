@@ -50,7 +50,8 @@ export function TaskManager() {
     return acc;
   }, {} as Record<Role, Task[]>);
 
-  const availableRounds = Array.from({ length: gameState.kpiHistory.length }, (_, i) => i + 1);
+  const totalRounds = Math.max(gameState.kpiHistory.length, 8);
+  const availableRounds = Array.from({ length: totalRounds }, (_, i) => i + 1);
 
   return (
     <div className="space-y-6">

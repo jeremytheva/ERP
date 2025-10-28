@@ -9,6 +9,15 @@ import { useFirestore, errorEmitter, FirestorePermissionError, useMemoFirebase }
 
 const GAME_ID = "default_game"; // For now, we use a single game document
 
+const INITIAL_ALERTS: GameState["alerts"] = {
+  mrpIssues: false,
+  cashLow: false,
+  dcStockout: false,
+  rmShortage: false,
+  co2OverTarget: false,
+  backlog: false,
+};
+
 const INITIAL_GAME_STATE: GameState = {
   companyValuation: 50000000,
   netIncome: 0,
@@ -39,7 +48,8 @@ const INITIAL_GAME_STATE: GameState = {
     roundDuration: 1200, // 20 minutes
     breakDuration: 300, // 5 minutes
     confirmNextRound: true,
-  }
+  },
+  alerts: { ...INITIAL_ALERTS },
 };
 
 
@@ -53,6 +63,7 @@ interface GameStateContextType {
   roundDuration: number;
   breakDuration: number;
   confirmNextRound: boolean;
+  alerts: GameState["alerts"];
   togglePause: () => void;
   resetTimer: () => void;
   resetGame: () => Promise<void>;
@@ -63,6 +74,7 @@ interface GameStateContextType {
   setIsBreakEnabled: (enabled: boolean) => void;
   setConfirmNextRound: (enabled: boolean) => void;
   addKpiHistoryEntry: (data: Omit<KpiHistoryEntry, 'round'>) => Promise<void>;
+  updateAlerts: (updates: Partial<GameState["alerts"]>) => Promise<void>;
 }
 
 const GameStateContext = createContext<GameStateContextType | undefined>(undefined);
@@ -110,7 +122,8 @@ export const GameStateProvider = ({ children }: { children: ReactNode }) => {
         const data = docSnap.data() as GameState;
         // Ensure timerState has all properties
         const timerState = { ...INITIAL_GAME_STATE.timerState, ...data.timerState };
-        const fullGameState = { ...INITIAL_GAME_STATE, ...data, timerState };
+        const alerts = { ...INITIAL_ALERTS, ...(data.alerts ?? {}) };
+        const fullGameState = { ...INITIAL_GAME_STATE, ...data, timerState, alerts };
         setGameState(fullGameState);
         setTimeLeft(fullGameState.timerState.timeLeft);
       } else {
@@ -136,20 +149,72 @@ export const GameStateProvider = ({ children }: { children: ReactNode }) => {
     return () => unsubscribe();
   }, [gameDocRef, firestore]);
   
-  const updateTimerState = async (updates: Partial<GameState["timerState"]>) => {
+  type TimerStateUpdate =
+    | Partial<GameState["timerState"]>
+    | ((current: GameState["timerState"]) => Partial<GameState["timerState"]>);
+
+  const updateTimerState = useCallback(async (updates: TimerStateUpdate) => {
+      let nextTimerState: GameState["timerState"] | null = null;
+      let previousTimerState: GameState["timerState"] | null = null;
+
+      setGameState((prev) => {
+        previousTimerState = prev.timerState;
+        const computedUpdates =
+          typeof updates === "function" ? updates(prev.timerState) : updates;
+        nextTimerState = { ...prev.timerState, ...computedUpdates };
+        return { ...prev, timerState: nextTimerState };
+      });
+
+      if (!nextTimerState) return;
+
+      setTimeLeft(nextTimerState.timeLeft);
+
       if (!gameDocRef) return;
+
       const batch = writeBatch(firestore);
-      const currentTimerState = gameState.timerState;
-      batch.update(gameDocRef, { timerState: { ...currentTimerState, ...updates } });
-      await batch.commit().catch(error => {
+      batch.update(gameDocRef, { timerState: nextTimerState });
+      await batch.commit().catch(() => {
         const contextualError = new FirestorePermissionError({
             path: gameDocRef.path,
             operation: 'update',
-            requestResourceData: { timerState: { ...currentTimerState, ...updates } },
+            requestResourceData: { timerState: nextTimerState },
         });
         errorEmitter.emit('permission-error', contextualError);
+        const fallbackState = previousTimerState;
+        if (fallbackState) {
+          setGameState((prev) => ({ ...prev, timerState: fallbackState }));
+          setTimeLeft(fallbackState.timeLeft);
+        }
       });
-  }
+  }, [firestore, gameDocRef]);
+
+  const updateAlerts = useCallback(async (updates: Partial<GameState["alerts"]>) => {
+      let nextAlerts: GameState["alerts"] | null = null;
+      let previousAlerts: GameState["alerts"] | null = null;
+
+      setGameState((prev) => {
+        previousAlerts = prev.alerts;
+        nextAlerts = { ...prev.alerts, ...updates };
+        return { ...prev, alerts: nextAlerts };
+      });
+
+      if (!nextAlerts || !gameDocRef) return;
+
+      const batch = writeBatch(firestore);
+      batch.update(gameDocRef, { alerts: nextAlerts });
+      await batch.commit().catch(() => {
+        const contextualError = new FirestorePermissionError({
+            path: gameDocRef.path,
+            operation: 'update',
+            requestResourceData: { alerts: nextAlerts },
+        });
+        errorEmitter.emit('permission-error', contextualError);
+        const fallbackAlerts = previousAlerts;
+        if (fallbackAlerts) {
+          setGameState((prev) => ({ ...prev, alerts: fallbackAlerts }));
+        }
+      });
+  }, [firestore, gameDocRef]);
 
   const addKpiHistoryEntry = async (data: Omit<KpiHistoryEntry, 'round'>) => {
     if (!gameDocRef) return;
@@ -186,26 +251,6 @@ export const GameStateProvider = ({ children }: { children: ReactNode }) => {
     });
   };
 
-  const handleRoundEnd = () => {
-    if (confirmNextRound) {
-        setIsAwaitingConfirmation(true);
-        updateTimerState({ isPaused: true }); // Pause timer while waiting
-    } else {
-        confirmAndAdvance();
-    }
-  };
-
-  const confirmAndAdvance = () => {
-    setIsAwaitingConfirmation(false);
-    if (isBreakActive) {
-        advanceRound();
-    } else if (isBreakEnabled) {
-        startBreak();
-    } else {
-        advanceRound();
-    }
-  };
-
   const advanceRound = useCallback(async () => {
     if (!gameDocRef) return;
     const batch = writeBatch(firestore);
@@ -240,7 +285,27 @@ export const GameStateProvider = ({ children }: { children: ReactNode }) => {
 
   const startBreak = useCallback(async () => {
     await updateTimerState({ isBreakActive: true, timeLeft: breakDuration, isPaused: false });
-  }, [breakDuration]);
+  }, [breakDuration, updateTimerState]);
+
+  const confirmAndAdvance = useCallback(() => {
+    setIsAwaitingConfirmation(false);
+    if (isBreakActive) {
+        advanceRound();
+    } else if (isBreakEnabled) {
+        startBreak();
+    } else {
+        advanceRound();
+    }
+  }, [advanceRound, isBreakActive, isBreakEnabled, startBreak]);
+
+  const handleRoundEnd = useCallback(() => {
+    if (confirmNextRound) {
+        setIsAwaitingConfirmation(true);
+        updateTimerState({ isPaused: true }); // Pause timer while waiting
+    } else {
+        confirmAndAdvance();
+    }
+  }, [confirmAndAdvance, confirmNextRound, updateTimerState]);
 
   useEffect(() => {
     if (isPaused || isLoading || !firestore) return;
@@ -260,12 +325,11 @@ export const GameStateProvider = ({ children }: { children: ReactNode }) => {
     }, 1000);
 
     return () => clearInterval(timerInterval);
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isPaused, isLoading, firestore]);
+  }, [firestore, handleRoundEnd, isLoading, isPaused, updateTimerState]);
 
   const togglePause = () => {
     if(isAwaitingConfirmation) return; // Don't allow play/pause during confirmation
-    updateTimerState({ isPaused: !isPaused });
+    updateTimerState((current) => ({ isPaused: !current.isPaused }));
   };
   
   const resetTimer = () => {
@@ -336,8 +400,10 @@ export const GameStateProvider = ({ children }: { children: ReactNode }) => {
     await batch.commit();
   }
   
+  const resolvedGameState = isLoading ? INITIAL_GAME_STATE : gameState;
+
   const value = {
-      gameState: isLoading ? INITIAL_GAME_STATE : gameState, // Provide initial state while loading
+      gameState: resolvedGameState, // Provide initial state while loading
       timeLeft,
       isPaused,
       isBreakActive,
@@ -346,6 +412,7 @@ export const GameStateProvider = ({ children }: { children: ReactNode }) => {
       roundDuration,
       breakDuration,
       confirmNextRound,
+      alerts: resolvedGameState.alerts,
       togglePause,
       resetTimer,
       resetGame,
@@ -356,6 +423,7 @@ export const GameStateProvider = ({ children }: { children: ReactNode }) => {
       setIsBreakEnabled: (enabled: boolean) => updateTimerState({ isBreakEnabled: enabled }),
       setConfirmNextRound: (enabled: boolean) => updateTimerState({ confirmNextRound: enabled }),
       addKpiHistoryEntry,
+      updateAlerts,
   };
 
   return (

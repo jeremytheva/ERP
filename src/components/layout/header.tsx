@@ -25,7 +25,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { ChevronsUpDown, LogOut, Clock, Settings, Play, Pause, RefreshCw, ChevronLeft, ChevronRight, Coffee, ShieldQuestion, RotateCcw } from "lucide-react";
+import { ChevronsUpDown, LogOut, Clock, Settings, Play, Pause, RefreshCw, ChevronLeft, ChevronRight, Coffee, ShieldQuestion, RotateCcw, Users } from "lucide-react";
 import { usePathname } from "next/navigation";
 import { SidebarTrigger } from "../ui/sidebar";
 import { useGameState } from "@/hooks/use-game-data";
@@ -33,6 +33,10 @@ import { Label } from "../ui/label";
 import { Input } from "../ui/input";
 import { Switch } from "../ui/switch";
 import { useUserProfiles } from "@/hooks/use-user-profiles";
+import { useTasks } from "@/hooks/use-tasks";
+import { useTeamSettings } from "@/hooks/use-team-settings";
+import type { RoleFilter } from "@/types";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 const getPageTitle = (pathname: string): string => {
     const segment = pathname.split("/").pop() || "dashboard";
@@ -68,8 +72,8 @@ const getPageTitle = (pathname: string): string => {
 export function Header() {
   const { profile, logout, login } = useAuth();
   const { profiles: userProfiles } = useUserProfiles();
-  const { 
-    gameState, 
+  const {
+    gameState,
     timeLeft, 
     isPaused, 
     isBreakActive,
@@ -86,11 +90,29 @@ export function Header() {
     setIsBreakEnabled,
     setConfirmNextRound
   } = useGameState();
+  const { roleFilter, setRoleFilter, isLoading: tasksLoading } = useTasks();
+  const { teamLeader } = useTeamSettings();
   const pathname = usePathname();
   const [isResetDialogOpen, setIsResetDialogOpen] = React.useState(false);
 
   const pageTitle = getPageTitle(pathname);
   const currentRound = gameState.kpiHistory[gameState.kpiHistory.length - 1]?.round || 1;
+  const canViewAllRoles = Boolean(
+    profile &&
+    (profile.id === teamLeader || profile.id === "instructor" || profile.name === "Instructor")
+  );
+
+  const roleOptions: RoleFilter[] = React.useMemo(() => {
+    if (canViewAllRoles) {
+      return ["All", "Team Leader", "Sales", "Production", "Procurement", "Logistics"];
+    }
+
+    if (profile?.name) {
+      return [profile.name as RoleFilter];
+    }
+
+    return ["All"];
+  }, [canViewAllRoles, profile?.name]);
 
   const handleRoundDurationChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const minutes = parseInt(e.target.value, 10);
@@ -133,6 +155,30 @@ export function Header() {
             {isBreakActive ? <Coffee className="h-4 w-4 text-muted-foreground" /> : <Clock className="h-4 w-4 text-muted-foreground" />}
             <span>{formatTime(timeLeft)}</span>
         </div>
+        {roleOptions.length > 0 && (
+          <div className="hidden flex-col gap-1 md:flex">
+            <span className="flex items-center gap-1 text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">
+              <Users className="h-3 w-3" />
+              Task View
+            </span>
+            <Select
+              value={roleFilter}
+              onValueChange={(value) => setRoleFilter(value as RoleFilter)}
+              disabled={!canViewAllRoles || tasksLoading}
+            >
+              <SelectTrigger className="h-9 w-[180px]">
+                <SelectValue placeholder="All roles" />
+              </SelectTrigger>
+              <SelectContent>
+                {roleOptions.map((option) => (
+                  <SelectItem key={option} value={option}>
+                    {option === "All" ? "All Roles" : option}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+        )}
         <DropdownMenu>
             <DropdownMenuTrigger asChild>
                 <Button variant="ghost" size="icon" className="h-8 w-8">

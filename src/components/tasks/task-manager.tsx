@@ -14,7 +14,7 @@ import type { Role, Task } from "@/types";
 const ROLES: Role[] = ["Sales", "Procurement", "Production", "Logistics", "Team Leader"];
 
 export function TaskManager() {
-  const { tasks, addTask, updateTask } = useTasks();
+  const { allTasks, addTask, updateTask } = useTasks();
   const { gameState } = useGameState();
   const [currentRound, setCurrentRound] = useState(gameState.kpiHistory[gameState.kpiHistory.length - 1]?.round || 1);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
@@ -38,7 +38,7 @@ export function TaskManager() {
     }
   };
 
-  const tasksByRound = tasks.filter(
+  const tasksByRound = allTasks.filter(
     (task) =>
       task.roundRecurrence === "Continuous" ||
       (task.roundRecurrence === "RoundStart" && (task.startRound ?? 1) <= currentRound) ||

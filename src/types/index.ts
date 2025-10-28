@@ -38,12 +38,22 @@ export type TimerState = {
   roundDuration: number;
   breakDuration: number;
   confirmNextRound: boolean;
-}
+};
+
+export type Alerts = {
+  mrpIssues: boolean;
+  cashLow: boolean;
+  dcStockout: boolean;
+  rmShortage: boolean;
+  co2OverTarget: boolean;
+  backlog: boolean;
+};
 
 export type GameState = Kpi & {
   kpiHistory: KpiHistory;
   teamStrategy: string;
   timerState: TimerState;
+  alerts: Alerts;
 };
 
 export type ActionItem = {
@@ -72,6 +82,7 @@ export type TimeframeConstraint = "None" | "StartPhase" | "MidPhase" | "EndPhase
 export type CompletionType = "Manual-Tick" | "Data-Confirmed" | "System-Validated";
 export type TaskType = "ERPsim Input Data" | "ERPsim Gather Data" | "Standard";
 export type Role = "Procurement" | "Production" | "Logistics" | "Sales" | "Team Leader";
+export type RoleFilter = "All" | Role;
 
 
 export type TaskDataField = {

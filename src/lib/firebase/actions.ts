@@ -1,8 +1,11 @@
 "use server";
 
-import { collection, getDocs, orderBy, query, type QueryConstraint } from "firebase/firestore";
+import type {
+  DocumentData,
+  Query,
+} from "firebase-admin/firestore";
 
-import { initializeFirebase } from "@/firebase";
+import { initializeFirebaseAdmin } from "./server";
 import type {
   ActionItemDocument,
   AiInsightDocument,
@@ -11,26 +14,37 @@ import type {
 import { firestoreContracts } from "../../../docs/firestore-schema";
 import { resolveContractPath } from "./utils";
 
-async function fetchCollection<T>(path: string, constraints: QueryConstraint[]) {
-  const { firestore } = initializeFirebase();
-  const collectionRef = collection(firestore, path);
-  const collectionQuery = constraints.length > 0 ? query(collectionRef, ...constraints) : collectionRef;
-  const snapshot = await getDocs(collectionQuery);
+type QueryBuilder = (query: Query<DocumentData>) => Query<DocumentData>;
+
+async function fetchCollection<T>(path: string, builders: QueryBuilder[] = []) {
+  const { firestore } = initializeFirebaseAdmin();
+  const collectionRef = firestore.collection(path);
+  const collectionQuery = builders.reduce<Query<DocumentData>>(
+    (currentQuery, builder) => builder(currentQuery),
+    collectionRef,
+  );
+  const snapshot = await collectionQuery.get();
 
   return snapshot.docs.map((doc) => ({ id: doc.id, ...(doc.data() as Omit<T, "id">) })) as T[];
 }
 
 export async function fetchCompanyMetrics(companyId: string) {
   const path = resolveContractPath(firestoreContracts.metrics, companyId);
-  return fetchCollection<CompanyMetricSnapshot>(path, [orderBy("round", "asc")]);
+  return fetchCollection<CompanyMetricSnapshot>(path, [
+    (query) => query.orderBy("round", "asc"),
+  ]);
 }
 
 export async function fetchCompanyActionItems(companyId: string) {
   const path = resolveContractPath(firestoreContracts.actionItems, companyId);
-  return fetchCollection<ActionItemDocument>(path, [orderBy("createdAt", "desc")]);
+  return fetchCollection<ActionItemDocument>(path, [
+    (query) => query.orderBy("createdAt", "desc"),
+  ]);
 }
 
 export async function fetchCompanyAiInsights(companyId: string) {
   const path = resolveContractPath(firestoreContracts.aiInsights, companyId);
-  return fetchCollection<AiInsightDocument>(path, [orderBy("createdAt", "desc")]);
+  return fetchCollection<AiInsightDocument>(path, [
+    (query) => query.orderBy("createdAt", "desc"),
+  ]);
 }

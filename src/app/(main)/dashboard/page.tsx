@@ -7,9 +7,11 @@ import { useGameState } from "@/hooks/use-game-data";
 import { DollarSign, Factory, HandCoins, Package, TrendingUp, Ship, Percent, Target, Leaf } from "lucide-react";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
 import { StrategicAdvisor } from "@/components/ai/strategic-advisor";
-import { Lightbulb } from "lucide-react";
+import { Lightbulb, ClipboardList } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
 import { useTeamSettings } from "@/hooks/use-team-settings";
+import { ActionItemList } from "@/components/tasks/action-item-list";
+import { TeamAlignmentBoard } from "@/components/team/team-alignment-board";
 
 
 export default function DashboardPage() {
@@ -89,6 +91,24 @@ export default function DashboardPage() {
               </Card>
             )}
         </div>
+      </div>
+
+      <div className="grid gap-6 lg:grid-cols-2">
+        <Card className="shadow-md">
+          <CardHeader>
+            <div className="flex items-center gap-3">
+              <ClipboardList className="h-5 w-5" />
+              <div>
+                <CardTitle>My Action Items</CardTitle>
+                <CardDescription>Track and complete your critical next steps.</CardDescription>
+              </div>
+            </div>
+          </CardHeader>
+          <CardContent>
+            <ActionItemList />
+          </CardContent>
+        </Card>
+        <TeamAlignmentBoard />
       </div>
     </div>
   );

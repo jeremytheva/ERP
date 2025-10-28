@@ -1,8 +1,10 @@
 import { App, cert, getApps, initializeApp, applicationDefault } from "firebase-admin/app";
+import { getAuth, Auth } from "firebase-admin/auth";
 import { Firestore, getFirestore } from "firebase-admin/firestore";
 
 let cachedApp: App | null = null;
 let cachedFirestore: Firestore | null = null;
+let cachedAuth: Auth | null = null;
 
 const resolveFirebaseCredential = () => {
   const projectId = process.env.FIREBASE_PROJECT_ID;
@@ -40,4 +42,13 @@ export const getAdminFirestore = (): Firestore => {
 
   cachedFirestore = getFirestore(getAdminApp());
   return cachedFirestore;
+};
+
+export const getAdminAuth = (): Auth => {
+  if (cachedAuth) {
+    return cachedAuth;
+  }
+
+  cachedAuth = getAuth(getAdminApp());
+  return cachedAuth;
 };

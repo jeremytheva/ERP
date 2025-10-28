@@ -107,8 +107,18 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     };
 
     const syncProfile = async () => {
+      let idToken: string | null = null;
+
       try {
-        await ensureUserDocument(user.uid);
+        idToken = await user.getIdToken();
+      } catch (error) {
+        console.error("Failed to obtain Firebase ID token", error);
+        setLoading(false);
+        return;
+      }
+
+      try {
+        await ensureUserDocument({ idToken });
       } catch (error) {
         console.error("Failed to ensure user document", error);
       }
@@ -140,7 +150,11 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       }
 
       try {
-        const selection = await fetchUserRoleSelection(user.uid);
+        if (!idToken) {
+          throw new Error("Missing Firebase ID token");
+        }
+
+        const selection = await fetchUserRoleSelection({ idToken });
         if (isCancelled) return;
 
         if (selection.activeRoleId && isRoleSlug(selection.activeRoleId)) {
@@ -191,8 +205,9 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       }
 
       if (isRoleSlug(profileId)) {
-        await ensureUserDocument(user.uid);
-        await persistRoleSelection({ uid: user.uid, roleId: profileId });
+        const idToken = await user.getIdToken();
+        await ensureUserDocument({ idToken });
+        await persistRoleSelection({ idToken, roleId: profileId });
       }
 
       setProfile(userProfile);

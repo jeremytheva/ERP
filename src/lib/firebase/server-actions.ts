@@ -3,7 +3,7 @@
 import { cookies } from "next/headers";
 import { FieldValue } from "firebase-admin/firestore";
 
-import { getAdminFirestore } from "./admin";
+import { getAdminAuth, getAdminFirestore } from "./admin";
 import {
   FirestoreUserDocument,
   ROLE_DEFINITIONS,
@@ -36,7 +36,26 @@ const setRoleCookie = async (roleId: RoleSlug | null) => {
   });
 };
 
-export const ensureUserDocument = async (uid: string) => {
+const resolveAuthenticatedUid = async (idToken: string) => {
+  if (!idToken) {
+    throw new Error("Missing Firebase ID token.");
+  }
+
+  try {
+    const decoded = await getAdminAuth().verifyIdToken(idToken);
+    return decoded.uid;
+  } catch (error) {
+    console.error("Failed to verify Firebase ID token", error);
+    throw new Error("Unable to authenticate Firebase user.");
+  }
+};
+
+export const ensureUserDocument = async ({
+  idToken,
+}: {
+  idToken: string;
+}) => {
+  const uid = await resolveAuthenticatedUid(idToken);
   const firestore = getAdminFirestore();
   const userRef = firestore.collection("users").doc(uid);
   const snapshot = await userRef.get();
@@ -71,16 +90,17 @@ export const ensureUserDocument = async (uid: string) => {
 };
 
 export const persistRoleSelection = async ({
-  uid,
+  idToken,
   roleId,
 }: {
-  uid: string;
+  idToken: string;
   roleId: RoleSlug;
 }) => {
   if (!isRoleSlug(roleId)) {
     throw new Error(`Unsupported role id: ${roleId}`);
   }
 
+  const uid = await resolveAuthenticatedUid(idToken);
   const firestore = getAdminFirestore();
   const userRef = firestore.collection("users").doc(uid);
   const roleDefinition = ROLE_DEFINITIONS[roleId];
@@ -107,7 +127,12 @@ export const persistRoleSelection = async ({
   return { roleId };
 };
 
-export const fetchUserRoleSelection = async (uid: string) => {
+export const fetchUserRoleSelection = async ({
+  idToken,
+}: {
+  idToken: string;
+}) => {
+  const uid = await resolveAuthenticatedUid(idToken);
   const firestore = getAdminFirestore();
   const userRef = firestore.collection("users").doc(uid);
   const snapshot = await userRef.get();

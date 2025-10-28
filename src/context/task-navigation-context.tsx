@@ -31,7 +31,7 @@ const TaskNavigationContext = createContext<TaskNavigationContextType | undefine
 
 export const TaskNavigationProvider = ({ children }: { children: React.ReactNode }) => {
     const { profile } = useAuth();
-    const { tasks } = useTasks();
+    const { allTasks } = useTasks();
     const { teamLeader } = useTeamSettings();
     const { gameState } = useGameState();
 
@@ -52,14 +52,14 @@ export const TaskNavigationProvider = ({ children }: { children: React.ReactNode
     }, [profile, isTeamLeader]);
 
     const allUserTasks = useMemo(() => {
-        return tasks.filter(task =>
-            userRoles.includes(task.role) &&
-            (task.roundRecurrence === "Continuous" || (task.startRound ?? 1) <= currentRound)
-        ).sort((a,b) => {
-             const priorityOrder = { "Critical": 1, "High": 2, "Medium": 3, "Low": 4 };
-             return priorityOrder[a.priority] - priorityOrder[b.priority];
-        });
-    }, [tasks, userRoles, currentRound]);
+        const priorityOrder: Record<Task["priority"], number> = { High: 1, Medium: 2, Low: 3 };
+        return allTasks
+            .filter(task =>
+                userRoles.includes(task.role) &&
+                (task.roundRecurrence === "Continuous" || task.startRound <= currentRound)
+            )
+            .sort((a, b) => priorityOrder[a.priority] - priorityOrder[b.priority]);
+    }, [allTasks, userRoles, currentRound]);
     
     useEffect(() => {
         const firstIncomplete = allUserTasks.find(t => !t.completed);
@@ -72,13 +72,15 @@ export const TaskNavigationProvider = ({ children }: { children: React.ReactNode
             let pageUrl = ROLE_PAGE_MAP[taskRole] || '/dashboard';
             
             // Special handling for some roles/t-codes that map to different pages
-            if(taskRole === 'Sales' && firstIncomplete.transactionCode.includes('MD61')) {
+            const transactionCode = firstIncomplete.transactionCode ?? "";
+
+            if(taskRole === 'Sales' && transactionCode.includes('MD61')) {
                 pageUrl = '/debriefing';
-            } else if (taskRole === 'Sales' && firstIncomplete.transactionCode.includes('ZADS')) {
+            } else if (taskRole === 'Sales' && transactionCode.includes('ZADS')) {
                  pageUrl = '/scenario-planning';
-            } else if (taskRole === 'Sales' && firstIncomplete.transactionCode.includes('VK32')) {
+            } else if (taskRole === 'Sales' && transactionCode.includes('VK32')) {
                  pageUrl = '/strategic-advisor';
-            } else if (taskRole === 'Team Leader' && firstIncomplete.transactionCode.includes('ZFB50')) {
+            } else if (taskRole === 'Team Leader' && transactionCode.includes('ZFB50')) {
                 pageUrl = '/debriefing';
             }
             setActiveTaskUrl(pageUrl);

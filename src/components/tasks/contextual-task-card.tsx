@@ -28,18 +28,18 @@ export function ContextualTaskCard({ transactionCode, title, description, classN
 
   const relevantTasks = useMemo(() => {
     if (!profile) return [];
-    return tasks.filter(task =>
-      task.role === profile.name &&
-      task.transactionCode === transactionCode &&
-      (
-        task.roundRecurrence === "Continuous" ||
-        (task.roundRecurrence === "RoundStart" && (task.startRound ?? 1) <= currentRound) ||
-        (task.roundRecurrence === "Once" && (task.startRound ?? 1) === currentRound)
+    const priorityOrder: Record<Task["priority"], number> = { High: 1, Medium: 2, Low: 3 };
+    return tasks
+      .filter(task =>
+        task.role === profile.name &&
+        task.transactionCode === transactionCode &&
+        (
+          task.roundRecurrence === "Continuous"
+            ? task.startRound <= currentRound
+            : task.round <= currentRound
+        )
       )
-    ).sort((a, b) => {
-        const priorityOrder = { "Critical": 1, "High": 2, "Medium": 3, "Low": 4 };
-        return priorityOrder[a.priority] - priorityOrder[b.priority];
-    });
+      .sort((a, b) => priorityOrder[a.priority] - priorityOrder[b.priority]);
   }, [tasks, profile, transactionCode, currentRound]);
 
   const handleTaskToggle = (task: Task) => {

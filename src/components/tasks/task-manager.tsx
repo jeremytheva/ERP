@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { useTasks } from "@/hooks/use-tasks";
 import { useGameState } from "@/hooks/use-game-data";
 import { Button } from "@/components/ui/button";
@@ -14,7 +14,7 @@ import type { Role, Task } from "@/types";
 const ROLES: Role[] = ["Sales", "Procurement", "Production", "Logistics", "Team Leader"];
 
 export function TaskManager() {
-  const { tasks, addTask, updateTask } = useTasks();
+  const { allTasks, addTask, updateTask } = useTasks();
   const { gameState } = useGameState();
   const [currentRound, setCurrentRound] = useState(gameState.kpiHistory[gameState.kpiHistory.length - 1]?.round || 1);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
@@ -38,11 +38,11 @@ export function TaskManager() {
     }
   };
 
-  const tasksByRound = tasks.filter(
+  const tasksByRound = allTasks.filter(
     (task) =>
-      task.roundRecurrence === "Continuous" ||
-      (task.roundRecurrence === "RoundStart" && (task.startRound ?? 1) <= currentRound) ||
-      (task.roundRecurrence === "Once" && (task.startRound ?? 1) === currentRound)
+      task.roundRecurrence === "Continuous"
+        ? task.startRound <= currentRound
+        : task.round <= currentRound
   );
 
   const tasksByRole = ROLES.reduce((acc, role) => {
@@ -50,7 +50,12 @@ export function TaskManager() {
     return acc;
   }, {} as Record<Role, Task[]>);
 
-  const availableRounds = Array.from({ length: gameState.kpiHistory.length }, (_, i) => i + 1);
+  const availableRounds = useMemo(() => {
+    const roundsFromTasks = new Set(allTasks.map((task) => task.round));
+    const historyRounds = gameState.kpiHistory.map((entry) => entry.round);
+    const combined = new Set([...roundsFromTasks, ...historyRounds]);
+    return Array.from(combined).sort((a, b) => a - b);
+  }, [allTasks, gameState.kpiHistory]);
 
   return (
     <div className="space-y-6">

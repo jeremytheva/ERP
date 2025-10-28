@@ -13,8 +13,7 @@ interface TaskCardProps {
   onEditTask: (task: Task) => void;
 }
 
-const priorityVariant: { [key in TaskPriority]: "destructive" | "default" | "secondary" | "outline" } = {
-  Critical: "destructive",
+const priorityVariant: Record<TaskPriority, "default" | "secondary" | "outline"> = {
   High: "default",
   Medium: "secondary",
   Low: "outline",
@@ -37,10 +36,12 @@ export function TaskCard({ role, tasks, onEditTask }: TaskCardProps) {
                 </div>
                 <p className="text-sm text-muted-foreground">{task.description}</p>
                 <div className="flex flex-wrap gap-x-4 gap-y-2 text-xs text-muted-foreground">
-                  <div className="flex items-center gap-1.5" title="Transaction Code">
-                    <Code className="h-3.5 w-3.5" />
-                    <code>{task.transactionCode}</code>
-                  </div>
+                  {task.transactionCode && (
+                    <div className="flex items-center gap-1.5" title="Transaction Code">
+                      <Code className="h-3.5 w-3.5" />
+                      <code>{task.transactionCode}</code>
+                    </div>
+                  )}
                   <div className="flex items-center gap-1.5" title="Estimated Time">
                     <Clock className="h-3.5 w-3.5" />
                     <span>{task.estimatedTime} min</span>

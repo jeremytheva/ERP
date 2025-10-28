@@ -66,36 +66,66 @@ export type RoleActionItems = {
 
 
 // New Expanded Task Definition
-export type TaskPriority = "Critical" | "High" | "Medium" | "Low";
-export type RoundRecurrence = "Once" | "RoundStart" | "Continuous";
-export type TimeframeConstraint = "None" | "StartPhase" | "MidPhase" | "EndPhase";
-export type CompletionType = "Manual-Tick" | "Data-Confirmed" | "System-Validated";
-export type TaskType = "ERPsim Input Data" | "ERPsim Gather Data" | "Standard";
-export type Role = "Procurement" | "Production" | "Logistics" | "Sales" | "Team Leader";
+export type Role = "Team Leader" | "Sales" | "Production" | "Procurement" | "Logistics";
+export type TaskPriority = "High" | "Medium" | "Low";
+export type RoundRecurrence = "RoundStart" | "Continuous";
+export type CompletionType = "Manual-Tick" | "Data-Confirmed" | "Ongoing";
+export type TaskType = "Standard" | "ERPsim Gather Data" | "ERPsim Input Data";
+export type Impact = "Revenue" | "Cost" | "Sustainability" | "Capacity" | "Risk";
+export type TaskVisibility = "Always" | "OnAlert";
 
-
-export type TaskDataField = {
-  fieldName: string;
-  dataType: "Currency" | "Integer" | "String";
-  value?: number | string | null; // User-entered value
-  suggestedValue?: number | string | null;
-  aiRationale?: string;
+export type Alerts = {
+  mrpIssues?: boolean;
+  cashLow?: boolean;
+  dcStockout?: boolean;
+  rmShortage?: boolean;
+  co2OverTarget?: boolean;
+  backlog?: boolean;
 };
 
-export type Task = {
-  id: string;
+export const AlertsEnum = {
+  MRP_ISSUES: "mrpIssues",
+  CASH_LOW: "cashLow",
+  DC_STOCKOUT: "dcStockout",
+  RM_SHORTAGE: "rmShortage",
+  CO2_OVER: "co2OverTarget",
+  BACKLOG: "backlog",
+} as const;
+
+export interface DataField {
+  fieldName: string;
+  dataType: "Integer" | "Currency" | "Percent" | "String";
+  suggestedValue?: number | string;
+  calculatedFrom?: string[];
+  // NOTE: kept as function for Codex/TS use (not meant to be stored directly in Firestore)
+  formula?: (inputs: Record<string, any>) => number | string;
+  aiHelp?: string;
+  // Runtime/user-entered value support for the UI layer
+  value?: number | string | null;
+}
+
+export interface Task {
+  id: string;                // versioned: e.g. "TL-1.2"
+  version: number;           // 2 for this dataset
+  round: number;             // explicit round bucket for UI grouping
   title: string;
   description: string;
   role: Role;
-  transactionCode: string;
+  transactionCode?: string;
   priority: TaskPriority;
-  estimatedTime: number; // in minutes
+  estimatedTime: number;     // minutes estimate
   roundRecurrence: RoundRecurrence;
-  startRound?: number;
-  timeframeConstraint?: TimeframeConstraint;
-  dependencyIDs: string[];
+  startRound: number;        // first round this can appear
+  dependencyIDs: string[];   // task ids this depends on
   completionType: CompletionType;
   taskType: TaskType;
-  dataFields?: TaskDataField[];
-  completed: boolean; // Added completion status
-};
+  completed: boolean;
+
+  // UX metadata
+  impact?: Impact;
+  visibility?: TaskVisibility; // "OnAlert" => show only if alerts[alertKey] === true
+  alertKey?: keyof Alerts;
+
+  // optional structured inputs/outputs
+  dataFields?: DataField[];
+}

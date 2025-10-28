@@ -28,7 +28,7 @@ const prompt = ai.definePrompt({
 
       Analyze the provided Task and the current GameState.
       For each 'dataField' within the task, determine the optimal 'suggestedValue'.
-      Provide a concise 'aiRationale' for each suggestion, explaining why it's a good decision based on the game state.
+      Provide a concise 'aiHelp' message for each suggestion, explaining why it's a good decision based on the game state.
 
       Current Game State:
       \`\`\`json
@@ -40,7 +40,7 @@ const prompt = ai.definePrompt({
       {{{json task}}}
       \`\`\`
 
-      Return the entire task object, but with the 'dataFields' array updated with your new 'suggestedValue' and 'aiRationale' for each field. Do not change any other properties of the task.
+      Return the entire task object, but with the 'dataFields' array updated with your new 'suggestedValue' and 'aiHelp' for each field. Do not change any other properties of the task.
       If the task has no dataFields, return it unchanged.
     `,
 });

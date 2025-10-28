@@ -57,7 +57,29 @@ const suggestOptimizedTaskInputsFlow = ai.defineFlow(
             return { updatedTask: input.task as Task };
         }
 
-        const { output } = await prompt(input);
+        const hasGoogleCredentials = Boolean(
+          process.env.GOOGLE_API_KEY ||
+          process.env.GOOGLE_GENAI_API_KEY ||
+          process.env.GOOGLE_APPLICATION_CREDENTIALS
+        );
+
+        if (!hasGoogleCredentials) {
+          throw new Error(
+            "Google AI credentials are not configured. Set GOOGLE_API_KEY (or GOOGLE_GENAI_API_KEY) to enable AI suggestions."
+          );
+        }
+
+        let output;
+        try {
+          ({ output } = await prompt(input));
+        } catch (error) {
+          console.error("Genkit prompt failed while generating optimized task inputs.", error);
+          const message =
+            error instanceof Error && error.message
+              ? `Unable to generate AI suggestions: ${error.message}`
+              : "Unable to generate AI suggestions. Check server logs for details.";
+          throw new Error(message);
+        }
         if (!output) {
             throw new Error('The AI model did not return a valid output.');
         }

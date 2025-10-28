@@ -2,16 +2,16 @@
 "use client";
 
 import { useState, useEffect, createContext, useContext, ReactNode } from "react";
-import { collection, onSnapshot, writeBatch, doc, FirestoreError, getDocs } from "firebase/firestore";
-import { useFirestore, errorEmitter, FirestorePermissionError, useAuth as useFirebaseAuth, useMemoFirebase } from "@/firebase";
+import { collection, onSnapshot, writeBatch, doc, FirestoreError } from "firebase/firestore";
+import { useFirestore, errorEmitter, FirestorePermissionError, useUser as useFirebaseUser, useMemoFirebase } from "@/firebase";
 import type { UserProfile } from "@/types";
+import { ROLE_DEFINITIONS } from "@/lib/firebase/firestore-schema";
 
-export const USER_PROFILES: UserProfile[] = [
-  { id: 'procurement', name: 'Procurement', avatarUrl: 'https://picsum.photos/seed/procurement/100/100' },
-  { id: 'production', name: 'Production', avatarUrl: 'https://picsum.photos/seed/production/100/100' },
-  { id: 'logistics', name: 'Logistics', avatarUrl: 'https://picsum.photos/seed/logistics/100/100' },
-  { id: 'sales', name: 'Sales', avatarUrl: 'https://picsum.photos/seed/sales/100/100' },
-];
+export const USER_PROFILES: UserProfile[] = Object.values(ROLE_DEFINITIONS).map((definition) => ({
+  id: definition.id,
+  name: definition.displayName,
+  avatarUrl: definition.avatarUrl,
+}));
 
 interface UserProfilesContextType {
   profiles: UserProfile[];
@@ -22,7 +22,7 @@ const UserProfilesContext = createContext<UserProfilesContextType | undefined>(u
 
 export const UserProfilesProvider = ({ children }: { children: ReactNode }) => {
   const firestore = useFirestore();
-  const { user, isUserLoading } = useFirebaseAuth();
+  const { user, isUserLoading } = useFirebaseUser();
   const [profiles, setProfiles] = useState<UserProfile[]>([]);
   const [loading, setLoading] = useState(true);
 

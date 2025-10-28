@@ -136,20 +136,44 @@ export const GameStateProvider = ({ children }: { children: ReactNode }) => {
     return () => unsubscribe();
   }, [gameDocRef, firestore]);
   
-  const updateTimerState = async (updates: Partial<GameState["timerState"]>) => {
+  type TimerStateUpdate =
+    | Partial<GameState["timerState"]>
+    | ((current: GameState["timerState"]) => Partial<GameState["timerState"]>);
+
+  const updateTimerState = useCallback(async (updates: TimerStateUpdate) => {
+      let nextTimerState: GameState["timerState"] | null = null;
+      let previousTimerState: GameState["timerState"] | null = null;
+
+      setGameState((prev) => {
+        previousTimerState = prev.timerState;
+        const computedUpdates =
+          typeof updates === "function" ? updates(prev.timerState) : updates;
+        nextTimerState = { ...prev.timerState, ...computedUpdates };
+        return { ...prev, timerState: nextTimerState };
+      });
+
+      if (!nextTimerState) return;
+
+      setTimeLeft(nextTimerState.timeLeft);
+
       if (!gameDocRef) return;
+
       const batch = writeBatch(firestore);
-      const currentTimerState = gameState.timerState;
-      batch.update(gameDocRef, { timerState: { ...currentTimerState, ...updates } });
-      await batch.commit().catch(error => {
+      batch.update(gameDocRef, { timerState: nextTimerState });
+      await batch.commit().catch(() => {
         const contextualError = new FirestorePermissionError({
             path: gameDocRef.path,
             operation: 'update',
-            requestResourceData: { timerState: { ...currentTimerState, ...updates } },
+            requestResourceData: { timerState: nextTimerState },
         });
         errorEmitter.emit('permission-error', contextualError);
+        const fallbackState = previousTimerState;
+        if (fallbackState) {
+          setGameState((prev) => ({ ...prev, timerState: fallbackState }));
+          setTimeLeft(fallbackState.timeLeft);
+        }
       });
-  }
+  }, [firestore, gameDocRef]);
 
   const addKpiHistoryEntry = async (data: Omit<KpiHistoryEntry, 'round'>) => {
     if (!gameDocRef) return;
@@ -186,26 +210,6 @@ export const GameStateProvider = ({ children }: { children: ReactNode }) => {
     });
   };
 
-  const handleRoundEnd = () => {
-    if (confirmNextRound) {
-        setIsAwaitingConfirmation(true);
-        updateTimerState({ isPaused: true }); // Pause timer while waiting
-    } else {
-        confirmAndAdvance();
-    }
-  };
-
-  const confirmAndAdvance = () => {
-    setIsAwaitingConfirmation(false);
-    if (isBreakActive) {
-        advanceRound();
-    } else if (isBreakEnabled) {
-        startBreak();
-    } else {
-        advanceRound();
-    }
-  };
-
   const advanceRound = useCallback(async () => {
     if (!gameDocRef) return;
     const batch = writeBatch(firestore);
@@ -240,7 +244,27 @@ export const GameStateProvider = ({ children }: { children: ReactNode }) => {
 
   const startBreak = useCallback(async () => {
     await updateTimerState({ isBreakActive: true, timeLeft: breakDuration, isPaused: false });
-  }, [breakDuration]);
+  }, [breakDuration, updateTimerState]);
+
+  const confirmAndAdvance = useCallback(() => {
+    setIsAwaitingConfirmation(false);
+    if (isBreakActive) {
+        advanceRound();
+    } else if (isBreakEnabled) {
+        startBreak();
+    } else {
+        advanceRound();
+    }
+  }, [advanceRound, isBreakActive, isBreakEnabled, startBreak]);
+
+  const handleRoundEnd = useCallback(() => {
+    if (confirmNextRound) {
+        setIsAwaitingConfirmation(true);
+        updateTimerState({ isPaused: true }); // Pause timer while waiting
+    } else {
+        confirmAndAdvance();
+    }
+  }, [confirmAndAdvance, confirmNextRound, updateTimerState]);
 
   useEffect(() => {
     if (isPaused || isLoading || !firestore) return;
@@ -260,12 +284,11 @@ export const GameStateProvider = ({ children }: { children: ReactNode }) => {
     }, 1000);
 
     return () => clearInterval(timerInterval);
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isPaused, isLoading, firestore]);
+  }, [firestore, handleRoundEnd, isLoading, isPaused, updateTimerState]);
 
   const togglePause = () => {
     if(isAwaitingConfirmation) return; // Don't allow play/pause during confirmation
-    updateTimerState({ isPaused: !isPaused });
+    updateTimerState((current) => ({ isPaused: !current.isPaused }));
   };
   
   const resetTimer = () => {

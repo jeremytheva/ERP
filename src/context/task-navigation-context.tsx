@@ -181,7 +181,7 @@ export const GoToCurrentTaskButton = () => {
     }
 
     return (
-        <div className="fixed bottom-6 right-6 z-50">
+        <div className="fixed bottom-6 left-6 z-50">
             <Button size="lg" className="shadow-lg" onClick={handleGoToTask}>
                 <LocateFixed className="mr-2 h-5 w-5" />
                 Go to Current Task

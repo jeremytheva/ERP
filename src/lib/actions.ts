@@ -17,10 +17,12 @@ import {
   answerQuestionsWithAICopilot,
   AnswerQuestionsWithAICopilotInput,
 } from "@/ai/flows/answer-questions-with-ai-copilot";
+import { suggestOptimizedTaskInputs } from "@/ai/flows/suggest-optimized-task-inputs";
+import type { SuggestOptimizedTaskInputsInput } from "@/lib/zod-schemas";
 import {
-    suggestOptimizedTaskInputs,
-    SuggestOptimizedTaskInputsInput,
-} from "@/ai/flows/suggest-optimized-task-inputs";
+  runCopilotChat,
+  CopilotChatInput,
+} from "@/ai/flows/copilot-chat";
 
 export const simulateScenarioAction = async (
   input: SimulateScenarioInput
@@ -75,9 +77,19 @@ export const suggestOptimizedTaskInputsAction = async (
 ) => {
     try {
         const result = await suggestOptimizedTaskInputs(input);
-        return { success: true, data: result };
+        return { success: true as const, data: result };
     } catch (error) {
         console.error(error);
-        return { success: false, error: "Failed to get AI suggestions." };
+        return { success: false as const, error: "Failed to get AI suggestions." };
     }
 }
+
+export const copilotChatAction = async (input: CopilotChatInput) => {
+  try {
+    const result = await runCopilotChat(input);
+    return { success: true as const, data: result };
+  } catch (error) {
+    console.error(error);
+    return { success: false as const, error: "Failed to generate a copilot response." };
+  }
+};

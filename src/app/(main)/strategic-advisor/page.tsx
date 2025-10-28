@@ -11,6 +11,8 @@ import { useGameState } from '@/hooks/use-game-data';
 import type { Task, Role } from "@/types";
 import { useTeamSettings } from "@/hooks/use-team-settings";
 import { useTaskNavigation } from "@/context/task-navigation-context";
+import { TeamAlignmentBoard } from "@/components/action-items/team-alignment-board";
+import { ActionItemList } from "@/components/action-items/action-item-list";
 
 export default function StrategicAdvisorPage() {
     const { profile } = useAuth();
@@ -136,6 +138,13 @@ export default function StrategicAdvisorPage() {
                     ))}
                 </CardContent>
             </Card>
+
+            {isTeamLeader && (
+                <div className="grid gap-6 xl:grid-cols-[2fr,1fr]">
+                    <TeamAlignmentBoard />
+                    <ActionItemList />
+                </div>
+            )}
         </div>
     )
 }

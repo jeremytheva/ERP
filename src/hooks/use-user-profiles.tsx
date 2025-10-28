@@ -3,7 +3,7 @@
 
 import { useState, useEffect, createContext, useContext, ReactNode } from "react";
 import { collection, onSnapshot, writeBatch, doc, FirestoreError, getDocs } from "firebase/firestore";
-import { useFirestore, errorEmitter, FirestorePermissionError, useAuth as useFirebaseAuth, useMemoFirebase } from "@/firebase";
+import { useFirestore, errorEmitter, FirestorePermissionError, useFirebase, useMemoFirebase } from "@/firebase";
 import type { UserProfile } from "@/types";
 
 export const USER_PROFILES: UserProfile[] = [
@@ -22,7 +22,7 @@ const UserProfilesContext = createContext<UserProfilesContextType | undefined>(u
 
 export const UserProfilesProvider = ({ children }: { children: ReactNode }) => {
   const firestore = useFirestore();
-  const { user, isUserLoading } = useFirebaseAuth();
+  const { user, isUserLoading } = useFirebase();
   const [profiles, setProfiles] = useState<UserProfile[]>([]);
   const [loading, setLoading] = useState(true);
 

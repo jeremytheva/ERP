@@ -1,11 +1,17 @@
 
 "use client";
 
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { ChartContainer, ChartTooltip, ChartTooltipContent, ChartLegend, ChartLegendContent } from "@/components/ui/chart";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "../../ui/card";
+import {
+  ChartContainer,
+  ChartTooltip,
+  ChartTooltipContent,
+  ChartLegend,
+  ChartLegendContent,
+} from "../../ui/chart";
 import { Bar, BarChart, CartesianGrid, XAxis, YAxis, Line, LineChart, ComposedChart } from "recharts";
-import type { KpiHistory, KpiHistoryEntry } from "@/types";
-import type { ChartConfig } from "@/components/ui/chart";
+import type { KpiHistory, KpiHistoryEntry } from "../../../types";
+import type { ChartConfig } from "../../ui/chart";
 import { useMemo } from "react";
 
 const chartConfig: ChartConfig = {

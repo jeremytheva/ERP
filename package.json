@@ -9,7 +9,9 @@
     "build": "NODE_ENV=production next build",
     "start": "next start",
     "lint": "next lint",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "build:test": "rm -rf .test-build && tsc -p tsconfig.test.json",
+    "test": "npm run build:test && node .test-build/components/dashboard/role-dashboards/__tests__/sales-dashboard.test.js && node .test-build/components/dashboard/role-dashboards/__tests__/executive-dashboard.test.js"
   },
   "dependencies": {
     "@genkit-ai/google-genai": "^1.20.0",

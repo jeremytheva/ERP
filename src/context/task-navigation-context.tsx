@@ -16,7 +16,7 @@ const ROLE_PAGE_MAP: Record<Role, string> = {
     "Production": "/production",
     "Procurement": "/procurement",
     "Logistics": "/logistics",
-    "Team Leader": "/strategic-advisor",
+    "Team Leader": "/lead",
 };
 
 interface TaskNavigationContextType {
@@ -79,7 +79,7 @@ export const TaskNavigationProvider = ({ children }: { children: React.ReactNode
             } else if (taskRole === 'Sales' && firstIncomplete.transactionCode.includes('VK32')) {
                  pageUrl = '/strategic-advisor';
             } else if (taskRole === 'Team Leader' && firstIncomplete.transactionCode.includes('ZFB50')) {
-                pageUrl = '/debriefing';
+                pageUrl = '/lead';
             }
             setActiveTaskUrl(pageUrl);
 

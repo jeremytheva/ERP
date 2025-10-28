@@ -60,8 +60,8 @@ const logisticsMenuItems = [
 const teamLeaderMenuItems = [
   { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
   { href: "/key-metrics", label: "Key Metrics", icon: BarChart2 },
+  { href: "/lead", label: "Executive Dashboard", icon: Crown },
   { href: "/strategic-advisor", label: "Analysis & Strategy", icon: Lightbulb },
-  { href: "/debriefing", label: "Investment Decisions", icon: FileText },
   { href: "/competitor-log", label: "Competitor Log", icon: Users },
 ];
 
@@ -86,7 +86,7 @@ export function MainSidebar() {
 
   const isActive = (href: string) => {
     // Special case for team leader on debriefing page
-    if (isTeamLeader && pathname === '/debriefing' && href === '/debriefing') {
+    if (isTeamLeader && href === '/lead' && (pathname === '/lead' || pathname === '/debriefing')) {
         return true;
     }
      // For other roles, a direct match is fine

@@ -1,0 +1,27 @@
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "noEmit": false,
+    "outDir": ".test-build",
+    "module": "commonjs",
+    "target": "ES2020",
+    "jsx": "react-jsx",
+    "moduleResolution": "node",
+    "rootDir": "src",
+    "esModuleInterop": true,
+    "allowJs": false,
+    "resolveJsonModule": true,
+    "isolatedModules": false,
+    "incremental": false
+  },
+  "include": [
+    "src/components/dashboard/kpi-card.tsx",
+    "src/components/dashboard/kpi-charts.tsx",
+    "src/components/dashboard/role-charts/**/*.tsx",
+    "src/components/dashboard/role-dashboards/role-insights-table.tsx",
+    "src/components/dashboard/role-dashboards/sales-dashboard-view.tsx",
+    "src/components/dashboard/role-dashboards/executive-dashboard-view.tsx",
+    "src/components/dashboard/role-dashboards/__tests__/**/*.tsx",
+    "src/components/dashboard/role-dashboards/__tests__/**/*.ts"
+  ]
+}

@@ -41,9 +41,32 @@ const taskSchema = z.object({
     (val) => (typeof val === 'string' ? val.split(',').map(s => s.trim()).filter(Boolean) : []),
     z.array(z.string())
   ),
-  completionType: z.enum(["Manual-Tick", "Data-Confirmed", "System-Validated"]),
+  completionType: z.enum(["Manual-Tick", "Data-Confirmed", "System-Validated", "Ongoing"]),
   taskType: z.enum(["ERPsim Input Data", "ERPsim Gather Data", "Standard"]),
   completed: z.boolean(),
+  version: z.coerce.number().optional(),
+  round: z.coerce.number().optional(),
+  impact: z.enum(["Capacity", "Revenue", "Risk"]).optional(),
+  visibility: z.enum(["Always", "OnAlert"]).optional(),
+  alertKey: z.enum(["cashLow", "mrpIssues", "rmShortage", "dcStockout", "backlog", "overProduction", "highInventory", "co2OverTarget", "lowSales"]).optional(),
+  roundStartOffsetMinutes: z.coerce.number().nullable().optional(),
+  roundDueOffsetMinutes: z.coerce.number().nullable().optional(),
+  goalMetric: z.enum(["Cash", "GrossMargin", "CO2e", "SetupTime", "InventoryValue", "TransportCost", "Revenue", "COGS", "Utilisation", "RM Cost"]).optional(),
+  goalTargetType: z.enum(["increase", "decrease"]).optional(),
+  goalTargetValue: z.coerce.number().optional(),
+  goalUnit: z.string().optional(),
+  goalRationale: z.string().optional(),
+  goalCalculation: z
+    .object({
+      baseMetric: z.string(),
+      targetType: z.enum(["increase", "decrease"]),
+      targetValue: z.number(),
+      minLimit: z.number(),
+      maxLimit: z.number(),
+      constraints: z.array(z.string()),
+      formula: z.string(),
+    })
+    .optional(),
 });
 
 type TaskFormValues = z.infer<typeof taskSchema>;

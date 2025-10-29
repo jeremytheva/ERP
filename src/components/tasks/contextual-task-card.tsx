@@ -10,6 +10,7 @@ import { Card, CardHeader, CardTitle, CardContent, CardDescription } from "@/com
 import { CheckCircle, Circle, ListTodo } from "lucide-react";
 import { Button } from "../ui/button";
 import { cn } from "@/lib/utils";
+import { isTaskActiveForRound } from "@/lib/task-utils";
 import type { Task, Role } from "@/types";
 
 interface ContextualTaskCardProps {
@@ -31,11 +32,7 @@ export function ContextualTaskCard({ transactionCode, title, description, classN
     return tasks.filter(task =>
       task.role === profile.name &&
       task.transactionCode === transactionCode &&
-      (
-        task.roundRecurrence === "Continuous" ||
-        (task.roundRecurrence === "RoundStart" && (task.startRound ?? 1) <= currentRound) ||
-        (task.roundRecurrence === "Once" && (task.startRound ?? 1) === currentRound)
-      )
+      isTaskActiveForRound(task, currentRound)
     ).sort((a, b) => {
         const priorityOrder = { "Critical": 1, "High": 2, "Medium": 3, "Low": 4 };
         return priorityOrder[a.priority] - priorityOrder[b.priority];

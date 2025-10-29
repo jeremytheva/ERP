@@ -9,6 +9,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Accordion } from "@/components/ui/accordion";
 import { TaskCard } from "./task-card";
 import { TaskFormDialog } from "./task-form-dialog";
+import { isTaskActiveForRound } from "@/lib/task-utils";
 import type { Role, Task } from "@/types";
 
 const ROLES: Role[] = ["Sales", "Procurement", "Production", "Logistics", "Team Leader"];
@@ -38,12 +39,7 @@ export function TaskManager() {
     }
   };
 
-  const tasksByRound = tasks.filter(
-    (task) =>
-      task.roundRecurrence === "Continuous" ||
-      (task.roundRecurrence === "RoundStart" && (task.startRound ?? 1) <= currentRound) ||
-      (task.roundRecurrence === "Once" && (task.startRound ?? 1) === currentRound)
-  );
+  const tasksByRound = tasks.filter((task) => isTaskActiveForRound(task, currentRound));
 
   const tasksByRole = ROLES.reduce((acc, role) => {
     acc[role] = tasksByRound.filter((task) => task.role === role);

@@ -3,8 +3,8 @@
 import { AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { cn } from "@/lib/utils";
-import type { Task, TaskPriority, Role } from "@/types";
+import { PRIORITY_BADGE_VARIANT } from "./constants";
+import type { Task, Role } from "@/types";
 import { Clock, Code, Link as LinkIcon, FilePenLine } from "lucide-react";
 
 interface TaskCardProps {
@@ -12,13 +12,6 @@ interface TaskCardProps {
   tasks: Task[];
   onEditTask: (task: Task) => void;
 }
-
-const priorityVariant: { [key in TaskPriority]: "destructive" | "default" | "secondary" | "outline" } = {
-  Critical: "destructive",
-  High: "default",
-  Medium: "secondary",
-  Low: "outline",
-};
 
 export function TaskCard({ role, tasks, onEditTask }: TaskCardProps) {
   return (
@@ -33,7 +26,7 @@ export function TaskCard({ role, tasks, onEditTask }: TaskCardProps) {
               <div key={task.id} className="p-4 rounded-lg border bg-card/50 space-y-3 group relative">
                 <div className="flex justify-between items-start">
                   <h4 className="font-semibold">{task.title}</h4>
-                  <Badge variant={priorityVariant[task.priority]}>{task.priority}</Badge>
+                  <Badge variant={PRIORITY_BADGE_VARIANT[task.priority]}>{task.priority}</Badge>
                 </div>
                 <p className="text-sm text-muted-foreground">{task.description}</p>
                 <div className="flex flex-wrap gap-x-4 gap-y-2 text-xs text-muted-foreground">

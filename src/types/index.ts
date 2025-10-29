@@ -69,21 +69,37 @@ export type RoleActionItems = {
 export type TaskPriority = "Critical" | "High" | "Medium" | "Low";
 export type RoundRecurrence = "Once" | "RoundStart" | "Continuous";
 export type TimeframeConstraint = "None" | "StartPhase" | "MidPhase" | "EndPhase";
-export type CompletionType = "Manual-Tick" | "Data-Confirmed" | "System-Validated";
+export type CompletionType = "Manual-Tick" | "Data-Confirmed" | "System-Validated" | "Ongoing";
 export type TaskType = "ERPsim Input Data" | "ERPsim Gather Data" | "Standard";
 export type Role = "Procurement" | "Production" | "Logistics" | "Sales" | "Team Leader";
+export type TaskImpact = "Revenue" | "Risk" | "Capacity" | "Sustainability" | "Cost";
+export type TaskVisibility = "OnAlert" | "Always";
 
+export enum AlertsEnum {
+  CASH_LOW = "CASH_LOW",
+  RM_SHORTAGE = "RM_SHORTAGE",
+  BACKLOG = "BACKLOG",
+  MRP_ISSUES = "MRP_ISSUES",
+  DC_STOCKOUT = "DC_STOCKOUT",
+}
+
+export type TaskDataFieldFormula = (args: Record<string, number | string | null>) => number | string;
 
 export type TaskDataField = {
   fieldName: string;
-  dataType: "Currency" | "Integer" | "String";
+  dataType: "Currency" | "Integer" | "String" | "Percent";
   value?: number | string | null; // User-entered value
   suggestedValue?: number | string | null;
   aiRationale?: string;
+  aiHelp?: string;
+  calculatedFrom?: string[];
+  formula?: TaskDataFieldFormula | string;
 };
 
 export type Task = {
   id: string;
+  version?: number;
+  round?: number;
   title: string;
   description: string;
   role: Role;
@@ -96,6 +112,9 @@ export type Task = {
   dependencyIDs: string[];
   completionType: CompletionType;
   taskType: TaskType;
-  dataFields?: TaskDataField[];
   completed: boolean; // Added completion status
+  impact?: TaskImpact;
+  visibility?: TaskVisibility;
+  alertKey?: AlertsEnum;
+  dataFields?: TaskDataField[];
 };

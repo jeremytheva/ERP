@@ -90,7 +90,8 @@
         "isBreakActive": {"type": "boolean"},
         "isBreakEnabled": {"type": "boolean"},
         "roundDuration": {"type": "number"},
-        "breakDuration": {"type": "number"}
+        "breakDuration": {"type": "number"},
+        "confirmNextRound": {"type": "boolean"}
       }
     },
     "Task": {
@@ -100,6 +101,8 @@
       "description": "Represents a single task or action item.",
       "properties": {
         "id": {"type": "string"},
+        "version": {"type": "number"},
+        "round": {"type": "number"},
         "title": {"type": "string"},
         "description": {"type": "string"},
         "role": {"type": "string"},
@@ -112,6 +115,9 @@
         "completionType": {"type": "string"},
         "taskType": {"type": "string"},
         "completed": {"type": "boolean"},
+        "impact": {"type": "string"},
+        "visibility": {"type": "string"},
+        "alertKey": {"type": "string"},
         "dataFields": {
           "type": "array",
           "items": { "$ref": "#/entities/TaskDataField" }
@@ -127,7 +133,10 @@
          "dataType": {"type": "string"},
          "value": {"type": ["number", "string", "null"]},
          "suggestedValue": {"type": ["number", "string", "null"]},
-         "aiRationale": {"type": "string"}
+         "aiRationale": {"type": "string"},
+         "aiHelp": {"type": "string"},
+         "calculatedFrom": {"type": "array", "items": {"type": "string"}},
+         "formula": {"type": "string"}
        }
     },
     "TeamSettings": {

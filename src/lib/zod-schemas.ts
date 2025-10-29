@@ -9,21 +9,44 @@ export const TaskDataFieldSchema = z.object({
     aiRationale: z.string().optional(),
 });
 
+const GoalCalculationSchema = z.object({
+    baseMetric: z.enum(["Cash", "CO2e", "COGS", "GrossMargin", "RM Cost", "Revenue", "SetupTime", "TransportCost", "Utilisation"]),
+    targetType: z.enum(["increase", "decrease"]),
+    targetValue: z.number(),
+    minLimit: z.number().optional(),
+    maxLimit: z.number().optional(),
+    constraints: z.array(z.string()),
+    formula: z.string(),
+});
+
 export const TaskSchema = z.object({
     id: z.string(),
+    version: z.number().optional(),
+    round: z.number().optional(),
     title: z.string(),
     description: z.string(),
-    role: z.enum(["Procurement", "Production", "Logistics", "Sales", "Team Leader"]),
+    role: z.enum(["Procurement", "Production", "Production Manager", "Logistics", "Sales", "Sales Manager", "Team Leader"]),
     transactionCode: z.string(),
     priority: z.enum(["Critical", "High", "Medium", "Low"]),
     estimatedTime: z.number(),
     roundRecurrence: z.enum(["Once", "RoundStart", "Continuous"]),
     startRound: z.number().optional(),
+    roundStartOffsetMinutes: z.number().nullable().optional(),
+    roundDueOffsetMinutes: z.number().nullable().optional(),
     dependencyIDs: z.array(z.string()),
-    completionType: z.enum(["Manual-Tick", "Data-Confirmed", "System-Validated"]),
+    completionType: z.enum(["Manual-Tick", "Data-Confirmed", "System-Validated", "Ongoing"]),
     taskType: z.enum(["ERPsim Input Data", "ERPsim Gather Data", "Standard"]),
     dataFields: z.array(TaskDataFieldSchema).optional(),
     completed: z.boolean().default(false),
+    impact: z.enum(["Capacity", "Revenue", "Risk"]).nullable().optional(),
+    visibility: z.enum(["Always", "OnAlert"]).optional(),
+    alertKey: z.string().nullable().optional(),
+    goalMetric: z.enum(["Cash", "CO2e", "COGS", "GrossMargin", "RM Cost", "Revenue", "SetupTime", "TransportCost", "Utilisation"]).optional(),
+    goalTargetType: z.enum(["increase", "decrease"]).optional(),
+    goalTargetValue: z.number().optional(),
+    goalUnit: z.string().optional(),
+    goalRationale: z.string().optional(),
+    goalCalculation: GoalCalculationSchema.optional(),
 });
 
 export const KpiSchema = z.object({
@@ -75,6 +98,7 @@ export const OptimizedTaskDataFieldSchema = TaskDataFieldSchema.extend({
     suggestedValue: z.union([z.number(), z.string(), z.null()]).describe("The AI-suggested optimal value for this field."),
     aiRationale: z.string().optional().describe("A brief explanation for why this value was suggested."),
 });
+export type OptimizedTaskDataField = z.infer<typeof OptimizedTaskDataFieldSchema>;
 
 export const SuggestOptimizedTaskInputsOutputSchema = z.object({
     updatedTask: TaskSchema.extend({

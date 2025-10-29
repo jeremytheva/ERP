@@ -69,9 +69,39 @@ export type RoleActionItems = {
 export type TaskPriority = "Critical" | "High" | "Medium" | "Low";
 export type RoundRecurrence = "Once" | "RoundStart" | "Continuous";
 export type TimeframeConstraint = "None" | "StartPhase" | "MidPhase" | "EndPhase";
-export type CompletionType = "Manual-Tick" | "Data-Confirmed" | "System-Validated";
+export type CompletionType = "Manual-Tick" | "Data-Confirmed" | "System-Validated" | "Ongoing";
 export type TaskType = "ERPsim Input Data" | "ERPsim Gather Data" | "Standard";
-export type Role = "Procurement" | "Production" | "Logistics" | "Sales" | "Team Leader";
+export type Role =
+  | "Procurement"
+  | "Production"
+  | "Production Manager"
+  | "Logistics"
+  | "Sales"
+  | "Sales Manager"
+  | "Team Leader";
+export type TaskImpact = "Capacity" | "Revenue" | "Risk";
+export type TaskVisibility = "Always" | "OnAlert";
+export type GoalMetric =
+  | "Cash"
+  | "CO2e"
+  | "COGS"
+  | "GrossMargin"
+  | "RM Cost"
+  | "Revenue"
+  | "SetupTime"
+  | "TransportCost"
+  | "Utilisation";
+export type GoalTargetType = "increase" | "decrease";
+
+export type GoalCalculation = {
+  baseMetric: GoalMetric;
+  targetType: GoalTargetType;
+  targetValue: number;
+  minLimit?: number;
+  maxLimit?: number;
+  constraints: string[];
+  formula: string;
+};
 
 
 export type TaskDataField = {
@@ -84,6 +114,8 @@ export type TaskDataField = {
 
 export type Task = {
   id: string;
+  version?: number;
+  round?: number;
   title: string;
   description: string;
   role: Role;
@@ -92,10 +124,28 @@ export type Task = {
   estimatedTime: number; // in minutes
   roundRecurrence: RoundRecurrence;
   startRound?: number;
+  roundStartOffsetMinutes?: number | null;
+  roundDueOffsetMinutes?: number | null;
   timeframeConstraint?: TimeframeConstraint;
   dependencyIDs: string[];
   completionType: CompletionType;
   taskType: TaskType;
   dataFields?: TaskDataField[];
   completed: boolean; // Added completion status
+  impact?: TaskImpact | null;
+  visibility?: TaskVisibility;
+  alertKey?: string | null;
+  goalMetric?: GoalMetric;
+  goalTargetType?: GoalTargetType;
+  goalTargetValue?: number;
+  goalUnit?: string;
+  goalRationale?: string;
+  goalCalculation?: GoalCalculation;
+};
+
+export type PeerData = {
+  name: string;
+  companyValuation: number;
+  netIncome: number;
+  cumulativeCO2eEmissions: number;
 };

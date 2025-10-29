@@ -22,6 +22,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "../ui/separator";
 import Markdown from 'react-markdown';
 import { useTasks } from "@/hooks/use-tasks";
+import type { Task } from "@/types";
 
 const formSchema = z.object({
   performanceData: z.string().min(10, { message: "Please provide some performance data." }),
@@ -64,7 +65,7 @@ export function DebriefingForm() {
 
   const handleAddActionItem = (itemText: string) => {
     // This is a simplified placeholder action
-    const newTask = {
+    const newTask: Task = {
         id: `T${new Date().getTime()}`,
         title: itemText,
         description: "Generated from debriefing report.",
@@ -152,7 +153,13 @@ export function DebriefingForm() {
                     <Markdown 
                       components={{
                         li: ({node, ...props}) => {
-                          const text = node.children[0].type === 'text' ? node.children[0].value : '';
+                          const firstChild = node?.children?.[0];
+                          const text =
+                            firstChild &&
+                            firstChild.type === 'text' &&
+                            typeof firstChild.value === 'string'
+                              ? firstChild.value
+                              : '';
                           return (
                             <li {...props} className="group relative">
                               {props.children}

@@ -1,4 +1,4 @@
-import { Task } from './types';
+import type { Task } from '@/types';
 
 export const ALL_TASKS_FULL_V4: Task[] = [
   {

@@ -31,7 +31,15 @@ const taskSchema = z.object({
   id: z.string(),
   title: z.string().min(3, "Title is required"),
   description: z.string().min(10, "Description is required"),
-  role: z.enum(["Procurement", "Production", "Logistics", "Sales", "Team Leader"]),
+  role: z.enum([
+    "Procurement",
+    "Production",
+    "Production Manager",
+    "Logistics",
+    "Sales",
+    "Sales Manager",
+    "Team Leader",
+  ]),
   transactionCode: z.string().min(1, "Transaction code is required"),
   priority: z.enum(["Critical", "High", "Medium", "Low"]),
   estimatedTime: z.coerce.number().min(0),
@@ -41,7 +49,7 @@ const taskSchema = z.object({
     (val) => (typeof val === 'string' ? val.split(',').map(s => s.trim()).filter(Boolean) : []),
     z.array(z.string())
   ),
-  completionType: z.enum(["Manual-Tick", "Data-Confirmed", "System-Validated"]),
+  completionType: z.enum(["Manual-Tick", "Data-Confirmed", "System-Validated", "Ongoing"]),
   taskType: z.enum(["ERPsim Input Data", "ERPsim Gather Data", "Standard"]),
   completed: z.boolean(),
 });
@@ -167,8 +175,10 @@ export function TaskFormDialog({ isOpen, onOpenChange, onSave, task }: TaskFormD
                                     </FormControl>
                                     <SelectContent>
                                         <SelectItem value="Sales">Sales</SelectItem>
+                                        <SelectItem value="Sales Manager">Sales Manager</SelectItem>
                                         <SelectItem value="Procurement">Procurement</SelectItem>
                                         <SelectItem value="Production">Production</SelectItem>
+                                        <SelectItem value="Production Manager">Production Manager</SelectItem>
                                         <SelectItem value="Logistics">Logistics</SelectItem>
                                         <SelectItem value="Team Leader">Team Leader</SelectItem>
                                     </SelectContent>
@@ -290,6 +300,7 @@ export function TaskFormDialog({ isOpen, onOpenChange, onSave, task }: TaskFormD
                                         <SelectItem value="Manual-Tick">Manual Tick</SelectItem>
                                         <SelectItem value="Data-Confirmed">Data Confirmed</SelectItem>
                                         <SelectItem value="System-Validated">System Validated</SelectItem>
+                                        <SelectItem value="Ongoing">Ongoing</SelectItem>
                                     </SelectContent>
                                     </Select>
                                     <FormMessage />

@@ -13,7 +13,9 @@ import { LocateFixed } from 'lucide-react';
 
 const ROLE_PAGE_MAP: Record<Role, string> = {
     "Sales": "/sales",
+    "Sales Manager": "/sales",
     "Production": "/production",
+    "Production Manager": "/production",
     "Procurement": "/procurement",
     "Logistics": "/logistics",
     "Team Leader": "/strategic-advisor",

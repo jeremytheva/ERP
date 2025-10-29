@@ -10,14 +10,28 @@
 
 import { ai } from '@/ai/genkit';
 import { z } from 'genkit';
-import { SuggestOptimizedTaskInputsInputSchema, SuggestOptimizedTaskInputsOutputSchema, TaskSchema, OptimizedTaskDataFieldSchema } from '@/lib/zod-schemas';
+import { SuggestOptimizedTaskInputsInputSchema, SuggestOptimizedTaskInputsOutputSchema } from '@/lib/zod-schemas';
 import type { Task } from '@/types';
-import type { SuggestOptimizedTaskInputsInput, SuggestOptimizedTaskInputsOutput } from '@/lib/zod-schemas';
+import type {
+  SuggestOptimizedTaskInputsInput,
+  SuggestOptimizedTaskInputsOutput,
+  OptimizedTaskDataField,
+} from '@/lib/zod-schemas';
 
 
 export async function suggestOptimizedTaskInputs(input: SuggestOptimizedTaskInputsInput): Promise<SuggestOptimizedTaskInputsOutput> {
   return suggestOptimizedTaskInputsFlow(input);
 }
+
+const normalizeDataFields = (
+  fields?: Task['dataFields']
+): OptimizedTaskDataField[] | undefined => {
+  if (!fields) return undefined;
+  return fields.map(({ suggestedValue, ...rest }) => ({
+    ...rest,
+    suggestedValue: suggestedValue ?? null,
+  }));
+};
 
 const prompt = ai.definePrompt({
     name: 'suggestOptimizedTaskInputsPrompt',
@@ -54,7 +68,7 @@ const suggestOptimizedTaskInputsFlow = ai.defineFlow(
     async (input) => {
         // If there are no data fields, there's nothing to optimize. Return the original task.
         if (!input.task.dataFields || input.task.dataFields.length === 0) {
-            return { updatedTask: input.task as Task };
+            return { updatedTask: input.task as SuggestOptimizedTaskInputsOutput['updatedTask'] };
         }
 
         const { output } = await prompt(input);
@@ -64,11 +78,15 @@ const suggestOptimizedTaskInputsFlow = ai.defineFlow(
 
         // The model should return the full task object.
         // We ensure the top-level properties of the original task are preserved.
-        const finalTask = {
+        const normalizedDataFields =
+            normalizeDataFields(output.updatedTask.dataFields) ??
+            normalizeDataFields(input.task.dataFields);
+
+        const finalTask: SuggestOptimizedTaskInputsOutput['updatedTask'] = {
             ...input.task,
             ...output.updatedTask,
-            dataFields: output.updatedTask.dataFields || input.task.dataFields,
-        } as Task;
+            dataFields: normalizedDataFields,
+        };
 
         return { updatedTask: finalTask };
     }

@@ -77,7 +77,11 @@ export const suggestOptimizedTaskInputsAction = async (
         const result = await suggestOptimizedTaskInputs(input);
         return { success: true, data: result };
     } catch (error) {
-        console.error(error);
-        return { success: false, error: "Failed to get AI suggestions." };
+        console.error("Failed to get AI suggestions.", error);
+        const errorMessage =
+          error instanceof Error && error.message
+            ? error.message
+            : "Failed to get AI suggestions.";
+        return { success: false, error: errorMessage };
     }
 }

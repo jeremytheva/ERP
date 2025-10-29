@@ -22,6 +22,7 @@ import { Card } from "../ui/card";
 import { suggestOptimizedTaskInputsAction } from "@/lib/actions";
 import { useGameState } from "@/hooks/use-game-data";
 import { useToast } from "@/hooks/use-toast";
+import { useTeamSettings } from "@/hooks/use-team-settings";
 
 interface InteractiveTaskCardProps {
   task: Task;
@@ -74,6 +75,7 @@ export const InteractiveTaskCard = React.forwardRef<HTMLDivElement, InteractiveT
     const { gameState } = useGameState();
     const { toast } = useToast();
     const [isAiLoading, setIsAiLoading] = React.useState(false);
+    const { aiSuggestionsEnabled } = useTeamSettings();
 
     const isCompleted = task.completed;
     const dependencies = task.dependencyIDs?.map(depId => allTasks.find(t => t.id === depId)).filter(Boolean) as Task[] | undefined;
@@ -90,31 +92,40 @@ export const InteractiveTaskCard = React.forwardRef<HTMLDivElement, InteractiveT
     });
 
     React.useEffect(() => {
-        if (isActive && task.dataFields && task.dataFields.length > 0 && !hasAiRationale && !isAiLoading) {
-            const getAiSuggestions = async () => {
-                setIsAiLoading(true);
-                const result = await suggestOptimizedTaskInputsAction({ task, gameState });
-                setIsAiLoading(false);
-
-                if (result.success && result.data) {
-                    const updatedTaskWithAISuggestions = result.data.updatedTask;
-                    onUpdate(updatedTaskWithAISuggestions);
-                    toast({
-                        title: "AI Suggestions Loaded",
-                        description: "Input fields have been pre-filled with AI suggestions.",
-                    });
-                } else {
-                    toast({
-                        variant: "destructive",
-                        title: "AI Suggestion Failed",
-                        description: result.error,
-                    });
-                }
-            };
-            getAiSuggestions();
+        if (
+            !aiSuggestionsEnabled ||
+            !isActive ||
+            !task.dataFields ||
+            task.dataFields.length === 0 ||
+            hasAiRationale ||
+            isAiLoading
+        ) {
+            return;
         }
+
+        const getAiSuggestions = async () => {
+            setIsAiLoading(true);
+            const result = await suggestOptimizedTaskInputsAction({ task, gameState });
+            setIsAiLoading(false);
+
+            if (result.success && result.data) {
+                const updatedTaskWithAISuggestions = result.data.updatedTask;
+                onUpdate(updatedTaskWithAISuggestions);
+                toast({
+                    title: "AI Suggestions Loaded",
+                    description: "Input fields have been pre-filled with AI suggestions.",
+                });
+            } else {
+                toast({
+                    variant: "destructive",
+                    title: "AI Suggestion Failed",
+                    description: result.error,
+                });
+            }
+        };
+        getAiSuggestions();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [isActive, task.id]);
+    }, [isActive, task.id, aiSuggestionsEnabled]);
 
 
     React.useEffect(() => {
@@ -243,13 +254,22 @@ export const InteractiveTaskCard = React.forwardRef<HTMLDivElement, InteractiveT
                 </div>
               )}
 
+              {!aiSuggestionsEnabled && task.dataFields && (
+                 <div className="flex items-start gap-3 rounded-md border border-border bg-muted/40 p-3 text-xs text-muted-foreground">
+                    <Sparkles className="h-4 w-4 mt-0.5 text-muted-foreground" />
+                    <p>
+                      AI suggestions are turned off in settings. You can still update these fields manually.
+                    </p>
+                 </div>
+              )}
+
               {isAiLoading && (
                  <div className="flex items-center justify-center gap-2 text-muted-foreground">
                     <Loader2 className="h-4 w-4 animate-spin" />
                     <span>Loading AI suggestions...</span>
                  </div>
               )}
-              
+
               {task.dataFields && !isAiLoading && (
                 <Form {...form}>
                   <form className="space-y-4">

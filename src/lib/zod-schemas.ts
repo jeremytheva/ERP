@@ -3,27 +3,34 @@ import { z } from 'zod';
 
 export const TaskDataFieldSchema = z.object({
     fieldName: z.string(),
-    dataType: z.enum(["Currency", "Integer", "String"]),
+    dataType: z.enum(["Integer", "Currency", "Percent", "String"]),
+    suggestedValue: z.union([z.number(), z.string()]).optional(),
+    calculatedFrom: z.array(z.string()).optional(),
+    formula: z.any().optional(),
+    aiHelp: z.string().optional(),
     value: z.union([z.number(), z.string(), z.null()]).optional(),
-    suggestedValue: z.union([z.number(), z.string(), z.null()]).optional(),
-    aiRationale: z.string().optional(),
 });
 
 export const TaskSchema = z.object({
     id: z.string(),
+    version: z.number(),
+    round: z.number(),
     title: z.string(),
     description: z.string(),
-    role: z.enum(["Procurement", "Production", "Logistics", "Sales", "Team Leader"]),
-    transactionCode: z.string(),
-    priority: z.enum(["Critical", "High", "Medium", "Low"]),
+    role: z.enum(["Team Leader", "Sales", "Production", "Procurement", "Logistics"]),
+    transactionCode: z.string().optional(),
+    priority: z.enum(["High", "Medium", "Low"]),
     estimatedTime: z.number(),
-    roundRecurrence: z.enum(["Once", "RoundStart", "Continuous"]),
-    startRound: z.number().optional(),
+    roundRecurrence: z.enum(["RoundStart", "Continuous"]),
+    startRound: z.number(),
     dependencyIDs: z.array(z.string()),
-    completionType: z.enum(["Manual-Tick", "Data-Confirmed", "System-Validated"]),
+    completionType: z.enum(["Manual-Tick", "Data-Confirmed", "Ongoing"]),
     taskType: z.enum(["ERPsim Input Data", "ERPsim Gather Data", "Standard"]),
     dataFields: z.array(TaskDataFieldSchema).optional(),
     completed: z.boolean().default(false),
+    impact: z.enum(["Revenue", "Cost", "Sustainability", "Capacity", "Risk"]).optional(),
+    visibility: z.enum(["Always", "OnAlert"]).optional(),
+    alertKey: z.enum(["mrpIssues", "cashLow", "dcStockout", "rmShortage", "co2OverTarget", "backlog"]).optional(),
 });
 
 export const KpiSchema = z.object({
@@ -73,13 +80,13 @@ export type SuggestOptimizedTaskInputsInput = z.infer<typeof SuggestOptimizedTas
 
 export const OptimizedTaskDataFieldSchema = TaskDataFieldSchema.extend({
     suggestedValue: z.union([z.number(), z.string(), z.null()]).describe("The AI-suggested optimal value for this field."),
-    aiRationale: z.string().optional().describe("A brief explanation for why this value was suggested."),
+    aiHelp: z.string().optional().describe("A brief explanation for why this value was suggested."),
 });
 
 export const SuggestOptimizedTaskInputsOutputSchema = z.object({
     updatedTask: TaskSchema.extend({
         dataFields: z.array(OptimizedTaskDataFieldSchema).optional()
-    }).describe("The task object with updated suggestedValues and aiRationale for its dataFields."),
+    }).describe("The task object with updated suggestedValues and aiHelp for its dataFields."),
 });
 export type SuggestOptimizedTaskInputsOutput = z.infer<typeof SuggestOptimizedTaskInputsOutputSchema>;
 

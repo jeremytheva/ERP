@@ -107,11 +107,16 @@
         "priority": {"type": "string"},
         "estimatedTime": {"type": "number"},
         "roundRecurrence": {"type": "string"},
+        "round": {"type": "number"},
         "startRound": {"type": "number"},
         "dependencyIDs": {"type": "array", "items": {"type": "string"}},
         "completionType": {"type": "string"},
         "taskType": {"type": "string"},
         "completed": {"type": "boolean"},
+        "version": {"type": "number"},
+        "impact": {"type": "string"},
+        "visibility": {"type": "string"},
+        "alertKey": {"type": "string"},
         "dataFields": {
           "type": "array",
           "items": { "$ref": "#/entities/TaskDataField" }
@@ -125,9 +130,11 @@
        "properties": {
          "fieldName": {"type": "string"},
          "dataType": {"type": "string"},
-         "value": {"type": ["number", "string", "null"]},
-         "suggestedValue": {"type": ["number", "string", "null"]},
-         "aiRationale": {"type": "string"}
+         "suggestedValue": {"type": ["number", "string"]},
+         "calculatedFrom": {"type": "array", "items": {"type": "string"}},
+         "formula": {},
+         "aiHelp": {"type": "string"},
+         "value": {"type": ["number", "string", "null"]}
        }
     },
     "TeamSettings": {

@@ -22,6 +22,8 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "../ui/separator";
 import Markdown from 'react-markdown';
 import { useTasks } from "@/hooks/use-tasks";
+import { useGameState } from "@/hooks/use-game-data";
+import type { Task } from "@/types";
 
 const formSchema = z.object({
   performanceData: z.string().min(10, { message: "Please provide some performance data." }),
@@ -35,6 +37,7 @@ export function DebriefingForm() {
   const { toast } = useToast();
   // This is a placeholder, a real implementation would need a more robust way to create tasks
   const { addTask } = useTasks();
+  const { gameState } = useGameState();
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -64,19 +67,23 @@ export function DebriefingForm() {
 
   const handleAddActionItem = (itemText: string) => {
     // This is a simplified placeholder action
-    const newTask = {
+    const currentRound = gameState.kpiHistory[gameState.kpiHistory.length - 1]?.round || 1;
+    const newTask: Task = {
         id: `T${new Date().getTime()}`,
+        version: 2,
+        round: currentRound,
         title: itemText,
         description: "Generated from debriefing report.",
         role: "Team Leader",
-        transactionCode: "N/A",
         priority: "Medium",
         estimatedTime: 5,
-        roundRecurrence: "Once",
+        roundRecurrence: "RoundStart",
+        startRound: currentRound,
         dependencyIDs: [],
         completionType: "Manual-Tick",
         taskType: "Standard",
         completed: false,
+        visibility: "Always",
       };
       addTask(newTask);
 

@@ -15,8 +15,8 @@ import { Button } from "@/components/ui/button";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
-import type { Task, TaskDataField, TaskPriority, GameState } from "@/types";
-import { Clock, Code, ChevronDown, CheckCircle, Circle, AlertTriangle, Info, SkipForward, Sparkles, Loader2 } from "lucide-react";
+import type { Task, DataField as TaskDataField, TaskPriority, GameState } from "@/types";
+import { Clock, Code, ChevronDown, CheckCircle, Circle, AlertTriangle, Info, SkipForward, Loader2 } from "lucide-react";
 import { Separator } from "../ui/separator";
 import { Card } from "../ui/card";
 import { suggestOptimizedTaskInputsAction } from "@/lib/actions";
@@ -33,8 +33,7 @@ interface InteractiveTaskCardProps {
   onFindNext: (taskId: string) => void;
 }
 
-const priorityVariant: { [key in TaskPriority]: "destructive" | "default" | "secondary" | "outline" } = {
-  Critical: "destructive",
+const priorityVariant: Record<TaskPriority, "default" | "secondary" | "outline"> = {
   High: "default",
   Medium: "secondary",
   Low: "outline",
@@ -54,6 +53,7 @@ const generateFormSchema = (dataFields: TaskDataField[]) => {
     const schemaShape: { [key: string]: z.ZodType<any, any> } = {};
     dataFields.forEach(field => {
         switch (field.dataType) {
+            case "Percent":
             case "Currency":
             case "Integer":
                 schemaShape[field.fieldName] = z.coerce.number().min(0, "Value must be positive.");
@@ -79,7 +79,7 @@ export const InteractiveTaskCard = React.forwardRef<HTMLDivElement, InteractiveT
     const dependencies = task.dependencyIDs?.map(depId => allTasks.find(t => t.id === depId)).filter(Boolean) as Task[] | undefined;
     const areDependenciesMet = !dependencies || dependencies.every(dep => dep.completed);
     
-    const hasAiRationale = task.dataFields?.some(df => df.aiRationale);
+    const hasAiHelp = task.dataFields?.some(df => df.aiHelp);
 
     const form = useForm({
         resolver: task.dataFields ? zodResolver(generateFormSchema(task.dataFields)) : undefined,
@@ -90,7 +90,7 @@ export const InteractiveTaskCard = React.forwardRef<HTMLDivElement, InteractiveT
     });
 
     React.useEffect(() => {
-        if (isActive && task.dataFields && task.dataFields.length > 0 && !hasAiRationale && !isAiLoading) {
+        if (isActive && task.dataFields && task.dataFields.length > 0 && !hasAiHelp && !isAiLoading) {
             const getAiSuggestions = async () => {
                 setIsAiLoading(true);
                 const result = await suggestOptimizedTaskInputsAction({ task, gameState });
@@ -113,8 +113,7 @@ export const InteractiveTaskCard = React.forwardRef<HTMLDivElement, InteractiveT
             };
             getAiSuggestions();
         }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [isActive, task.id]);
+    }, [isActive, task, hasAiHelp, isAiLoading, onUpdate, gameState, toast]);
 
 
     React.useEffect(() => {
@@ -125,8 +124,7 @@ export const InteractiveTaskCard = React.forwardRef<HTMLDivElement, InteractiveT
             }, {} as Record<string, any>);
             form.reset(defaultValues);
         }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [task, form.reset]);
+    }, [task, form]);
 
     const handleMarkComplete = (completed: boolean) => {
         let updatedDataFields = task.dataFields;
@@ -184,13 +182,15 @@ export const InteractiveTaskCard = React.forwardRef<HTMLDivElement, InteractiveT
                   {task.title}
                 </p>
                 <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-muted-foreground mt-1">
-                  <div
-                    className="flex items-center gap-1.5"
-                    title="Transaction Code"
-                  >
-                    <Code className="h-3.5 w-3.5" />
-                    <code>{task.transactionCode}</code>
-                  </div>
+                  {task.transactionCode && (
+                    <div
+                      className="flex items-center gap-1.5"
+                      title="Transaction Code"
+                    >
+                      <Code className="h-3.5 w-3.5" />
+                      <code>{task.transactionCode}</code>
+                    </div>
+                  )}
                   <div
                     className="flex items-center gap-1.5"
                     title="Estimated Time"
@@ -270,14 +270,15 @@ export const InteractiveTaskCard = React.forwardRef<HTMLDivElement, InteractiveT
                                 <Input
                                   type={
                                     field.dataType === "Currency" ||
-                                    field.dataType === "Integer"
+                                    field.dataType === "Integer" ||
+                                    field.dataType === "Percent"
                                       ? "number"
                                       : "text"
                                   }
                                   {...formField}
                                   className="bg-background"
                                   step={
-                                    field.dataType === "Currency"
+                                    field.dataType === "Currency" || field.dataType === "Percent"
                                       ? "0.01"
                                       : "1"
                                   }
@@ -287,14 +288,14 @@ export const InteractiveTaskCard = React.forwardRef<HTMLDivElement, InteractiveT
                             </FormItem>
                           )}
                         />
-                        {field.aiRationale && (
+                        {field.aiHelp && (
                           <div className="mt-2 flex items-start gap-2 text-xs text-muted-foreground">
                             <Info className="h-4 w-4 shrink-0 mt-0.5" />
                             <p>
                               <span className="font-semibold">
-                                AI Rationale:
+                                AI Guidance:
                               </span>{" "}
-                              {field.aiRationale}
+                              {field.aiHelp}
                             </p>
                           </div>
                         )}

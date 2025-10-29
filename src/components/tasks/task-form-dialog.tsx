@@ -31,19 +31,24 @@ const taskSchema = z.object({
   id: z.string(),
   title: z.string().min(3, "Title is required"),
   description: z.string().min(10, "Description is required"),
-  role: z.enum(["Procurement", "Production", "Logistics", "Sales", "Team Leader"]),
-  transactionCode: z.string().min(1, "Transaction code is required"),
-  priority: z.enum(["Critical", "High", "Medium", "Low"]),
+  role: z.enum(["Team Leader", "Sales", "Production", "Procurement", "Logistics"]),
+  transactionCode: z.string().optional(),
+  priority: z.enum(["High", "Medium", "Low"]),
   estimatedTime: z.coerce.number().min(0),
-  roundRecurrence: z.enum(["Once", "RoundStart", "Continuous"]),
-  startRound: z.coerce.number().min(1).optional(),
+  roundRecurrence: z.enum(["RoundStart", "Continuous"]),
+  round: z.coerce.number().min(1),
+  startRound: z.coerce.number().min(1),
   dependencyIDs: z.preprocess(
-    (val) => (typeof val === 'string' ? val.split(',').map(s => s.trim()).filter(Boolean) : []),
+    (val) => (typeof val === 'string' ? val.split(',').map(s => s.trim()).filter(Boolean) : Array.isArray(val) ? val : []),
     z.array(z.string())
   ),
-  completionType: z.enum(["Manual-Tick", "Data-Confirmed", "System-Validated"]),
+  completionType: z.enum(["Manual-Tick", "Data-Confirmed", "Ongoing"]),
   taskType: z.enum(["ERPsim Input Data", "ERPsim Gather Data", "Standard"]),
   completed: z.boolean(),
+  version: z.coerce.number().min(1).default(2),
+  impact: z.enum(["Revenue", "Cost", "Sustainability", "Capacity", "Risk"]).optional(),
+  visibility: z.enum(["Always", "OnAlert"]).optional(),
+  alertKey: z.enum(["mrpIssues", "cashLow", "dcStockout", "rmShortage", "co2OverTarget", "backlog"]).optional(),
 });
 
 type TaskFormValues = z.infer<typeof taskSchema>;
@@ -62,16 +67,19 @@ export function TaskFormDialog({ isOpen, onOpenChange, onSave, task }: TaskFormD
       id: "",
       title: "",
       description: "",
-      role: "Sales",
+      role: "Team Leader",
       transactionCode: "",
       priority: "Medium",
       estimatedTime: 5,
       roundRecurrence: "RoundStart",
+      round: 1,
       startRound: 1,
       dependencyIDs: [],
       completionType: "Manual-Tick",
       taskType: "Standard",
       completed: false,
+      version: 2,
+      visibility: "Always",
     },
   });
 
@@ -79,40 +87,56 @@ export function TaskFormDialog({ isOpen, onOpenChange, onSave, task }: TaskFormD
     if (task) {
       form.reset({
         ...task,
+        version: task.version ?? 2,
+        round: task.round ?? task.startRound ?? 1,
+        transactionCode: task.transactionCode || "",
         dependencyIDs: task.dependencyIDs || [],
+        visibility: task.visibility ?? "Always",
+        alertKey: task.visibility === "OnAlert" ? task.alertKey : undefined,
       });
     } else {
       form.reset({
         id: `T${new Date().getTime()}`,
         title: "",
         description: "",
-        role: "Sales",
+        role: "Team Leader",
         transactionCode: "",
         priority: "Medium",
         estimatedTime: 5,
         roundRecurrence: "RoundStart",
+        round: 1,
         startRound: 1,
         dependencyIDs: [],
         completionType: "Manual-Tick",
         taskType: "Standard",
         completed: false,
+        version: 2,
+        visibility: "Always",
+        impact: undefined,
+        alertKey: undefined,
       });
     }
   }, [task, form, isOpen]);
 
   const onSubmit = (values: TaskFormValues) => {
-    // This is a bit of a hack to merge back dataFields if they exist
+    const visibility = values.visibility ?? "Always";
     const finalTask: Task = {
         ...(task || {}),
         ...values,
+        version: values.version ?? task?.version ?? 2,
+        transactionCode: values.transactionCode ? values.transactionCode : undefined,
+        visibility,
+        alertKey: visibility === "OnAlert" ? values.alertKey : undefined,
+        dependencyIDs: Array.isArray(values.dependencyIDs) ? values.dependencyIDs : [],
         dataFields: task?.dataFields || undefined
     };
     onSave(finalTask);
     onOpenChange(false);
   };
-  
-  // Create a string from the array for the input field
-  const dependencyIDsString = Array.isArray(form.getValues("dependencyIDs")) ? form.getValues("dependencyIDs").join(', ') : '';
+
+  const watchedVisibility = form.watch("visibility");
+  const dependencyIDsValue = form.watch("dependencyIDs");
+  const dependencyIDsString = Array.isArray(dependencyIDsValue) ? dependencyIDsValue.join(', ') : '';
 
 
   return (
@@ -163,14 +187,14 @@ export function TaskFormDialog({ isOpen, onOpenChange, onSave, task }: TaskFormD
                                     <FormLabel>Role</FormLabel>
                                     <Select onValueChange={field.onChange} value={field.value}>
                                     <FormControl>
-                                        <SelectTrigger><SelectValue /></SelectTrigger>
+                                <SelectTrigger><SelectValue /></SelectTrigger>
                                     </FormControl>
                                     <SelectContent>
-                                        <SelectItem value="Sales">Sales</SelectItem>
-                                        <SelectItem value="Procurement">Procurement</SelectItem>
-                                        <SelectItem value="Production">Production</SelectItem>
-                                        <SelectItem value="Logistics">Logistics</SelectItem>
-                                        <SelectItem value="Team Leader">Team Leader</SelectItem>
+                                <SelectItem value="Team Leader">Team Leader</SelectItem>
+                                <SelectItem value="Sales">Sales</SelectItem>
+                                <SelectItem value="Production">Production</SelectItem>
+                                <SelectItem value="Procurement">Procurement</SelectItem>
+                                <SelectItem value="Logistics">Logistics</SelectItem>
                                     </SelectContent>
                                     </Select>
                                     <FormMessage />
@@ -191,6 +215,76 @@ export function TaskFormDialog({ isOpen, onOpenChange, onSave, task }: TaskFormD
                             )}
                         />
                     </div>
+                    <div className="grid grid-cols-2 gap-4">
+                        <FormField
+                            control={form.control}
+                            name="impact"
+                            render={({ field }) => (
+                                <FormItem>
+                                    <FormLabel>Impact</FormLabel>
+                                    <Select onValueChange={field.onChange} value={field.value ?? ""}>
+                                    <FormControl>
+                                        <SelectTrigger><SelectValue placeholder="Select impact" /></SelectTrigger>
+                                    </FormControl>
+                                    <SelectContent>
+                                        <SelectItem value="Revenue">Revenue</SelectItem>
+                                        <SelectItem value="Cost">Cost</SelectItem>
+                                        <SelectItem value="Sustainability">Sustainability</SelectItem>
+                                        <SelectItem value="Capacity">Capacity</SelectItem>
+                                        <SelectItem value="Risk">Risk</SelectItem>
+                                    </SelectContent>
+                                    </Select>
+                                    <FormMessage />
+                                </FormItem>
+                            )}
+                        />
+                    </div>
+                    <div className="grid grid-cols-2 gap-4">
+                        <FormField
+                            control={form.control}
+                            name="visibility"
+                            render={({ field }) => (
+                                <FormItem>
+                                    <FormLabel>Visibility</FormLabel>
+                                    <Select onValueChange={field.onChange} value={field.value ?? "Always"}>
+                                    <FormControl>
+                                        <SelectTrigger><SelectValue /></SelectTrigger>
+                                    </FormControl>
+                                    <SelectContent>
+                                        <SelectItem value="Always">Always</SelectItem>
+                                        <SelectItem value="OnAlert">On Alert</SelectItem>
+                                    </SelectContent>
+                                    </Select>
+                                    <FormMessage />
+                                </FormItem>
+                            )}
+                        />
+                        {watchedVisibility === "OnAlert" && (
+                            <FormField
+                                control={form.control}
+                                name="alertKey"
+                                render={({ field }) => (
+                                    <FormItem>
+                                        <FormLabel>Alert Key</FormLabel>
+                                        <Select onValueChange={field.onChange} value={field.value ?? ""}>
+                                        <FormControl>
+                                            <SelectTrigger><SelectValue placeholder="Select alert" /></SelectTrigger>
+                                        </FormControl>
+                                        <SelectContent>
+                                            <SelectItem value="cashLow">Cash Low</SelectItem>
+                                            <SelectItem value="rmShortage">RM Shortage</SelectItem>
+                                            <SelectItem value="mrpIssues">MRP Issues</SelectItem>
+                                            <SelectItem value="dcStockout">DC Stockout</SelectItem>
+                                            <SelectItem value="co2OverTarget">CO₂ Over Target</SelectItem>
+                                            <SelectItem value="backlog">Backlog</SelectItem>
+                                        </SelectContent>
+                                        </Select>
+                                        <FormMessage />
+                                    </FormItem>
+                                )}
+                            />
+                        )}
+                    </div>
                      <div className="grid grid-cols-2 gap-4">
                         <FormField
                             control={form.control}
@@ -203,7 +297,6 @@ export function TaskFormDialog({ isOpen, onOpenChange, onSave, task }: TaskFormD
                                         <SelectTrigger><SelectValue /></SelectTrigger>
                                     </FormControl>
                                     <SelectContent>
-                                        <SelectItem value="Critical">Critical</SelectItem>
                                         <SelectItem value="High">High</SelectItem>
                                         <SelectItem value="Medium">Medium</SelectItem>
                                         <SelectItem value="Low">Low</SelectItem>
@@ -227,7 +320,7 @@ export function TaskFormDialog({ isOpen, onOpenChange, onSave, task }: TaskFormD
                             )}
                         />
                     </div>
-                     <div className="grid grid-cols-2 gap-4">
+                    <div className="grid grid-cols-2 gap-4">
                         <FormField
                             control={form.control}
                             name="roundRecurrence"
@@ -239,12 +332,24 @@ export function TaskFormDialog({ isOpen, onOpenChange, onSave, task }: TaskFormD
                                         <SelectTrigger><SelectValue /></SelectTrigger>
                                     </FormControl>
                                     <SelectContent>
-                                        <SelectItem value="Once">Once</SelectItem>
                                         <SelectItem value="RoundStart">Round Start</SelectItem>
                                         <SelectItem value="Continuous">Continuous</SelectItem>
                                     </SelectContent>
                                     </Select>
                                     <FormMessage />
+                                </FormItem>
+                            )}
+                        />
+                        <FormField
+                            control={form.control}
+                            name="round"
+                            render={({ field }) => (
+                                <FormItem>
+                                <FormLabel>Round</FormLabel>
+                                <FormControl>
+                                    <Input type="number" {...field} />
+                                </FormControl>
+                                <FormMessage />
                                 </FormItem>
                             )}
                         />
@@ -269,7 +374,7 @@ export function TaskFormDialog({ isOpen, onOpenChange, onSave, task }: TaskFormD
                             <FormItem>
                             <FormLabel>Dependency IDs</FormLabel>
                             <FormControl>
-                                <Input placeholder="e.g. T1, T5" {...field} value={dependencyIDsString} onChange={e => field.onChange(e.target.value.split(',').map(s => s.trim()))} />
+                                <Input placeholder="e.g. T1.2, T5.2" {...field} value={dependencyIDsString} onChange={e => field.onChange(e.target.value.split(',').map(s => s.trim()).filter(Boolean))} />
                             </FormControl>
                             <FormMessage />
                             </FormItem>
@@ -289,7 +394,7 @@ export function TaskFormDialog({ isOpen, onOpenChange, onSave, task }: TaskFormD
                                     <SelectContent>
                                         <SelectItem value="Manual-Tick">Manual Tick</SelectItem>
                                         <SelectItem value="Data-Confirmed">Data Confirmed</SelectItem>
-                                        <SelectItem value="System-Validated">System Validated</SelectItem>
+                                        <SelectItem value="Ongoing">Ongoing</SelectItem>
                                     </SelectContent>
                                     </Select>
                                     <FormMessage />

@@ -74,12 +74,72 @@ export const InteractiveTaskCard = React.forwardRef<HTMLDivElement, InteractiveT
     const { gameState } = useGameState();
     const { toast } = useToast();
     const [isAiLoading, setIsAiLoading] = React.useState(false);
+    const [isSaving, setIsSaving] = React.useState(false);
 
     const isCompleted = task.completed;
     const dependencies = task.dependencyIDs?.map(depId => allTasks.find(t => t.id === depId)).filter(Boolean) as Task[] | undefined;
     const areDependenciesMet = !dependencies || dependencies.every(dep => dep.completed);
-    
+
     const hasAiRationale = task.dataFields?.some(df => df.aiRationale);
+    const currentRound = gameState.kpiHistory[gameState.kpiHistory.length - 1]?.round || 1;
+
+    const statusBadge = React.useMemo(() => {
+        if (isCompleted) {
+            return {
+                label: "Completed",
+                className: "bg-emerald-100 text-emerald-700 border-emerald-200 hover:bg-emerald-100",
+                title: "Task has been completed."
+            };
+        }
+
+        if (!areDependenciesMet) {
+            return {
+                label: "Blocked",
+                className: "bg-amber-100 text-amber-800 border-amber-200 hover:bg-amber-100",
+                title: "Waiting on prerequisite tasks to be finished."
+            };
+        }
+
+        if (isCurrent) {
+            return {
+                label: "Current",
+                className: "bg-blue-100 text-blue-700 border-blue-200 hover:bg-blue-100",
+                title: "This is the next prioritized task."
+            };
+        }
+
+        const timeframeLabels: Record<string, string> = {
+            StartPhase: "Start Phase",
+            MidPhase: "Mid Phase",
+            EndPhase: "End Phase",
+        };
+
+        const waitingContext: string[] = [];
+
+        if (task.timeframeConstraint && task.timeframeConstraint !== "None") {
+            const timeframeText = timeframeLabels[task.timeframeConstraint];
+            if (timeframeText) {
+                waitingContext.push(timeframeText);
+            }
+        }
+
+        if (task.roundRecurrence === "RoundStart") {
+            waitingContext.push("Round Start");
+        } else if (task.roundRecurrence === "Once" && task.startRound && task.startRound > currentRound) {
+            waitingContext.push(`Round ${task.startRound}`);
+        }
+
+        const contextLabel = waitingContext.length > 0 ? `Waiting • ${waitingContext.join(" • ")}` : "Waiting";
+        const title = waitingContext.length > 0
+            ? `Scheduled for ${waitingContext.join(", ")}.`
+            : "Ready once time allows.";
+
+        return {
+            label: contextLabel,
+            className: "bg-muted text-muted-foreground border-transparent",
+            title,
+        };
+    }, [areDependenciesMet, currentRound, isCompleted, isCurrent, task.roundRecurrence, task.startRound, task.timeframeConstraint]);
 
     const form = useForm({
         resolver: task.dataFields ? zodResolver(generateFormSchema(task.dataFields)) : undefined,
@@ -88,6 +148,40 @@ export const InteractiveTaskCard = React.forwardRef<HTMLDivElement, InteractiveT
             return acc;
         }, {} as Record<string, any>)
     });
+
+    const { isDirty } = form.formState;
+
+    const hasDataFields = Boolean(task.dataFields && task.dataFields.length > 0);
+
+    const buildUpdatedDataFields = React.useCallback(async () => {
+        if (!hasDataFields || !task.dataFields) {
+            return { ok: true as const, dataFields: undefined };
+        }
+
+        let submittedValues: Record<string, any> | null = null;
+
+        await form.handleSubmit(
+            values => {
+                submittedValues = values;
+            },
+            () => {
+                submittedValues = null;
+            }
+        )();
+
+        if (!submittedValues) {
+            return { ok: false as const };
+        }
+
+        const updatedDataFields = task.dataFields.map(field => ({
+            ...field,
+            value: submittedValues?.[field.fieldName] ?? null,
+        }));
+
+        form.reset(submittedValues);
+
+        return { ok: true as const, dataFields: updatedDataFields };
+    }, [form, hasDataFields, task.dataFields]);
 
     React.useEffect(() => {
         if (isActive && task.dataFields && task.dataFields.length > 0 && !hasAiRationale && !isAiLoading) {
@@ -128,22 +222,60 @@ export const InteractiveTaskCard = React.forwardRef<HTMLDivElement, InteractiveT
     // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [task, form.reset]);
 
-    const handleMarkComplete = (completed: boolean) => {
-        let updatedDataFields = task.dataFields;
-
-        if (task.dataFields) {
-             form.trigger().then(isValid => {
-                if (isValid) {
-                    const values = form.getValues();
-                    updatedDataFields = task.dataFields?.map(df => ({...df, value: values[df.fieldName]}));
-                    onUpdate({ ...task, completed, dataFields: updatedDataFields });
-                } else if (!completed) {
-                    onUpdate({ ...task, completed });
-                }
-             });
-        } else {
-            onUpdate({ ...task, completed });
+    const handleSaveDataFields = React.useCallback(async () => {
+        if (!hasDataFields) {
+            return;
         }
+
+        setIsSaving(true);
+        const result = await buildUpdatedDataFields();
+        setIsSaving(false);
+
+        if (!result.ok || !result.dataFields) {
+            toast({
+                variant: "destructive",
+                title: "Unable to save changes",
+                description: "Please resolve any validation issues before saving.",
+            });
+            return;
+        }
+
+        onUpdate({ ...task, dataFields: result.dataFields });
+        toast({
+            title: "Baseline inputs updated",
+            description: "Your adjusted values have been saved for this task.",
+        });
+    }, [buildUpdatedDataFields, hasDataFields, onUpdate, task, toast]);
+
+    const handleMarkComplete = async (completed: boolean) => {
+        if (completed && hasDataFields) {
+            const result = await buildUpdatedDataFields();
+
+            if (!result.ok || !result.dataFields) {
+                toast({
+                    variant: "destructive",
+                    title: "Cannot mark complete",
+                    description: "Fix validation errors before marking this task as complete.",
+                });
+                return;
+            }
+
+            onUpdate({ ...task, completed, dataFields: result.dataFields });
+            return;
+        }
+
+        if (!completed && hasDataFields && task.dataFields) {
+            const values = form.getValues();
+            const updatedDataFields = task.dataFields.map(field => ({
+                ...field,
+                value: values[field.fieldName] ?? null,
+            }));
+
+            onUpdate({ ...task, completed, dataFields: updatedDataFields });
+            return;
+        }
+
+        onUpdate({ ...task, completed });
     };
 
   return (
@@ -200,18 +332,32 @@ export const InteractiveTaskCard = React.forwardRef<HTMLDivElement, InteractiveT
                   </div>
                 </div>
               </div>
-              <Badge
-                variant={priorityVariant[task.priority]}
-                className="hidden sm:inline-flex"
-              >
-                {task.priority}
-              </Badge>
-              <ChevronDown
-                className={cn(
-                  "h-5 w-5 transition-transform",
-                  isActive && "rotate-180"
+              <div className="flex flex-wrap items-center justify-end gap-2">
+                {statusBadge && (
+                  <Badge
+                    variant="outline"
+                    className={cn(
+                      "whitespace-nowrap",
+                      statusBadge.className
+                    )}
+                    title={statusBadge.title}
+                  >
+                    {statusBadge.label}
+                  </Badge>
                 )}
-              />
+                <Badge
+                  variant={priorityVariant[task.priority]}
+                  className="whitespace-nowrap"
+                >
+                  {task.priority}
+                </Badge>
+                <ChevronDown
+                  className={cn(
+                    "h-5 w-5 flex-shrink-0 transition-transform",
+                    isActive && "rotate-180"
+                  )}
+                />
+              </div>
             </div>
           </CollapsibleTrigger>
           <CollapsibleContent>
@@ -283,6 +429,11 @@ export const InteractiveTaskCard = React.forwardRef<HTMLDivElement, InteractiveT
                                   }
                                 />
                               </FormControl>
+                              {field.suggestedValue !== undefined && field.suggestedValue !== null && (
+                                <p className="mt-1 text-xs text-muted-foreground">
+                                  Baseline suggestion: <span className="font-medium">{String(field.suggestedValue)}</span>
+                                </p>
+                              )}
                               <FormMessage />
                             </FormItem>
                           )}
@@ -306,6 +457,23 @@ export const InteractiveTaskCard = React.forwardRef<HTMLDivElement, InteractiveT
 
               <div className="flex justify-end items-center gap-2">
                  <div className="flex justify-end gap-2">
+                    {hasDataFields && (
+                        <Button
+                            type="button"
+                            variant="secondary"
+                            onClick={handleSaveDataFields}
+                            disabled={isSaving || !isDirty}
+                        >
+                            {isSaving ? (
+                                <>
+                                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                                    Saving
+                                </>
+                            ) : (
+                                "Save Changes"
+                            )}
+                        </Button>
+                    )}
                     {isCompleted ? (
                     <Button
                         variant="outline"

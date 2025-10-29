@@ -7,7 +7,7 @@ import React, { useEffect } from "react";
 import { SidebarProvider } from "@/components/ui/sidebar";
 import { MainSidebar } from "@/components/layout/main-sidebar";
 import { Header } from "@/components/layout/header";
-import { AiCopilot } from "@/components/ai/ai-copilot";
+import { CopilotChatWindow } from "@/components/ai/copilot-chat-window";
 import { ConfirmRoundStartDialog } from "@/components/game/confirm-round-start-dialog";
 import { GoToCurrentTaskButton } from "@/context/task-navigation-context";
 import { useTeamSettings } from "@/hooks/use-team-settings";
@@ -47,7 +47,7 @@ export default function MainLayout({ children }: { children: React.ReactNode }) 
           </main>
         </div>
       </div>
-      {isTeamLeader && <AiCopilot />}
+      {isTeamLeader && <CopilotChatWindow />}
       <ConfirmRoundStartDialog />
       <GoToCurrentTaskButton />
     </SidebarProvider>

@@ -7,6 +7,13 @@ export type UserProfile = {
   avatarUrl: string;
 };
 
+export type PeerData = {
+  name: string;
+  companyValuation: number;
+  netIncome: number;
+  cumulativeCO2eEmissions: number;
+};
+
 export type Kpi = {
   companyValuation: number;
   netIncome: number;
@@ -46,11 +53,42 @@ export type GameState = Kpi & {
   timerState: TimerState;
 };
 
+export type ActionItemStatus = "backlog" | "in_progress" | "blocked" | "done";
+export type ActionItemPriority = "low" | "medium" | "high";
+
 export type ActionItem = {
   id: string;
-  text: string;
-  completed: boolean;
-  isCustom?: boolean;
+  teamId: string;
+  ownerUid: string;
+  ownerProfileId: string;
+  ownerRole: string;
+  title: string;
+  description?: string | null;
+  status: ActionItemStatus;
+  priority: ActionItemPriority;
+  dueRound?: number | null;
+  order: number;
+  createdAt: string;
+  updatedAt: string;
+};
+
+export type CompetitorNoteStatus = "observation" | "insight" | "response" | "watch";
+export type CompetitorNotePriority = ActionItemPriority;
+
+export type CompetitorNote = {
+  id: string;
+  teamId: string;
+  ownerUid: string;
+  authorName: string;
+  competitor: string;
+  title: string;
+  summary: string;
+  status: CompetitorNoteStatus;
+  priority: CompetitorNotePriority;
+  focusRoles: string[];
+  order: number;
+  createdAt: string;
+  updatedAt: string;
 };
 
 export type CompetitorLogEntry = {

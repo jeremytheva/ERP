@@ -1,4 +1,3 @@
-
 import { Timestamp } from "firebase/firestore";
 
 export type UserProfile = {
@@ -38,12 +37,19 @@ export type TimerState = {
   roundDuration: number;
   breakDuration: number;
   confirmNextRound: boolean;
-}
+};
 
 export type GameState = Kpi & {
   kpiHistory: KpiHistory;
   teamStrategy: string;
   timerState: TimerState;
+};
+
+export type PeerData = {
+  name: string;
+  companyValuation: number;
+  netIncome: number;
+  cumulativeCO2eEmissions: number;
 };
 
 export type ActionItem = {
@@ -62,22 +68,53 @@ export type CompetitorLogEntry = {
 
 export type RoleActionItems = {
   [key: string]: string[];
-}
+};
 
-
-// New Expanded Task Definition
+// Task model definitions
 export type TaskPriority = "Critical" | "High" | "Medium" | "Low";
 export type RoundRecurrence = "Once" | "RoundStart" | "Continuous";
 export type TimeframeConstraint = "None" | "StartPhase" | "MidPhase" | "EndPhase";
-export type CompletionType = "Manual-Tick" | "Data-Confirmed" | "System-Validated";
+export type CompletionType = "Manual-Tick" | "Data-Confirmed" | "System-Validated" | "Ongoing";
 export type TaskType = "ERPsim Input Data" | "ERPsim Gather Data" | "Standard";
 export type Role = "Procurement" | "Production" | "Logistics" | "Sales" | "Team Leader";
+export type TaskVisibility = "Always" | "OnAlert";
+export type TaskAlertKey =
+  | "cashLow"
+  | "mrpIssues"
+  | "rmShortage"
+  | "dcStockout"
+  | "backlog"
+  | "overProduction"
+  | "highInventory"
+  | "co2OverTarget"
+  | "lowSales";
+export type GoalTargetType = "increase" | "decrease";
+export type GoalMetric =
+  | "Cash"
+  | "GrossMargin"
+  | "CO2e"
+  | "SetupTime"
+  | "InventoryValue"
+  | "TransportCost"
+  | "Revenue"
+  | "COGS"
+  | "Utilisation"
+  | "RM Cost";
 
+export type TaskGoalCalculation = {
+  baseMetric: string;
+  targetType: GoalTargetType;
+  targetValue: number;
+  minLimit: number;
+  maxLimit: number;
+  constraints: string[];
+  formula: string;
+};
 
 export type TaskDataField = {
   fieldName: string;
   dataType: "Currency" | "Integer" | "String";
-  value?: number | string | null; // User-entered value
+  value?: number | string | null;
   suggestedValue?: number | string | null;
   aiRationale?: string;
 };
@@ -89,7 +126,7 @@ export type Task = {
   role: Role;
   transactionCode: string;
   priority: TaskPriority;
-  estimatedTime: number; // in minutes
+  estimatedTime: number;
   roundRecurrence: RoundRecurrence;
   startRound?: number;
   timeframeConstraint?: TimeframeConstraint;
@@ -97,5 +134,34 @@ export type Task = {
   completionType: CompletionType;
   taskType: TaskType;
   dataFields?: TaskDataField[];
-  completed: boolean; // Added completion status
+  completed: boolean;
+  version?: number;
+  round?: number;
+  impact?: "Capacity" | "Revenue" | "Risk";
+  visibility?: TaskVisibility;
+  alertKey?: TaskAlertKey;
+  roundStartOffsetMinutes?: number | null;
+  roundDueOffsetMinutes?: number | null;
+  goalMetric?: GoalMetric;
+  goalTargetType?: GoalTargetType;
+  goalTargetValue?: number;
+  goalUnit?: string;
+  goalRationale?: string;
+  goalCalculation?: TaskGoalCalculation;
+};
+
+export type ExtendedTask = Task & {
+  version: number;
+  round: number;
+  startRound: number;
+  impact: "Capacity" | "Revenue" | "Risk";
+  visibility: TaskVisibility;
+  roundStartOffsetMinutes: number | null;
+  roundDueOffsetMinutes: number | null;
+  goalMetric: GoalMetric;
+  goalTargetType: GoalTargetType;
+  goalTargetValue: number;
+  goalUnit: string;
+  goalRationale: string;
+  goalCalculation: TaskGoalCalculation;
 };

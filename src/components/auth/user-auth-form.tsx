@@ -10,6 +10,7 @@ import { useUserProfiles } from "@/hooks/use-user-profiles";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { initiateAnonymousSignIn } from "@/firebase";
 import { useAuth as useFirebaseAuth } from "@/firebase";
+import { createAnonymousSession } from "@/lib/firebase/server-actions";
 
 
 interface UserAuthFormProps extends React.HTMLAttributes<HTMLDivElement> {}
@@ -20,6 +21,7 @@ export function UserAuthForm({ className, ...props }: UserAuthFormProps) {
   const [selectedProfile, setSelectedProfile] = React.useState<string>("");
   const { user, login } = useAuth();
   const auth = useFirebaseAuth();
+  const [pendingRole, setPendingRole] = React.useState<string | null>(null);
 
   React.useEffect(() => {
     if (profiles && profiles.length > 0 && !selectedProfile) {
@@ -30,20 +32,39 @@ export function UserAuthForm({ className, ...props }: UserAuthFormProps) {
 
   const handleLogin = async (event: React.SyntheticEvent) => {
     event.preventDefault();
-    if (!auth) return;
+    if (!auth || !selectedProfile) return;
+
     setIsLoading(true);
-    if (!user) {
+
+    try {
+      await createAnonymousSession();
+
+      if (!user) {
+        setPendingRole(selectedProfile);
         initiateAnonymousSignIn(auth);
+        return;
+      }
+
+      await login(selectedProfile);
+      setIsLoading(false);
+    } catch (error) {
+      console.error("Anonymous sign-in failed", error);
+      setIsLoading(false);
     }
-    // The onAuthStateChanged listener in AuthProvider will handle the user state change
-    // and we can then proceed with login. We will wait for the user object to be available.
   };
 
   React.useEffect(() => {
-    if (user && isLoading) {
-      login(selectedProfile).finally(() => setIsLoading(false));
-    }
-  }, [user, isLoading, login, selectedProfile]);
+    if (!user || !pendingRole) return;
+
+    login(pendingRole)
+      .catch((error) => {
+        console.error("Role activation failed", error);
+      })
+      .finally(() => {
+        setPendingRole(null);
+        setIsLoading(false);
+      });
+  }, [user, pendingRole, login]);
 
   return (
     <div className={cn("grid gap-6", className)} {...props}>

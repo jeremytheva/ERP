@@ -51,6 +51,10 @@ export type ActionItem = {
   text: string;
   completed: boolean;
   isCustom?: boolean;
+  ownerRole?: string | null;
+  ownerName?: string | null;
+  createdAt?: Date | Timestamp;
+  updatedAt?: Date | Timestamp;
 };
 
 export type CompetitorLogEntry = {
@@ -58,6 +62,21 @@ export type CompetitorLogEntry = {
   text: string;
   author: string;
   createdAt: Date | Timestamp;
+};
+
+export type CompetitorNoteStatus = "intel" | "analysis" | "response";
+
+export type CompetitorNote = {
+  id: string;
+  title: string;
+  summary: string;
+  status: CompetitorNoteStatus;
+  role?: string | null;
+  ownerUid?: string;
+  createdByName?: string | null;
+  order?: number;
+  createdAt?: Date | Timestamp;
+  updatedAt?: Date | Timestamp;
 };
 
 export type RoleActionItems = {

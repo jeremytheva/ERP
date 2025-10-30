@@ -26,6 +26,8 @@ interface TeamSettingsContextType {
   visibleRoles: Role[];
   isRoleVisible: (roleId: string) => boolean;
   setRoleVisibility: (roleId: string, isVisible: boolean) => void;
+  teamLeader: string | null;
+  setTeamLeader: (roleId: string | null) => void;
 }
 
 const TeamSettingsContext = createContext<TeamSettingsContextType | undefined>(undefined);
@@ -34,6 +36,7 @@ export const TeamSettingsProvider = ({ children }: { children: ReactNode }) => {
   const { user } = useAppContextAuth();
   const firestore = useFirestore();
   const [visibleRoleIds, setVisibleRoleIds] = useState<string[]>(DEFAULT_VISIBLE_ROLE_IDS);
+  const [teamLeader, setTeamLeaderState] = useState<string | null>(null);
 
   const settingsDocRef = useMemoFirebase(() => {
     if (!user || !firestore) return null;
@@ -45,16 +48,19 @@ export const TeamSettingsProvider = ({ children }: { children: ReactNode }) => {
 
     const unsubscribe = onSnapshot(settingsDocRef, (docSnap) => {
       if (docSnap.exists()) {
-        const storedRoles = docSnap.data().visibleRoleIds as string[] | undefined;
+        const data = docSnap.data();
+        const storedRoles = data.visibleRoleIds as string[] | undefined;
         if (storedRoles && Array.isArray(storedRoles)) {
           setVisibleRoleIds(storedRoles);
         } else {
           setVisibleRoleIds(DEFAULT_VISIBLE_ROLE_IDS);
         }
+        setTeamLeaderState((data.teamLeader as string | null | undefined) ?? null);
       } else {
         // Initialize settings document if it doesn't exist
-        const data = { visibleRoleIds: DEFAULT_VISIBLE_ROLE_IDS };
+        const data = { visibleRoleIds: DEFAULT_VISIBLE_ROLE_IDS, teamLeader: null };
         setVisibleRoleIds(data.visibleRoleIds);
+        setTeamLeaderState(data.teamLeader);
         setDoc(settingsDocRef, data).catch(error => {
             const contextualError = new FirestorePermissionError({
                 path: settingsDocRef.path,
@@ -72,6 +78,7 @@ export const TeamSettingsProvider = ({ children }: { children: ReactNode }) => {
         });
         errorEmitter.emit('permission-error', contextualError);
         setVisibleRoleIds(DEFAULT_VISIBLE_ROLE_IDS);
+        setTeamLeaderState(null);
     });
 
     return () => unsubscribe();
@@ -108,6 +115,20 @@ export const TeamSettingsProvider = ({ children }: { children: ReactNode }) => {
     });
   }, [persistRoleIds]);
 
+  const setTeamLeader = useCallback((roleId: string | null) => {
+    setTeamLeaderState(roleId);
+    if (!settingsDocRef) return;
+    const data = { teamLeader: roleId };
+    setDoc(settingsDocRef, data, { merge: true }).catch(error => {
+        const contextualError = new FirestorePermissionError({
+            path: settingsDocRef.path,
+            operation: 'update',
+            requestResourceData: data,
+        });
+        errorEmitter.emit('permission-error', contextualError);
+    });
+  }, [settingsDocRef]);
+
   const visibleRoles = useMemo(() => {
     return visibleRoleIds
       .map((roleId) => ROLE_ID_TO_ROLE[roleId])
@@ -117,7 +138,7 @@ export const TeamSettingsProvider = ({ children }: { children: ReactNode }) => {
   const isRoleVisible = useCallback((roleId: string) => visibleRoleIds.includes(roleId), [visibleRoleIds]);
 
   return (
-    <TeamSettingsContext.Provider value={{ visibleRoleIds, visibleRoles, isRoleVisible, setRoleVisibility }}>
+    <TeamSettingsContext.Provider value={{ visibleRoleIds, visibleRoles, isRoleVisible, setRoleVisibility, teamLeader, setTeamLeader }}>
       {children}
     </TeamSettingsContext.Provider>
   );

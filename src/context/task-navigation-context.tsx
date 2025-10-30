@@ -32,7 +32,7 @@ const TaskNavigationContext = createContext<TaskNavigationContextType | undefine
 export const TaskNavigationProvider = ({ children }: { children: React.ReactNode }) => {
     const { profile } = useAuth();
     const { tasks } = useTasks();
-    const { visibleRoles } = useTeamSettings();
+    const { teamLeader } = useTeamSettings();
     const { gameState } = useGameState();
 
     const [activeTaskId, setActiveTaskId] = useState<string | null>(null);
@@ -41,15 +41,21 @@ export const TaskNavigationProvider = ({ children }: { children: React.ReactNode
 
     const currentRound = gameState.kpiHistory[gameState.kpiHistory.length - 1]?.round || 1;
 
+    const isTeamLeader = profile?.id === teamLeader;
+
     const userRoles = useMemo(() => {
-        if (visibleRoles.length > 0) {
-            return visibleRoles;
+        if (!profile) {
+            return [];
         }
-        if (profile) {
-            return [profile.name as Role];
+
+        const roles: Role[] = [profile.name as Role];
+
+        if (isTeamLeader) {
+            roles.push("Team Leader");
         }
-        return [];
-    }, [visibleRoles, profile]);
+
+        return roles;
+    }, [profile, isTeamLeader]);
 
     const allUserTasks = useMemo(() => {
         return tasks.filter(task =>

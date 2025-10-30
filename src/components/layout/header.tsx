@@ -2,6 +2,7 @@
 "use client";
 
 import React from "react";
+import Link from "next/link";
 import { useAuth } from "@/hooks/use-auth";
 import {
   DropdownMenu,
@@ -25,14 +26,14 @@ import {
 } from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { ChevronsUpDown, LogOut, Clock, Settings, Play, Pause, RefreshCw, ChevronLeft, ChevronRight, Coffee, ShieldQuestion, RotateCcw } from "lucide-react";
+import { ChevronsUpDown, LogOut, Clock, Settings, Play, Pause, RefreshCw, ChevronLeft, ChevronRight, Coffee, ShieldQuestion, RotateCcw, SlidersHorizontal } from "lucide-react";
 import { usePathname } from "next/navigation";
-import { SidebarTrigger } from "../ui/sidebar";
 import { useGameState } from "@/hooks/use-game-data";
 import { Label } from "../ui/label";
 import { Input } from "../ui/input";
 import { Switch } from "../ui/switch";
 import { useUserProfiles } from "@/hooks/use-user-profiles";
+import { cn } from "@/lib/utils";
 
 const getPageTitle = (pathname: string): string => {
     const segment = pathname.split("/").pop() || "dashboard";
@@ -121,9 +122,6 @@ export function Header() {
   return (
     <>
     <header className="sticky top-0 z-10 flex h-16 items-center gap-4 border-b bg-background/80 backdrop-blur-sm px-4 md:px-6">
-       <div className="md:hidden">
-          <SidebarTrigger />
-        </div>
       <h1 className="text-xl font-semibold md:text-2xl font-headline hidden md:block">{pageTitle}</h1>
 
       <div className="flex items-center gap-2 ml-auto">
@@ -136,7 +134,7 @@ export function Header() {
         <DropdownMenu>
             <DropdownMenuTrigger asChild>
                 <Button variant="ghost" size="icon" className="h-8 w-8">
-                    <Settings className="h-4 w-4" />
+                    <SlidersHorizontal className="h-4 w-4" />
                 </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="w-64">
@@ -190,6 +188,20 @@ export function Header() {
                  </div>
             </DropdownMenuContent>
         </DropdownMenu>
+        <Button
+          variant="ghost"
+          size="icon"
+          className={cn(
+            "h-8 w-8",
+            pathname?.startsWith("/settings") && "bg-muted text-primary"
+          )}
+          asChild
+        >
+          <Link href="/settings" aria-label="Open settings">
+            <Settings className="h-4 w-4" />
+            <span className="sr-only">Open settings</span>
+          </Link>
+        </Button>
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <Button variant="ghost" className="flex items-center gap-3">

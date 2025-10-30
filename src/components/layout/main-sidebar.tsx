@@ -122,7 +122,6 @@ export function MainSidebar() {
                 <SidebarMenuItem key={label}>
                     <Link href={href} passHref>
                     <SidebarMenuButton
-                        as="a"
                         isActive={isActive(href)}
                         tooltip={{ children: label, side: "right", align:"center" }}
                         className="justify-start"
@@ -141,7 +140,6 @@ export function MainSidebar() {
         <SidebarMenuItem>
             <Link href="/settings" passHref>
                 <SidebarMenuButton
-                as="a"
                 isActive={pathname.startsWith("/settings")}
                 tooltip={{ children: "Settings", side: "right", align:"center" }}
                 className="justify-start"

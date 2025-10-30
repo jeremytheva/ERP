@@ -31,7 +31,7 @@ const TaskNavigationContext = createContext<TaskNavigationContextType | undefine
 
 export const TaskNavigationProvider = ({ children }: { children: React.ReactNode }) => {
     const { profile } = useAuth();
-    const { tasks } = useTasks();
+    const { allTasks } = useTasks();
     const { teamLeader } = useTeamSettings();
     const { gameState } = useGameState();
 
@@ -52,14 +52,14 @@ export const TaskNavigationProvider = ({ children }: { children: React.ReactNode
     }, [profile, isTeamLeader]);
 
     const allUserTasks = useMemo(() => {
-        return tasks.filter(task =>
+        return allTasks.filter(task =>
             userRoles.includes(task.role) &&
             (task.roundRecurrence === "Continuous" || (task.startRound ?? 1) <= currentRound)
         ).sort((a,b) => {
              const priorityOrder = { "Critical": 1, "High": 2, "Medium": 3, "Low": 4 };
              return priorityOrder[a.priority] - priorityOrder[b.priority];
         });
-    }, [tasks, userRoles, currentRound]);
+    }, [allTasks, userRoles, currentRound]);
     
     useEffect(() => {
         const firstIncomplete = allUserTasks.find(t => !t.completed);
@@ -181,7 +181,7 @@ export const GoToCurrentTaskButton = () => {
     }
 
     return (
-        <div className="fixed bottom-6 right-6 z-50">
+        <div className="fixed bottom-6 left-6 z-50">
             <Button size="lg" className="shadow-lg" onClick={handleGoToTask}>
                 <LocateFixed className="mr-2 h-5 w-5" />
                 Go to Current Task

@@ -1,11 +1,29 @@
 
 "use client";
 
-import { useState, useEffect, createContext, useContext, ReactNode } from "react";
+import {
+  useState,
+  useEffect,
+  useMemo,
+  useCallback,
+  useRef,
+  createContext,
+  useContext,
+  ReactNode,
+} from "react";
 import { collection, doc, onSnapshot, writeBatch, FirestoreError, setDoc, deleteDoc, getDocs } from "firebase/firestore";
 import { useFirestore, errorEmitter, FirestorePermissionError, useMemoFirebase } from "@/firebase";
 import { useAuth as useAppContextAuth } from "./use-auth";
-import type { Task, Role, TaskPriority, RoundRecurrence, CompletionType, TaskType } from "@/types";
+import { useTeamSettings } from "./use-team-settings";
+import type {
+  Task,
+  Role,
+  TaskPriority,
+  RoundRecurrence,
+  CompletionType,
+  TaskType,
+  RoleFilter,
+} from "@/types";
 
 const ALL_TASKS: Task[] = [
   // --- TEAM LEADER TASKS ---
@@ -350,31 +368,82 @@ const ALL_TASKS: Task[] = [
 
 interface TasksContextType {
   tasks: Task[];
+  allTasks: Task[];
   addTask: (task: Task) => Promise<void>;
   updateTask: (task: Task) => Promise<void>;
   deleteTask: (taskId: string) => Promise<void>;
+  isLoading: boolean;
+  roleFilter: RoleFilter;
+  setRoleFilter: (role: RoleFilter) => void;
 }
 
 const TasksContext = createContext<TasksContextType | undefined>(undefined);
 
 export const TasksProvider = ({ children }: { children: ReactNode }) => {
-  const { user } = useAppContextAuth();
+  const { user, profile } = useAppContextAuth();
+  const { teamLeader } = useTeamSettings();
   const firestore = useFirestore();
-  const [tasks, setTasks] = useState<Task[]>([]);
+  const [allTasks, setAllTasks] = useState<Task[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [roleFilter, setRoleFilterState] = useState<RoleFilter>("All");
+  const previousCanViewAllRoles = useRef(false);
 
   const tasksColRef = useMemoFirebase(() => {
     if (!user || !firestore) return null;
     return collection(firestore, "tasks");
   }, [user, firestore]);
 
+  const canViewAllRoles = useMemo(() => {
+    if (!profile) return false;
+    return (
+      profile.id === teamLeader ||
+      profile.id === "instructor" ||
+      profile.name === "Instructor"
+    );
+  }, [profile, teamLeader]);
+
+  useEffect(() => {
+    if (!profile) {
+      setRoleFilterState("All");
+      previousCanViewAllRoles.current = false;
+      return;
+    }
+
+    if (canViewAllRoles) {
+      if (!previousCanViewAllRoles.current) {
+        setRoleFilterState("All");
+      }
+    } else {
+      setRoleFilterState(profile.name as RoleFilter);
+    }
+
+    previousCanViewAllRoles.current = canViewAllRoles;
+  }, [profile, canViewAllRoles]);
+
+  const applyRoleFilter = useCallback(
+    (next: RoleFilter) => {
+      if (!profile) {
+        setRoleFilterState(next);
+        return;
+      }
+
+      if (!canViewAllRoles) {
+        setRoleFilterState(profile.name as RoleFilter);
+        return;
+      }
+
+      setRoleFilterState(next);
+    },
+    [canViewAllRoles, profile]
+  );
+
   useEffect(() => {
     if (!tasksColRef) {
-      setTasks([]);
+      setAllTasks([]);
       setIsLoading(false);
       return;
     }
-    
+
     setIsLoading(true);
 
     const unsubscribe = onSnapshot(tasksColRef, async (querySnapshot) => {
@@ -387,7 +456,7 @@ export const TasksProvider = ({ children }: { children: ReactNode }) => {
           batch.set(taskDocRef, task);
         });
         await batch.commit().then(() => {
-            setTasks(ALL_TASKS);
+            setAllTasks(ALL_TASKS);
             setIsLoading(false);
         }).catch(error => {
           const contextualError = new FirestorePermissionError({
@@ -403,23 +472,34 @@ export const TasksProvider = ({ children }: { children: ReactNode }) => {
         // A more robust solution would be to diff the tasks.
         if (dbTasks.length !== ALL_TASKS.length) {
             console.log("Task mismatch detected, re-seeding database...");
-             const batch = writeBatch(firestore);
-            // First, delete existing tasks
-            const existingTasksSnapshot = await getDocs(tasksColRef);
-            existingTasksSnapshot.forEach(doc => {
-                batch.delete(doc.ref);
-            });
-            // Then, add the new tasks
-            ALL_TASKS.forEach((task) => {
-              const taskDocRef = doc(firestore, "tasks", task.id);
-              batch.set(taskDocRef, task);
-            });
-            await batch.commit();
-            setTasks(ALL_TASKS);
+            const batch = writeBatch(firestore);
+            try {
+              const existingTasksSnapshot = await getDocs(tasksColRef);
+              existingTasksSnapshot.forEach(doc => {
+                  batch.delete(doc.ref);
+              });
+
+              ALL_TASKS.forEach((task) => {
+                const taskDocRef = doc(firestore, "tasks", task.id);
+                batch.set(taskDocRef, task);
+              });
+
+              await batch.commit();
+              setAllTasks(ALL_TASKS);
+            } catch (error) {
+              const contextualError = new FirestorePermissionError({
+                path: 'tasks',
+                operation: 'write',
+              });
+              errorEmitter.emit('permission-error', contextualError);
+              setAllTasks(dbTasks);
+            } finally {
+              setIsLoading(false);
+            }
         } else {
-             setTasks(dbTasks);
+             setAllTasks(dbTasks);
+             setIsLoading(false);
         }
-        setIsLoading(false);
       }
     },
     (error: FirestoreError) => {
@@ -428,12 +508,17 @@ export const TasksProvider = ({ children }: { children: ReactNode }) => {
             operation: 'list',
         });
         errorEmitter.emit('permission-error', contextualError);
-        setTasks([]); // Fallback to empty array on error
+        setAllTasks([]); // Fallback to empty array on error
         setIsLoading(false);
     });
 
     return () => unsubscribe();
   }, [tasksColRef, firestore]);
+
+  const roleFilteredTasks = useMemo(() => {
+    if (roleFilter === "All") return allTasks;
+    return allTasks.filter(task => task.role === roleFilter);
+  }, [allTasks, roleFilter]);
 
   const addTask = async (task: Task) => {
     if (!firestore) return;
@@ -459,7 +544,16 @@ export const TasksProvider = ({ children }: { children: ReactNode }) => {
     });
   };
   
-  const value = { tasks, addTask, updateTask, deleteTask };
+  const value = {
+    tasks: roleFilteredTasks,
+    allTasks,
+    addTask,
+    updateTask,
+    deleteTask,
+    isLoading,
+    roleFilter,
+    setRoleFilter: applyRoleFilter,
+  };
 
   return (
     <TasksContext.Provider value={value}>

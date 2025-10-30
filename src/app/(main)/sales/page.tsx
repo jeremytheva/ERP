@@ -2,9 +2,8 @@
 "use client";
 
 import { useMemo } from "react";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { TrendingUp, DollarSign, Percent } from "lucide-react";
-import { InteractiveTaskCard } from '@/components/tasks/interactive-task-card';
+import { TaskGroup } from "@/components/tasks/task-group";
 import { useAuth } from '@/hooks/use-auth';
 import { useTasks } from '@/hooks/use-tasks';
 import { useGameState } from '@/hooks/use-game-data';
@@ -15,7 +14,7 @@ import { useTaskNavigation } from "@/context/task-navigation-context";
 
 export default function SalesPage() {
     const { profile } = useAuth();
-    const { tasks, updateTask } = useTasks();
+    const { tasks, allTasks, updateTask } = useTasks();
     const { gameState } = useGameState();
     const { activeTaskId, openedTaskId, setOpenedTaskId, getTaskRef } = useTaskNavigation();
     
@@ -66,28 +65,19 @@ export default function SalesPage() {
             
              <SalesChart history={gameState.kpiHistory} />
             
-             <Card>
-                <CardHeader>
-                    <CardTitle className="font-headline text-3xl">Market Analysis (ZMARKET)</CardTitle>
-                    <CardDescription>Extract key market data from ZMARKET to drive pricing decisions.</CardDescription>
-                </CardHeader>
-                <CardContent className="space-y-2">
-                    {marketAnalysisTasks.map((task, index) => (
-                        <div key={task.id} className="relative pt-6">
-                            <InteractiveTaskCard
-                                ref={getTaskRef(task.id)}
-                                task={task}
-                                allTasks={tasks}
-                                isActive={openedTaskId === task.id}
-                                isCurrent={activeTaskId === task.id}
-                                onToggle={() => setOpenedTaskId(openedTaskId === task.id ? null : task.id)}
-                                onUpdate={handleTaskUpdate}
-                                onFindNext={(id) => handleFindNextTask(id, marketAnalysisTasks)}
-                            />
-                        </div>
-                    ))}
-                </CardContent>
-            </Card>
+            <TaskGroup
+                title="Market Analysis (ZMARKET)"
+                description="Extract key market data from ZMARKET to drive pricing decisions."
+                tasks={marketAnalysisTasks}
+                allTasks={allTasks}
+                currentRound={currentRound}
+                openedTaskId={openedTaskId}
+                setOpenedTaskId={setOpenedTaskId}
+                activeTaskId={activeTaskId}
+                getTaskRef={getTaskRef}
+                onUpdate={handleTaskUpdate}
+                onFindNext={handleFindNextTask}
+            />
         </div>
     )
 }

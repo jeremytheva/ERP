@@ -16,12 +16,26 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "
 import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
 import type { Task, TaskDataField, TaskPriority, GameState } from "@/types";
-import { Clock, Code, ChevronDown, CheckCircle, Circle, AlertTriangle, Info, SkipForward, Sparkles, Loader2 } from "lucide-react";
+import {
+  Clock,
+  Code,
+  ChevronDown,
+  CheckCircle,
+  Circle,
+  AlertTriangle,
+  Info,
+  SkipForward,
+  Loader2,
+  CalendarDays,
+  Repeat2,
+  AlertCircle,
+} from "lucide-react";
 import { Separator } from "../ui/separator";
 import { Card } from "../ui/card";
 import { suggestOptimizedTaskInputsAction } from "@/lib/actions";
 import { useGameState } from "@/hooks/use-game-data";
 import { useToast } from "@/hooks/use-toast";
+import { getTaskStatusMeta, type TaskDueStatus } from "@/lib/task-utils";
 
 interface InteractiveTaskCardProps {
   task: Task;
@@ -78,6 +92,16 @@ export const InteractiveTaskCard = React.forwardRef<HTMLDivElement, InteractiveT
     const isCompleted = task.completed;
     const dependencies = task.dependencyIDs?.map(depId => allTasks.find(t => t.id === depId)).filter(Boolean) as Task[] | undefined;
     const areDependenciesMet = !dependencies || dependencies.every(dep => dep.completed);
+    const currentRound = gameState.kpiHistory[gameState.kpiHistory.length - 1]?.round || 1;
+    const statusMeta = getTaskStatusMeta(task, allTasks, currentRound);
+
+    const statusBadgeClasses: Record<TaskDueStatus, string> = {
+        overdue: "bg-destructive/10 text-destructive border-destructive/20",
+        due: "bg-primary/10 text-primary border-primary/20",
+        blocked: "bg-amber-500/10 text-amber-500 border-amber-500/20",
+        upcoming: "bg-muted text-muted-foreground border-border",
+        completed: "bg-emerald-500/10 text-emerald-600 border-emerald-500/20",
+    };
     
     const hasAiRationale = task.dataFields?.some(df => df.aiRationale);
 
@@ -164,17 +188,26 @@ export const InteractiveTaskCard = React.forwardRef<HTMLDivElement, InteractiveT
       >
         <Collapsible open={isActive} onOpenChange={onToggle}>
           <CollapsibleTrigger asChild>
-            <div className="flex items-center gap-4 p-4 cursor-pointer">
-              <div
-                onClick={(e) => {
-                  e.preventDefault();
-                  e.stopPropagation();
-                  handleMarkComplete(!task.completed);
-                }}
-              >
-                {completionIcon(task)}
-              </div>
-              <div className="flex-1">
+              <div className="flex flex-col gap-4 p-4 cursor-pointer sm:flex-row sm:items-center">
+                <div
+                  onClick={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    handleMarkComplete(!task.completed);
+                  }}
+                >
+                  {completionIcon(task)}
+                </div>
+              <div className="flex-1 space-y-2">
+                <div className="flex flex-wrap items-center gap-2">
+                    <Badge
+                      variant="outline"
+                      className={cn("border", statusBadgeClasses[statusMeta.status])}
+                    >
+                      {statusMeta.label}
+                    </Badge>
+                    <Badge variant={priorityVariant[task.priority]}>{task.priority}</Badge>
+                </div>
                 <p
                   className={cn(
                     "font-semibold",
@@ -183,7 +216,7 @@ export const InteractiveTaskCard = React.forwardRef<HTMLDivElement, InteractiveT
                 >
                   {task.title}
                 </p>
-                <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-muted-foreground mt-1">
+                <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-muted-foreground">
                   <div
                     className="flex items-center gap-1.5"
                     title="Transaction Code"
@@ -199,13 +232,25 @@ export const InteractiveTaskCard = React.forwardRef<HTMLDivElement, InteractiveT
                     <span>{task.estimatedTime} min</span>
                   </div>
                 </div>
+                <div className="grid gap-2 text-xs text-muted-foreground sm:grid-cols-2">
+                  <div className="flex items-center gap-1.5">
+                    <CalendarDays className="h-3.5 w-3.5" />
+                    <span>
+                      Start Round {statusMeta.startRound}
+                    </span>
+                  </div>
+                  <div className="flex items-center gap-1.5">
+                    <Repeat2 className="h-3.5 w-3.5" />
+                    <span>{task.roundRecurrence}</span>
+                  </div>
+                  {task.timeframeConstraint && task.timeframeConstraint !== "None" && (
+                    <div className="flex items-center gap-1.5 sm:col-span-2">
+                      <AlertCircle className="h-3.5 w-3.5" />
+                      <span>{task.timeframeConstraint} Focus</span>
+                    </div>
+                  )}
+                </div>
               </div>
-              <Badge
-                variant={priorityVariant[task.priority]}
-                className="hidden sm:inline-flex"
-              >
-                {task.priority}
-              </Badge>
               <ChevronDown
                 className={cn(
                   "h-5 w-5 transition-transform",

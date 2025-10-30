@@ -21,14 +21,14 @@ interface ContextualTaskCardProps {
 
 export function ContextualTaskCard({ transactionCode, title, description, className }: ContextualTaskCardProps) {
   const { profile } = useAuth();
-  const { tasks, updateTask } = useTasks();
+  const { allTasks, updateTask } = useTasks();
   const { gameState } = useGameState();
 
   const currentRound = gameState.kpiHistory[gameState.kpiHistory.length - 1]?.round || 1;
 
   const relevantTasks = useMemo(() => {
     if (!profile) return [];
-    return tasks.filter(task =>
+    return allTasks.filter(task =>
       task.role === profile.name &&
       task.transactionCode === transactionCode &&
       (
@@ -40,7 +40,7 @@ export function ContextualTaskCard({ transactionCode, title, description, classN
         const priorityOrder = { "Critical": 1, "High": 2, "Medium": 3, "Low": 4 };
         return priorityOrder[a.priority] - priorityOrder[b.priority];
     });
-  }, [tasks, profile, transactionCode, currentRound]);
+  }, [allTasks, profile, transactionCode, currentRound]);
 
   const handleTaskToggle = (task: Task) => {
     updateTask({ ...task, completed: !task.completed });

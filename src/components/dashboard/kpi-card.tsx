@@ -1,7 +1,7 @@
 
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { TooltipProvider, Tooltip, TooltipTrigger, TooltipContent } from "@/components/ui/tooltip";
-import { cn } from "@/lib/utils";
+import { Card, CardContent, CardHeader, CardTitle } from "../ui/card";
+import { TooltipProvider, Tooltip, TooltipTrigger, TooltipContent } from "../ui/tooltip";
+import { cn } from "../../lib/utils";
 import { type LucideIcon } from "lucide-react";
 
 interface KpiCardProps {

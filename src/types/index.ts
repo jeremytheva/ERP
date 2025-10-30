@@ -30,6 +30,33 @@ export type Kpi = {
 export type KpiHistoryEntry = Kpi & { round: number };
 export type KpiHistory = KpiHistoryEntry[];
 
+export type PeerData = {
+  name: string;
+  companyValuation: number;
+  netIncome?: number;
+  cumulativeCO2eEmissions?: number;
+};
+
+export type RoleRoute = "sales" | "procurement" | "production" | "logistics" | "lead";
+
+export type RoleMetricsTable = {
+  title: string;
+  description?: string;
+  columns: string[];
+  rows: Array<Record<string, string | number>>;
+};
+
+export type RoleMetrics = {
+  trend: KpiHistory;
+  peerComparison: PeerData[];
+  tables: RoleMetricsTable[];
+};
+
+export type CompanyMetrics = {
+  id: string;
+  roles: Partial<Record<RoleRoute, RoleMetrics>>;
+};
+
 export type TimerState = {
   timeLeft: number;
   isPaused: boolean;

@@ -7,17 +7,17 @@ import {
   CardHeader,
   CardTitle,
   CardDescription,
-} from "@/components/ui/card";
+} from "../ui/card";
 import {
   ChartContainer,
   ChartTooltip,
   ChartTooltipContent,
   ChartLegend,
   ChartLegendContent,
-} from "@/components/ui/chart";
+} from "../ui/chart";
 import { Area, AreaChart, Bar, BarChart, CartesianGrid, XAxis, YAxis, Line, LineChart, ComposedChart } from "recharts";
-import type { KpiHistory, KpiHistoryEntry } from "@/types";
-import type { ChartConfig } from "@/components/ui/chart"
+import type { KpiHistory, KpiHistoryEntry } from "../../types";
+import type { ChartConfig } from "../ui/chart";
 import { useMemo } from "react";
 
 interface KpiChartsProps {

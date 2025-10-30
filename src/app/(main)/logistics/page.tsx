@@ -10,7 +10,7 @@ import { useAuth } from '@/hooks/use-auth';
 import { useTasks } from '@/hooks/use-tasks';
 import { useGameState } from '@/hooks/use-game-data';
 import type { Task } from "@/types";
-import { KpiCard } from "@/components/dashboard/kpi-card";
+import { KpiCard } from "@/components/kpi-card";
 import { LogisticsChart } from "@/components/dashboard/role-charts/logistics-chart";
 import { useTaskNavigation } from '@/context/task-navigation-context';
 

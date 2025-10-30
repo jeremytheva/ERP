@@ -21,7 +21,7 @@ import { simulateScenarioAction } from "@/lib/actions";
 import { useToast } from "@/hooks/use-toast";
 import type { SimulateScenarioOutput } from "@/ai/flows/simulate-scenario-outcomes";
 import { Loader2, Wand2 } from "lucide-react";
-import { KpiCard } from "../dashboard/kpi-card";
+import { KpiCard } from "@/components/kpi-card";
 import { Target, DollarSign, PiggyBank, Factory } from "lucide-react";
 import { Separator } from "../ui/separator";
 

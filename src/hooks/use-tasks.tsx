@@ -83,7 +83,7 @@ const ALL_TASKS: Task[] = [
     completionType: "Data-Confirmed",
     taskType: "Standard",
     completed: false,
-    dataFields: [{ fieldName: "Setup_Time_Reduction_Investment", dataType: "Currency" }]
+    dataFields: [{ fieldName: "Setup_Time_Reduction_Investment", dataType: "Currency", suggestedValue: null }]
   },
 
   // --- SALES MANAGER TASKS ---
@@ -280,7 +280,7 @@ const ALL_TASKS: Task[] = [
     completionType: "Data-Confirmed",
     taskType: "ERPsim Input Data",
     completed: false,
-    dataFields: [{ fieldName: "Sustainability_Investment_Amount", dataType: "Currency" }]
+    dataFields: [{ fieldName: "Sustainability_Investment_Amount", dataType: "Currency", suggestedValue: null }]
   },
 
   // --- LOGISTICS MANAGER TASKS ---
@@ -314,7 +314,7 @@ const ALL_TASKS: Task[] = [
     completionType: "Data-Confirmed",
     taskType: "ERPsim Input Data",
     completed: false,
-    dataFields: [{ fieldName: "Total_Transfer_Quantity", dataType: "Integer" }]
+    dataFields: [{ fieldName: "Total_Transfer_Quantity", dataType: "Integer", suggestedValue: null }]
   },
   {
     id: "L-3",

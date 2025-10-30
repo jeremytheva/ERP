@@ -83,4 +83,113 @@ export const SuggestOptimizedTaskInputsOutputSchema = z.object({
 });
 export type SuggestOptimizedTaskInputsOutput = z.infer<typeof SuggestOptimizedTaskInputsOutputSchema>;
 
+export const CompetitorLogEntrySchema = z.object({
+    id: z.string(),
+    text: z.string(),
+    author: z.string(),
+    createdAt: z
+        .union([
+            z.date(),
+            z.object({ seconds: z.number(), nanoseconds: z.number() }),
+            z.string(),
+            z.number(),
+            z.null(),
+            z.undefined(),
+        ])
+        .optional(),
+});
+
+export const ScenarioConfigSchema = z.object({
+    name: z.string().min(1),
+    description: z.string().optional(),
+    marketingSpend: z.number().nonnegative(),
+    productionVolume: z.number().nonnegative(),
+});
+export type ScenarioConfig = z.infer<typeof ScenarioConfigSchema>;
+
+export const SimulatedScenarioResultSchema = z.object({
+    predictedCompanyValuation: z.number(),
+    predictedNetIncome: z.number(),
+    predictedInventoryValue: z.number(),
+    predictedTotalEmissions: z.number(),
+});
+export type SimulatedScenarioResult = z.infer<typeof SimulatedScenarioResultSchema>;
+
+const FirestoreTimestampSchema = z
+    .union([
+        z.date(),
+        z.object({ seconds: z.number(), nanoseconds: z.number() }),
+        z.string(),
+        z.number(),
+        z.null(),
+        z.undefined(),
+    ])
+    .optional();
+
+export const StrategyDocumentSchema = z.object({
+    id: z.string(),
+    gameId: z.string(),
+    authorId: z.string(),
+    scenario: ScenarioConfigSchema.extend({
+        gameStateSnapshot: GameStateSchema,
+    }),
+    predictions: SimulatedScenarioResultSchema,
+    recommendations: z.string(),
+    notes: z.string().optional(),
+    status: z.enum(["pending", "complete"]),
+    createdAt: FirestoreTimestampSchema,
+    updatedAt: FirestoreTimestampSchema,
+});
+export type StrategyDocument = z.infer<typeof StrategyDocumentSchema>;
+
+export const SalesScenarioRequestSchema = z.object({
+    gameId: z.string().min(1),
+    authorId: z.string().min(1),
+    scenario: ScenarioConfigSchema,
+    gameState: GameStateSchema,
+    competitorLog: z.array(CompetitorLogEntrySchema).default([]),
+    initialNotes: z.string().optional(),
+});
+export type SalesScenarioRequest = z.infer<typeof SalesScenarioRequestSchema>;
+
+export const SalesScenarioResultSchema = z.object({
+    strategyId: z.string(),
+    predictions: SimulatedScenarioResultSchema,
+    recommendations: z.string(),
+    scenario: ScenarioConfigSchema,
+    optimisticStrategy: StrategyDocumentSchema,
+});
+export type SalesScenarioResult = z.infer<typeof SalesScenarioResultSchema>;
+
+export const StrategyNotesUpdateSchema = z.object({
+    strategyId: z.string().min(1),
+    notes: z.string(),
+    authorId: z.string().min(1),
+});
+export type StrategyNotesUpdate = z.infer<typeof StrategyNotesUpdateSchema>;
+
+export const DebriefReportRequestSchema = z.object({
+    gameId: z.string().min(1),
+    authorId: z.string().min(1),
+    performanceData: z.string().min(1),
+    competitorAnalysis: z.string().min(1),
+    actionItems: z.string().min(1),
+    round: z.number().min(1),
+});
+export type DebriefReportRequest = z.infer<typeof DebriefReportRequestSchema>;
+
+export const DebriefReportDocumentSchema = z.object({
+    id: z.string(),
+    gameId: z.string(),
+    authorId: z.string(),
+    round: z.number(),
+    summaryReport: z.string(),
+    performanceData: z.string(),
+    competitorAnalysis: z.string(),
+    actionItems: z.string(),
+    createdAt: FirestoreTimestampSchema,
+    updatedAt: FirestoreTimestampSchema,
+});
+export type DebriefReportDocument = z.infer<typeof DebriefReportDocumentSchema>;
+
     

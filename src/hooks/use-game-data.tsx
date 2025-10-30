@@ -7,7 +7,9 @@ import { useAuth as useAppContextAuth } from "./use-auth";
 import type { GameState, KpiHistoryEntry } from "@/types";
 import { useFirestore, errorEmitter, FirestorePermissionError, useMemoFirebase } from "@/firebase";
 
-const GAME_ID = "default_game"; // For now, we use a single game document
+import { DEFAULT_GAME_ID } from "@/lib/logic/constants";
+
+const GAME_ID = DEFAULT_GAME_ID; // For now, we use a single game document
 
 const INITIAL_GAME_STATE: GameState = {
   companyValuation: 50000000,

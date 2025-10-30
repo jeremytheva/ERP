@@ -8,16 +8,13 @@ import { DollarSign, Factory, HandCoins, Package, TrendingUp, Ship, Percent, Tar
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
 import { StrategicAdvisor } from "@/components/ai/strategic-advisor";
 import { Lightbulb } from "lucide-react";
-import { useAuth } from "@/hooks/use-auth";
-import { useTeamSettings } from "@/hooks/use-team-settings";
+import { useTeamSettings, TEAM_LEADER_ROLE_ID } from "@/hooks/use-team-settings";
 
 
 export default function DashboardPage() {
   const { gameState } = useGameState();
-  const { profile } = useAuth();
-  const { teamLeader } = useTeamSettings();
-  
-  const isTeamLeader = profile?.id === teamLeader;
+  const { isRoleVisible } = useTeamSettings();
+  const showStrategicAdvisor = isRoleVisible(TEAM_LEADER_ROLE_ID);
 
   return (
     <div className="space-y-6">
@@ -72,7 +69,7 @@ export default function DashboardPage() {
             <KpiCharts history={gameState.kpiHistory} />
         </div>
          <div className="lg:col-span-1">
-            {isTeamLeader && (
+            {showStrategicAdvisor && (
               <Card>
                   <CardHeader>
                       <div className="flex items-center gap-3">

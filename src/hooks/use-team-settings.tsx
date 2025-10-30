@@ -45,11 +45,31 @@ export const TeamSettingsProvider = ({ children }: { children: ReactNode }) => {
 
     const unsubscribe = onSnapshot(settingsDocRef, (docSnap) => {
       if (docSnap.exists()) {
-        const storedRoles = docSnap.data().visibleRoleIds as string[] | undefined;
+        const data = docSnap.data();
+        const storedRoles = data.visibleRoleIds as string[] | undefined;
+
         if (storedRoles && Array.isArray(storedRoles)) {
           setVisibleRoleIds(storedRoles);
         } else {
-          setVisibleRoleIds(DEFAULT_VISIBLE_ROLE_IDS);
+          const shouldIncludeTeamLeader = Boolean(data.teamLeader);
+          const fallbackRoles = new Set(DEFAULT_VISIBLE_ROLE_IDS);
+
+          if (shouldIncludeTeamLeader) {
+            fallbackRoles.add(TEAM_LEADER_ROLE_ID);
+          }
+
+          const nextVisibleRoleIds = Array.from(fallbackRoles);
+          setVisibleRoleIds(nextVisibleRoleIds);
+
+          const migrationData = { visibleRoleIds: nextVisibleRoleIds };
+          setDoc(settingsDocRef, migrationData, { merge: true }).catch(() => {
+            const contextualError = new FirestorePermissionError({
+              path: settingsDocRef.path,
+              operation: 'update',
+              requestResourceData: migrationData,
+            });
+            errorEmitter.emit('permission-error', contextualError);
+          });
         }
       } else {
         // Initialize settings document if it doesn't exist

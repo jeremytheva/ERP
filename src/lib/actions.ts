@@ -17,10 +17,8 @@ import {
   answerQuestionsWithAICopilot,
   AnswerQuestionsWithAICopilotInput,
 } from "@/ai/flows/answer-questions-with-ai-copilot";
-import {
-    suggestOptimizedTaskInputs,
-    SuggestOptimizedTaskInputsInput,
-} from "@/ai/flows/suggest-optimized-task-inputs";
+import { suggestOptimizedTaskInputs } from "@/ai/flows/suggest-optimized-task-inputs";
+import type { SuggestOptimizedTaskInputsInput } from "@/lib/zod-schemas";
 
 export const simulateScenarioAction = async (
   input: SimulateScenarioInput

@@ -17,53 +17,16 @@ import {
   SidebarGroupLabel,
 } from "@/components/ui/sidebar";
 import { Button } from "@/components/ui/button";
-import { Bot, LayoutDashboard, Database, FileText, ListTodo, Users, Settings, Briefcase, ShoppingCart, Factory, Truck, BarChart2, Crown, Package, Leaf, Lightbulb } from "lucide-react";
+import { Bot, Settings } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
 import { useTeamSettings } from "@/hooks/use-team-settings";
 import { useMemo } from "react";
-import type { Role } from "@/types";
-
-const salesMenuItems = [
-  { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
-  { href: "/key-metrics", label: "Key Metrics", icon: BarChart2 },
-  { href: "/live-inventory", label: "Inventory/Stock Status (LIT)", icon: FileText },
-  { href: "/sales", label: "Market Analysis (ZMARKET)", icon: BarChart2 },
-  { href: "/debriefing", label: "Forecasting (MD61)", icon: FileText },
-  { href: "/strategic-advisor", label: "Pricing (VK32)", icon: Lightbulb },
-  { href: "/scenario-planning", label: "Marketing (ZADS)", icon: Factory },
-  { href: "/master-data", label: "Master Data", icon: Database },
-];
-
-const productionMenuItems = [
-    { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
-    { href: "/key-metrics", label: "Key Metrics", icon: BarChart2 },
-    { href: "/production", label: "Production Planning", icon: Factory },
-    { href: "/live-inventory", label: "RM Stock Status (LIT)", icon: FileText },
-    { href: "/master-data", label: "Master Data", icon: Database },
-];
-
-const procurementMenuItems = [
-    { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
-    { href: "/key-metrics", label: "Key Metrics", icon: BarChart2 },
-    { href: "/procurement", label: "Sourcing & Ordering", icon: ShoppingCart },
-    { href: "/live-inventory", label: "RM Stock Status (LIT)", icon: FileText },
-    { href: "/master-data", label: "Master Data", icon: Database },
-];
-
-const logisticsMenuItems = [
-    { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
-    { href: "/key-metrics", label: "Key Metrics", icon: BarChart2 },
-    { href: "/logistics", label: "Liquidity & Transfers", icon: Truck },
-    { href: "/master-data", label: "Master Data", icon: Database },
-];
-
-const teamLeaderMenuItems = [
-  { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
-  { href: "/key-metrics", label: "Key Metrics", icon: BarChart2 },
-  { href: "/strategic-advisor", label: "Analysis & Strategy", icon: Lightbulb },
-  { href: "/debriefing", label: "Investment Decisions", icon: FileText },
-  { href: "/competitor-log", label: "Competitor Log", icon: Users },
-];
+import { getRoleNavigationItems } from "@/lib/navigation";
+import {
+  ROLE_DEFINITIONS,
+  TEAM_LEADER_DEFINITION,
+  isRoleSlug,
+} from "@/lib/firebase/firestore-schema";
 
 
 export function MainSidebar() {
@@ -71,42 +34,50 @@ export function MainSidebar() {
   const { profile } = useAuth();
   const { teamLeader } = useTeamSettings();
 
-  const isTeamLeader = profile?.id === teamLeader;
+  const isTeamLeader = profile?.id && profile.id === teamLeader;
 
   const menuItems = useMemo(() => {
-    if (isTeamLeader) return teamLeaderMenuItems;
-    switch (profile?.name as Role) {
-        case "Sales": return salesMenuItems;
-        case "Production": return productionMenuItems;
-        case "Procurement": return procurementMenuItems;
-        case "Logistics": return logisticsMenuItems;
-        default: return [];
+    if (isTeamLeader) {
+      return getRoleNavigationItems(TEAM_LEADER_DEFINITION.permittedComponents);
     }
+
+    if (profile?.id && isRoleSlug(profile.id)) {
+      return getRoleNavigationItems(ROLE_DEFINITIONS[profile.id].permittedComponents);
+    }
+
+    return [];
+  }, [profile, isTeamLeader]);
+
+  const homeHref = useMemo(() => {
+    if (isTeamLeader) {
+      return TEAM_LEADER_DEFINITION.defaultPath;
+    }
+
+    if (profile?.id && isRoleSlug(profile.id)) {
+      return ROLE_DEFINITIONS[profile.id].defaultPath;
+    }
+
+    return "/dashboard";
   }, [profile, isTeamLeader]);
 
   const isActive = (href: string) => {
-    // Special case for team leader on debriefing page
-    if (isTeamLeader && pathname === '/debriefing' && href === '/debriefing') {
-        return true;
+    if (pathname === href) {
+      return true;
     }
-     // For other roles, a direct match is fine
-    if (!isTeamLeader && pathname === href) {
-        return true;
+
+    if (isTeamLeader && href !== "/dashboard" && pathname.startsWith(href)) {
+      return true;
     }
-    // For team leader, we want to highlight the parent route
-    if (isTeamLeader && href !== '/dashboard' && pathname.startsWith(href)) {
-        return true;
-    }
-    
-    return pathname === href;
-  }
+
+    return false;
+  };
 
   return (
     <Sidebar collapsible="icon" className="border-r">
       <SidebarHeader className="flex items-center justify-between">
          <div className="flex items-center gap-2">
             <Button variant="ghost" size="icon" className="h-10 w-10 text-primary" asChild>
-                <Link href="/dashboard">
+                <Link href={homeHref}>
                     <Bot size={24}/>
                 </Link>
             </Button>
@@ -120,36 +91,36 @@ export function MainSidebar() {
             {menuItems.map(({ href, label, icon: Icon }) => {
               return (
                 <SidebarMenuItem key={label}>
-                    <Link href={href} passHref>
-                    <SidebarMenuButton
-                        as="a"
-                        isActive={isActive(href)}
-                        tooltip={{ children: label, side: "right", align:"center" }}
-                        className="justify-start"
-                    >
-                        <Icon />
-                        <span>{label}</span>
-                    </SidebarMenuButton>
+                  <SidebarMenuButton
+                    asChild
+                    isActive={isActive(href)}
+                    tooltip={{ children: label, side: "right", align: "center" }}
+                    className="justify-start"
+                  >
+                    <Link href={href}>
+                      <Icon />
+                      <span>{label}</span>
                     </Link>
+                  </SidebarMenuButton>
                 </SidebarMenuItem>
-              )
+              );
             })}
         </SidebarGroup>
         
         <SidebarSeparator />
         
         <SidebarMenuItem>
-            <Link href="/settings" passHref>
-                <SidebarMenuButton
-                as="a"
-                isActive={pathname.startsWith("/settings")}
-                tooltip={{ children: "Settings", side: "right", align:"center" }}
-                className="justify-start"
-                >
-                <Settings />
-                <span>Settings</span>
-                </SidebarMenuButton>
+          <SidebarMenuButton
+            asChild
+            isActive={pathname.startsWith("/settings")}
+            tooltip={{ children: "Settings", side: "right", align: "center" }}
+            className="justify-start"
+          >
+            <Link href="/settings">
+              <Settings />
+              <span>Settings</span>
             </Link>
+          </SidebarMenuButton>
         </SidebarMenuItem>
         
       </SidebarMenu>

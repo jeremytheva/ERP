@@ -1,5 +1,6 @@
 
 import { Timestamp } from "firebase/firestore";
+import type { LucideIcon } from "lucide-react";
 
 export type UserProfile = {
   id: string;
@@ -72,6 +73,77 @@ export type TimeframeConstraint = "None" | "StartPhase" | "MidPhase" | "EndPhase
 export type CompletionType = "Manual-Tick" | "Data-Confirmed" | "System-Validated";
 export type TaskType = "ERPsim Input Data" | "ERPsim Gather Data" | "Standard";
 export type Role = "Procurement" | "Production" | "Logistics" | "Sales" | "Team Leader";
+
+export type RoleRoute = "sales" | "procurement" | "production" | "logistics" | "lead";
+
+export type MetricFormat = "currency" | "number" | "percent";
+
+export type MetricTrendPoint = {
+  round: number;
+  value: number;
+};
+
+export type PeerMetricPoint = {
+  name: string;
+  value: number;
+};
+
+export type PeerData = PeerMetricPoint;
+
+export interface CompanyMetricKpi {
+  id: string;
+  label: string;
+  value: number;
+  format?: MetricFormat;
+  unit?: string;
+  tooltip?: string;
+  icon?: string;
+}
+
+export interface CompanyMetricTrendSeries {
+  id: string;
+  label: string;
+  format?: MetricFormat;
+  color?: string;
+  data: MetricTrendPoint[];
+}
+
+export interface CompanyMetricPeerSeries {
+  label: string;
+  format?: MetricFormat;
+  highlightName?: string;
+  data: PeerMetricPoint[];
+}
+
+export interface CompanyMetricTableColumn {
+  key: string;
+  label: string;
+  format?: MetricFormat;
+  unit?: string;
+}
+
+export interface CompanyMetricTable {
+  title?: string;
+  caption?: string;
+  description?: string;
+  columns: CompanyMetricTableColumn[];
+  rows: Array<Record<string, string | number>>;
+}
+
+export interface CompanyMetricsDocument {
+  role: RoleRoute;
+  kpis: CompanyMetricKpi[];
+  trendSeries?: CompanyMetricTrendSeries[];
+  trendTitle?: string;
+  trendDescription?: string;
+  peerComparison?: CompanyMetricPeerSeries;
+  peerTitle?: string;
+  peerDescription?: string;
+  table?: CompanyMetricTable;
+  updatedAt?: Timestamp | Date | string | null;
+}
+
+export type DashboardKpi = CompanyMetricKpi & { icon?: LucideIcon };
 
 
 export type TaskDataField = {

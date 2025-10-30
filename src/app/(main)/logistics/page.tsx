@@ -3,15 +3,14 @@
 
 import { useMemo } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Banknote, PackageOpen, HandCoins, Warehouse, ShipWheel } from "lucide-react";
+import { Banknote, PackageOpen, Warehouse, ShipWheel } from "lucide-react";
 import { Truck } from 'lucide-react';
 import { InteractiveTaskCard } from '@/components/tasks/interactive-task-card';
 import { useAuth } from '@/hooks/use-auth';
 import { useTasks } from '@/hooks/use-tasks';
 import { useGameState } from '@/hooks/use-game-data';
 import type { Task } from "@/types";
-import { KpiCard } from "@/components/dashboard/kpi-card";
-import { LogisticsChart } from "@/components/dashboard/role-charts/logistics-chart";
+import { LogisticsDashboard } from "@/components/dashboard/role-dashboards";
 import { useTaskNavigation } from '@/context/task-navigation-context';
 
 export default function LogisticsPage() {
@@ -70,13 +69,7 @@ export default function LogisticsPage() {
 
     return (
         <div className="space-y-6">
-            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-                <KpiCard title="Cash Balance" value={gameState.cashBalance} icon={HandCoins} format="currency" tooltip="The total amount of cash your company has on hand." />
-                <KpiCard title="On-Time Delivery Rate" value={gameState.onTimeDeliveryRate} icon={ShipWheel} format="percent" tooltip="The percentage of orders delivered to customers on time." />
-                <KpiCard title="Warehouse Costs" value={gameState.warehouseCosts} icon={Warehouse} format="currency" tooltip="Total costs associated with storing inventory." />
-            </div>
-            
-            <LogisticsChart history={gameState.kpiHistory} />
+            <LogisticsDashboard />
 
             <Card>
                 <CardHeader>

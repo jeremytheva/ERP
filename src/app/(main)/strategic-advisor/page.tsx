@@ -11,6 +11,7 @@ import { useGameState } from '@/hooks/use-game-data';
 import type { Task, Role } from "@/types";
 import { useTeamSettings } from "@/hooks/use-team-settings";
 import { useTaskNavigation } from "@/context/task-navigation-context";
+import { ExecutiveDashboard } from "@/components/dashboard/role-dashboards";
 
 export default function StrategicAdvisorPage() {
     const { profile } = useAuth();
@@ -79,6 +80,8 @@ export default function StrategicAdvisorPage() {
 
     return (
         <div className="space-y-6">
+            {isTeamLeader ? <ExecutiveDashboard /> : null}
+
             {isTeamLeader && strategyTasks.length > 0 && (
                  <Card>
                     <CardHeader>

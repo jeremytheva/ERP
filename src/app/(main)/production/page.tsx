@@ -2,9 +2,9 @@
 "use client";
 
 import { useMemo } from 'react';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { FileBox, Wrench, PackageCheck, FileSignature, Factory, RefreshCw, Package } from "lucide-react";
-import { InteractiveTaskCard } from '@/components/tasks/interactive-task-card';
+import { TaskGroup } from "@/components/tasks/task-group";
 import { useAuth } from '@/hooks/use-auth';
 import { useTasks } from '@/hooks/use-tasks';
 import { useGameState } from '@/hooks/use-game-data';
@@ -107,118 +107,65 @@ export default function ProductionPage() {
                 </CardHeader>
             </Card>
 
-            {planningTasks.length > 0 && (
-                <Card>
-                    <CardHeader>
-                        <div className="flex items-center gap-3">
-                            <FileBox className="h-6 w-6" />
-                            <CardTitle>Planning & Capacity</CardTitle>
-                        </div>
-                        <CardDescription>Confirm capacity, set lot size strategy, and check for overstock.</CardDescription>
-                    </CardHeader>
-                    <CardContent className="space-y-2">
-                        {planningTasks.map(task => (
-                             <div key={task.id} className="relative pt-6">
-                                <InteractiveTaskCard
-                                    ref={getTaskRef(task.id)}
-                                    task={task}
-                                    allTasks={tasks}
-                                    isActive={openedTaskId === task.id}
-                                    isCurrent={activeTaskId === task.id}
-                                    onToggle={() => setOpenedTaskId(openedTaskId === task.id ? null : task.id)}
-                                    onUpdate={handleTaskUpdate}
-                                    onFindNext={(id) => handleFindNextTask(id, planningTasks)}
-                                />
-                             </div>
-                        ))}
-                    </CardContent>
-                </Card>
-            )}
-            
+            <TaskGroup
+                title="Planning & Capacity"
+                description="Confirm capacity, set lot size strategy, and check for overstock."
+                tasks={planningTasks}
+                allTasks={tasks}
+                currentRound={currentRound}
+                openedTaskId={openedTaskId}
+                setOpenedTaskId={setOpenedTaskId}
+                activeTaskId={activeTaskId}
+                getTaskRef={getTaskRef}
+                onUpdate={handleTaskUpdate}
+                onFindNext={handleFindNextTask}
+                titleIcon={<FileBox className="h-6 w-6" />}
+            />
 
-            {mrpTasks.length > 0 && (
-                 <Card>
-                    <CardHeader>
-                        <div className="flex items-center gap-3">
-                            <Wrench className="h-6 w-6" />
-                            <CardTitle>MRP (MD01)</CardTitle>
-                        </div>
-                        <CardDescription>Execute the MRP run after the forecast is finalized.</CardDescription>
-                    </CardHeader>
-                    <CardContent className="space-y-2">
-                        {mrpTasks.map(task => (
-                             <div key={task.id} className="relative pt-6">
-                                <InteractiveTaskCard
-                                    ref={getTaskRef(task.id)}
-                                    task={task}
-                                    allTasks={tasks}
-                                    isActive={openedTaskId === task.id}
-                                    isCurrent={activeTaskId === task.id}
-                                    onToggle={() => setOpenedTaskId(openedTaskId === task.id ? null : task.id)}
-                                    onUpdate={handleTaskUpdate}
-                                    onFindNext={(id) => handleFindNextTask(id, mrpTasks)}
-                                />
-                             </div>
-                        ))}
-                    </CardContent>
-                </Card>
-            )}
-            
-            {releaseTasks.length > 0 && (
-                <Card>
-                    <CardHeader>
-                        <div className="flex items-center gap-3">
-                            <PackageCheck className="h-6 w-6" />
-                            <CardTitle>Production Release (CO41)</CardTitle>
-                        </div>
-                        <CardDescription>Final step to release production orders. The output will be logged to the LIT.</CardDescription>
-                    </CardHeader>
-                    <CardContent className="space-y-2">
-                        {releaseTasks.map(task => (
-                             <div key={task.id} className="relative pt-6">
-                                <InteractiveTaskCard
-                                    ref={getTaskRef(task.id)}
-                                    task={task}
-                                    allTasks={tasks}
-                                    isActive={openedTaskId === task.id}
-                                    isCurrent={activeTaskId === task.id}
-                                    onToggle={() => setOpenedTaskId(openedTaskId === task.id ? null : task.id)}
-                                    onUpdate={handleTaskUpdate}
-                                    onFindNext={(id) => handleFindNextTask(id, releaseTasks)}
-                                />
-                             </div>
-                        ))}
-                    </CardContent>
-                </Card>
-            )}
+            <TaskGroup
+                title="MRP (MD01)"
+                description="Execute the MRP run after the forecast is finalized."
+                tasks={mrpTasks}
+                allTasks={tasks}
+                currentRound={currentRound}
+                openedTaskId={openedTaskId}
+                setOpenedTaskId={setOpenedTaskId}
+                activeTaskId={activeTaskId}
+                getTaskRef={getTaskRef}
+                onUpdate={handleTaskUpdate}
+                onFindNext={handleFindNextTask}
+                titleIcon={<Wrench className="h-6 w-6" />}
+            />
 
-            {bomTasks.length > 0 && (
-                <Card>
-                    <CardHeader>
-                        <div className="flex items-center gap-3">
-                            <FileSignature className="h-6 w-6" />
-                            <CardTitle>BOM Review (ZCS02)</CardTitle>
-                        </div>
-                        <CardDescription>Track recipe changes for cost or sustainability.</CardDescription>
-                    </CardHeader>
-                    <CardContent className="space-y-2">
-                        {bomTasks.map(task => (
-                             <div key={task.id} className="relative pt-6">
-                                 <InteractiveTaskCard
-                                    ref={getTaskRef(task.id)}
-                                    task={task}
-                                    allTasks={tasks}
-                                    isActive={openedTaskId === task.id}
-                                    isCurrent={activeTaskId === task.id}
-                                    onToggle={() => setOpenedTaskId(openedTaskId === task.id ? null : task.id)}
-                                    onUpdate={handleTaskUpdate}
-                                    onFindNext={(id) => handleFindNextTask(id, bomTasks)}
-                                />
-                             </div>
-                        ))}
-                    </CardContent>
-                </Card>
-            )}
+            <TaskGroup
+                title="Production Release (CO41)"
+                description="Final step to release production orders. The output will be logged to the LIT."
+                tasks={releaseTasks}
+                allTasks={tasks}
+                currentRound={currentRound}
+                openedTaskId={openedTaskId}
+                setOpenedTaskId={setOpenedTaskId}
+                activeTaskId={activeTaskId}
+                getTaskRef={getTaskRef}
+                onUpdate={handleTaskUpdate}
+                onFindNext={handleFindNextTask}
+                titleIcon={<PackageCheck className="h-6 w-6" />}
+            />
+
+            <TaskGroup
+                title="BOM Review (ZCS02)"
+                description="Track recipe changes for cost or sustainability."
+                tasks={bomTasks}
+                allTasks={tasks}
+                currentRound={currentRound}
+                openedTaskId={openedTaskId}
+                setOpenedTaskId={setOpenedTaskId}
+                activeTaskId={activeTaskId}
+                getTaskRef={getTaskRef}
+                onUpdate={handleTaskUpdate}
+                onFindNext={handleFindNextTask}
+                titleIcon={<FileSignature className="h-6 w-6" />}
+            />
         </div>
     );
 }

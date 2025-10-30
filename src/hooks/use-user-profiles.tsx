@@ -48,13 +48,19 @@ export const UserProfilesProvider = ({ children }: { children: ReactNode }) => {
         const missingProfiles = USER_PROFILES.filter(mockProfile => !firestoreProfileIds.has(mockProfile.id));
 
         if (missingProfiles.length > 0 && querySnapshot.docs.length < USER_PROFILES.length) {
+            const combinedProfilesMap = new Map<string, UserProfile>();
+            firestoreProfiles.forEach(profile => combinedProfilesMap.set(profile.id, profile));
+            missingProfiles.forEach(profile => combinedProfilesMap.set(profile.id, profile));
+            setProfiles(Array.from(combinedProfilesMap.values()));
+            setLoading(false);
+
             const batch = writeBatch(firestore);
             missingProfiles.forEach(profile => {
                 const profileDocRef = doc(firestore, "users", profile.id);
                 batch.set(profileDocRef, profile);
             });
             // Non-blocking commit
-            batch.commit().catch(error => {
+            batch.commit().catch(() => {
                  const contextualError = new FirestorePermissionError({
                     path: 'users',
                     operation: 'write',

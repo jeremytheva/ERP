@@ -2,10 +2,10 @@
 "use client";
 
 import { useMemo } from 'react';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Banknote, PackageOpen, HandCoins, Warehouse, ShipWheel } from "lucide-react";
 import { Truck } from 'lucide-react';
-import { InteractiveTaskCard } from '@/components/tasks/interactive-task-card';
+import { TaskGroup } from "@/components/tasks/task-group";
 import { useAuth } from '@/hooks/use-auth';
 import { useTasks } from '@/hooks/use-tasks';
 import { useGameState } from '@/hooks/use-game-data';
@@ -90,61 +90,35 @@ export default function LogisticsPage() {
                 </CardHeader>
             </Card>
             
-            {monitoringTasks.length > 0 && (
-                <Card>
-                    <CardHeader>
-                        <div className="flex items-center gap-3">
-                            <Banknote className="h-6 w-6" />
-                            <CardTitle>Liquidity & Delivery Monitoring</CardTitle>
-                        </div>
-                         <CardDescription>Monitor current Cash Balance (ZFF7B) and track incoming raw material deliveries from ZME2N.</CardDescription>
-                    </CardHeader>
-                    <CardContent className="space-y-2">
-                        {monitoringTasks.map(task => (
-                            <div key={task.id} className="relative pt-6">
-                                <InteractiveTaskCard
-                                    ref={getTaskRef(task.id)}
-                                    task={task}
-                                    allTasks={tasks}
-                                    isActive={openedTaskId === task.id}
-                                    isCurrent={activeTaskId === task.id}
-                                    onToggle={() => setOpenedTaskId(openedTaskId === task.id ? null : task.id)}
-                                    onUpdate={handleTaskUpdate}
-                                    onFindNext={(id) => handleFindNextTask(id, monitoringTasks)}
-                                />
-                            </div>
-                        ))}
-                    </CardContent>
-                </Card>
-            )}
-            
-            {stockTransferTasks.length > 0 && (
-                <Card>
-                    <CardHeader>
-                         <div className="flex items-center gap-3">
-                            <PackageOpen className="h-6 w-6" />
-                            <CardTitle>Stock Transfer (ZMB1B)</CardTitle>
-                        </div>
-                        <CardDescription>Calculate and plan stock transfers to DCs using ZMB1B. The Final Transfer Qty will be pushed to the LIT.</CardDescription>
-                    </CardHeader>
-                    <CardContent className="space-y-2">
-                        {stockTransferTasks.map(task => (
-                            <div key={task.id} className="relative pt-6">
-                                <InteractiveTaskCard
-                                    ref={getTaskRef(task.id)}
-                                    task={task}
-                                    allTasks={tasks}
-                                    isActive={openedTaskId === task.id}
-                                    isCurrent={activeTaskId === task.id}
-                                    onToggle={() => setOpenedTaskId(openedTaskId === task.id ? null : task.id)}
-                                    onUpdate={handleTaskUpdate}
-                                    onFindNext={(id) => handleFindNextTask(id, stockTransferTasks)}
-                                />
-                            </div>
-                        ))}
-                    </CardContent>
-                </Card>
-            )}
+            <TaskGroup
+                title="Liquidity & Delivery Monitoring"
+                description="Monitor current Cash Balance (ZFF7B) and track incoming raw material deliveries from ZME2N."
+                tasks={monitoringTasks}
+                allTasks={tasks}
+                currentRound={currentRound}
+                openedTaskId={openedTaskId}
+                setOpenedTaskId={setOpenedTaskId}
+                activeTaskId={activeTaskId}
+                getTaskRef={getTaskRef}
+                onUpdate={handleTaskUpdate}
+                onFindNext={handleFindNextTask}
+                titleIcon={<Banknote className="h-6 w-6" />}
+            />
+
+            <TaskGroup
+                title="Stock Transfer (ZMB1B)"
+                description="Calculate and plan stock transfers to DCs using ZMB1B. The Final Transfer Qty will be pushed to the LIT."
+                tasks={stockTransferTasks}
+                allTasks={tasks}
+                currentRound={currentRound}
+                openedTaskId={openedTaskId}
+                setOpenedTaskId={setOpenedTaskId}
+                activeTaskId={activeTaskId}
+                getTaskRef={getTaskRef}
+                onUpdate={handleTaskUpdate}
+                onFindNext={handleFindNextTask}
+                titleIcon={<PackageOpen className="h-6 w-6" />}
+            />
         </div>
     );
 }

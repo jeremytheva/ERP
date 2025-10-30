@@ -403,23 +403,34 @@ export const TasksProvider = ({ children }: { children: ReactNode }) => {
         // A more robust solution would be to diff the tasks.
         if (dbTasks.length !== ALL_TASKS.length) {
             console.log("Task mismatch detected, re-seeding database...");
-             const batch = writeBatch(firestore);
-            // First, delete existing tasks
-            const existingTasksSnapshot = await getDocs(tasksColRef);
-            existingTasksSnapshot.forEach(doc => {
-                batch.delete(doc.ref);
-            });
-            // Then, add the new tasks
-            ALL_TASKS.forEach((task) => {
-              const taskDocRef = doc(firestore, "tasks", task.id);
-              batch.set(taskDocRef, task);
-            });
-            await batch.commit();
-            setTasks(ALL_TASKS);
+            const batch = writeBatch(firestore);
+            try {
+              const existingTasksSnapshot = await getDocs(tasksColRef);
+              existingTasksSnapshot.forEach(doc => {
+                  batch.delete(doc.ref);
+              });
+
+              ALL_TASKS.forEach((task) => {
+                const taskDocRef = doc(firestore, "tasks", task.id);
+                batch.set(taskDocRef, task);
+              });
+
+              await batch.commit();
+              setTasks(ALL_TASKS);
+            } catch (error) {
+              const contextualError = new FirestorePermissionError({
+                path: 'tasks',
+                operation: 'write',
+              });
+              errorEmitter.emit('permission-error', contextualError);
+              setTasks(dbTasks);
+            } finally {
+              setIsLoading(false);
+            }
         } else {
              setTasks(dbTasks);
+             setIsLoading(false);
         }
-        setIsLoading(false);
       }
     },
     (error: FirestoreError) => {

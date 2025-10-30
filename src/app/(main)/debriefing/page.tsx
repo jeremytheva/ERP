@@ -16,30 +16,31 @@ export default function DebriefingPage() {
     const { profile } = useAuth();
     const { tasks, updateTask } = useTasks();
     const { gameState } = useGameState();
-    const { teamLeader } = useTeamSettings();
+    const { visibleRoles } = useTeamSettings();
     
     const { activeTaskId, openedTaskId, setOpenedTaskId, getTaskRef } = useTaskNavigation();
 
     const currentRound = gameState.kpiHistory[gameState.kpiHistory.length - 1]?.round || 1;
-    const isTeamLeader = profile?.id === teamLeader;
+    const canViewTeamLeader = visibleRoles.includes("Team Leader");
+    const canViewSales = visibleRoles.length > 0 ? visibleRoles.includes("Sales") : profile?.name === "Sales";
 
     const forecastingTasks = useMemo(() => {
-        if (!profile) return [];
+        if (!canViewSales) return [];
         return tasks.filter(task =>
-            task.role === profile.name &&
+            task.role === "Sales" &&
             task.transactionCode.includes("MD61") &&
              (task.roundRecurrence === "Continuous" || (task.startRound ?? 1) <= currentRound)
         ).sort((a,b) => a.priority.localeCompare(b.priority));
-    }, [tasks, profile, currentRound]);
-    
+    }, [tasks, currentRound, canViewSales]);
+
     const teamLeaderTasks = useMemo(() => {
-        if (!isTeamLeader) return [];
+        if (!canViewTeamLeader) return [];
         return tasks.filter(task =>
             task.role === "Team Leader" &&
             task.transactionCode.includes("ZFB50") && // Investment decisions
             (task.roundRecurrence === "Continuous" || (task.startRound ?? 1) <= currentRound)
         ).sort((a, b) => a.priority.localeCompare(b.priority));
-    }, [tasks, isTeamLeader, currentRound]);
+    }, [tasks, canViewTeamLeader, currentRound]);
 
     const allTasksForPage = useMemo(() => [...teamLeaderTasks, ...forecastingTasks], [teamLeaderTasks, forecastingTasks]);
 
@@ -71,7 +72,7 @@ export default function DebriefingPage() {
 
     return (
         <div className="space-y-6">
-             {isTeamLeader && teamLeaderTasks.length > 0 && (
+             {canViewTeamLeader && teamLeaderTasks.length > 0 && (
                 <Card>
                     <CardHeader>
                         <div className="flex items-center gap-3">

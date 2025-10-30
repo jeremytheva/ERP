@@ -136,7 +136,11 @@
       "type": "object",
       "description": "Stores team-wide settings.",
       "properties": {
-        "teamLeader": {"type": "string"}
+        "visibleRoleIds": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "List of role identifiers that should expose their data in the UI."
+        }
       }
     },
     "CompetitorLogEntry": {

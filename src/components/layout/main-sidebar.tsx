@@ -19,7 +19,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Bot, LayoutDashboard, Database, FileText, ListTodo, Users, Settings, Briefcase, ShoppingCart, Factory, Truck, BarChart2, Crown, Package, Leaf, Lightbulb } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
-import { useTeamSettings } from "@/hooks/use-team-settings";
+import { useTeamSettings, TEAM_LEADER_ROLE_ID } from "@/hooks/use-team-settings";
 import { useMemo } from "react";
 import type { Role } from "@/types";
 
@@ -69,12 +69,12 @@ const teamLeaderMenuItems = [
 export function MainSidebar() {
   const pathname = usePathname();
   const { profile } = useAuth();
-  const { teamLeader } = useTeamSettings();
+  const { isRoleVisible } = useTeamSettings();
 
-  const isTeamLeader = profile?.id === teamLeader;
+  const hasTeamLeaderAccess = isRoleVisible(TEAM_LEADER_ROLE_ID);
 
   const menuItems = useMemo(() => {
-    if (isTeamLeader) return teamLeaderMenuItems;
+    if (hasTeamLeaderAccess) return teamLeaderMenuItems;
     switch (profile?.name as Role) {
         case "Sales": return salesMenuItems;
         case "Production": return productionMenuItems;
@@ -82,22 +82,22 @@ export function MainSidebar() {
         case "Logistics": return logisticsMenuItems;
         default: return [];
     }
-  }, [profile, isTeamLeader]);
+  }, [profile, hasTeamLeaderAccess]);
 
   const isActive = (href: string) => {
     // Special case for team leader on debriefing page
-    if (isTeamLeader && pathname === '/debriefing' && href === '/debriefing') {
+    if (hasTeamLeaderAccess && pathname === '/debriefing' && href === '/debriefing') {
         return true;
     }
      // For other roles, a direct match is fine
-    if (!isTeamLeader && pathname === href) {
+    if (!hasTeamLeaderAccess && pathname === href) {
         return true;
     }
     // For team leader, we want to highlight the parent route
-    if (isTeamLeader && href !== '/dashboard' && pathname.startsWith(href)) {
+    if (hasTeamLeaderAccess && href !== '/dashboard' && pathname.startsWith(href)) {
         return true;
     }
-    
+
     return pathname === href;
   }
 

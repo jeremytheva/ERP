@@ -16,38 +16,39 @@ export default function StrategicAdvisorPage() {
     const { profile } = useAuth();
     const { tasks, updateTask } = useTasks();
     const { gameState } = useGameState();
-    const { teamLeader } = useTeamSettings();
+    const { visibleRoles } = useTeamSettings();
     const { activeTaskId, openedTaskId, setOpenedTaskId, getTaskRef } = useTaskNavigation();
     
     const currentRound = gameState.kpiHistory[gameState.kpiHistory.length - 1]?.round || 1;
-    const isTeamLeader = profile?.id === teamLeader;
+    const canViewTeamLeader = visibleRoles.includes("Team Leader");
 
     const userRoles = useMemo(() => {
-        if (!profile) return [];
-        const roles: Role[] = [profile.name as Role];
-        if (isTeamLeader) {
-            roles.push("Team Leader");
+        if (visibleRoles.length > 0) {
+            return visibleRoles;
         }
-        return roles;
-    }, [profile, isTeamLeader]);
+        if (profile) {
+            return [profile.name as Role];
+        }
+        return [];
+    }, [visibleRoles, profile]);
 
     const pricingTasks = useMemo(() => {
-        if (!profile) return [];
+        if (userRoles.length === 0) return [];
         return tasks.filter(task =>
             userRoles.includes(task.role) &&
             task.transactionCode.includes("VK32") &&
              (task.roundRecurrence === "Continuous" || (task.startRound ?? 1) <= currentRound)
         ).sort((a,b) => a.priority.localeCompare(b.priority));
-    }, [tasks, profile, currentRound, userRoles]);
+    }, [tasks, currentRound, userRoles]);
 
     const strategyTasks = useMemo(() => {
-        if (!isTeamLeader) return [];
+        if (!canViewTeamLeader) return [];
         return tasks.filter(task =>
             task.role === "Team Leader" &&
             (task.transactionCode === "N/A (Team Coordination)" || task.transactionCode.includes("F.01") || task.transactionCode.includes("Dashboard")) &&
             (task.roundRecurrence === "Continuous" || (task.startRound ?? 1) <= currentRound)
         ).sort((a, b) => a.priority.localeCompare(b.priority));
-    }, [tasks, isTeamLeader, currentRound]);
+    }, [tasks, canViewTeamLeader, currentRound]);
     
     const allTasksForPage = useMemo(() => [...strategyTasks, ...pricingTasks], [strategyTasks, pricingTasks]);
     
@@ -79,7 +80,7 @@ export default function StrategicAdvisorPage() {
 
     return (
         <div className="space-y-6">
-            {isTeamLeader && strategyTasks.length > 0 && (
+            {canViewTeamLeader && strategyTasks.length > 0 && (
                  <Card>
                     <CardHeader>
                         <div className="flex items-center gap-3">

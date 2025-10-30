@@ -1,41 +1,54 @@
 
 "use client";
 
-import { useTeamSettings } from "@/hooks/use-team-settings";
+import { useTeamSettings, TEAM_LEADER_ROLE_ID } from "@/hooks/use-team-settings";
 import { Label } from "@/components/ui/label";
-import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { Checkbox } from "@/components/ui/checkbox";
 import { useUserProfiles } from "@/hooks/use-user-profiles";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
 import { USER_PROFILES } from "@/hooks/use-user-profiles";
+import { useMemo } from "react";
 
 export function TeamSettings() {
-  const { teamLeader, setTeamLeader } = useTeamSettings();
+  const { visibleRoleIds, setRoleVisibility } = useTeamSettings();
   const { profiles } = useUserProfiles();
 
-  const availableRoles = profiles.length > 0 ? profiles : USER_PROFILES;
+  const availableRoles = useMemo(() => {
+    const baseRoles = (profiles.length > 0 ? profiles : USER_PROFILES).map(({ id, name }) => ({ id, name }));
+    return [
+      ...baseRoles,
+      { id: TEAM_LEADER_ROLE_ID, name: "Team Leader" },
+    ];
+  }, [profiles]);
 
 
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Assign Team Leader</CardTitle>
+        <CardTitle>Select Visible Roles</CardTitle>
         <CardDescription>
-          The Team Leader will have additional responsibilities and tasks. This can be any role.
+          Choose which roles should surface their insights and tasks on the main workspace.
         </CardDescription>
       </CardHeader>
       <CardContent>
-        <RadioGroup
-          value={teamLeader || ""}
-          onValueChange={setTeamLeader}
-          className="space-y-2"
-        >
-          {availableRoles.map((profile) => (
-            <div key={profile.id} className="flex items-center space-x-2">
-              <RadioGroupItem value={profile.id} id={profile.id} />
-              <Label htmlFor={profile.id}>{profile.name}</Label>
-            </div>
-          ))}
-        </RadioGroup>
+        <div className="space-y-3">
+          {availableRoles.map((role) => {
+            const isChecked = visibleRoleIds.includes(role.id);
+
+            return (
+              <div key={role.id} className="flex items-center space-x-3">
+                <Checkbox
+                  id={role.id}
+                  checked={isChecked}
+                  onCheckedChange={(checked) => setRoleVisibility(role.id, checked === true)}
+                />
+                <Label htmlFor={role.id} className="leading-tight">
+                  {role.name}
+                </Label>
+              </div>
+            );
+          })}
+        </div>
       </CardContent>
     </Card>
   );

@@ -54,17 +54,20 @@ export const UserProfilesProvider = ({ children }: { children: ReactNode }) => {
                 batch.set(profileDocRef, profile);
             });
             // Non-blocking commit
-            batch.commit().catch(error => {
+            batch.commit().catch(() => {
                  const contextualError = new FirestorePermissionError({
                     path: 'users',
                     operation: 'write',
                 });
                 errorEmitter.emit('permission-error', contextualError);
+                setProfiles(USER_PROFILES);
+                setLoading(false);
             });
-        } else {
-            setProfiles(firestoreProfiles.length > 0 ? firestoreProfiles : USER_PROFILES);
-            setLoading(false);
         }
+
+        const resolvedProfiles = firestoreProfiles.length > 0 ? firestoreProfiles : USER_PROFILES;
+        setProfiles(resolvedProfiles);
+        setLoading(false);
     },
     (error: FirestoreError) => {
         const contextualError = new FirestorePermissionError({

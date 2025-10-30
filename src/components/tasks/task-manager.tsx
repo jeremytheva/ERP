@@ -50,7 +50,9 @@ export function TaskManager() {
     return acc;
   }, {} as Record<Role, Task[]>);
 
-  const availableRounds = Array.from({ length: gameState.kpiHistory.length }, (_, i) => i + 1);
+  const availableRounds = gameState.kpiHistory.length
+    ? Array.from(new Set(gameState.kpiHistory.map((entry) => entry.round))).sort((a, b) => a - b)
+    : [1];
 
   return (
     <div className="space-y-6">

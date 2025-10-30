@@ -99,3 +99,10 @@ export type Task = {
   dataFields?: TaskDataField[];
   completed: boolean; // Added completion status
 };
+
+export type PeerData = {
+  name: string;
+  companyValuation: number;
+  netIncome: number;
+  cumulativeCO2eEmissions: number;
+};

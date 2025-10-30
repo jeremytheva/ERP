@@ -11,6 +11,8 @@ import { useGameState } from '@/hooks/use-game-data';
 import type { Task, Role } from "@/types";
 import { useTeamSettings } from "@/hooks/use-team-settings";
 import { useTaskNavigation } from "@/context/task-navigation-context";
+import { AdvisorInsights } from "@/components/ai/advisor-insights";
+import { StrategicNotesEditor } from "@/components/ai/strategic-notes-editor";
 
 export default function StrategicAdvisorPage() {
     const { profile } = useAuth();
@@ -134,6 +136,22 @@ export default function StrategicAdvisorPage() {
                             />
                         </div>
                     ))}
+                </CardContent>
+            </Card>
+
+            <Card>
+                <CardHeader>
+                    <div className="flex items-center gap-3">
+                        <Lightbulb className="h-6 w-6" />
+                        <div>
+                            <CardTitle className="font-headline text-3xl">AI Advisor Insights</CardTitle>
+                            <CardDescription>Review the latest saved scenario analysis and capture team notes.</CardDescription>
+                        </div>
+                    </div>
+                </CardHeader>
+                <CardContent className="space-y-6">
+                    <AdvisorInsights />
+                    <StrategicNotesEditor />
                 </CardContent>
             </Card>
         </div>

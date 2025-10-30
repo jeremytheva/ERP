@@ -117,39 +117,37 @@ export function MainSidebar() {
       <SidebarMenu className="flex-1 p-2">
         <SidebarGroup>
             <SidebarGroupLabel>Menu</SidebarGroupLabel>
-            {menuItems.map(({ href, label, icon: Icon }) => {
-              return (
-                <SidebarMenuItem key={label}>
-                    <Link href={href} passHref>
-                    <SidebarMenuButton
-                        as="a"
-                        isActive={isActive(href)}
-                        tooltip={{ children: label, side: "right", align:"center" }}
-                        className="justify-start"
-                    >
-                        <Icon />
-                        <span>{label}</span>
-                    </SidebarMenuButton>
-                    </Link>
-                </SidebarMenuItem>
-              )
-            })}
+            {menuItems.map(({ href, label, icon: Icon }) => (
+              <SidebarMenuItem key={label}>
+                <SidebarMenuButton
+                  asChild
+                  isActive={isActive(href)}
+                  tooltip={{ children: label, side: "right", align: "center" }}
+                  className="justify-start"
+                >
+                  <Link href={href}>
+                    <Icon />
+                    <span>{label}</span>
+                  </Link>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+            ))}
         </SidebarGroup>
         
         <SidebarSeparator />
         
         <SidebarMenuItem>
-            <Link href="/settings" passHref>
-                <SidebarMenuButton
-                as="a"
-                isActive={pathname.startsWith("/settings")}
-                tooltip={{ children: "Settings", side: "right", align:"center" }}
-                className="justify-start"
-                >
-                <Settings />
-                <span>Settings</span>
-                </SidebarMenuButton>
+          <SidebarMenuButton
+            asChild
+            isActive={pathname.startsWith("/settings")}
+            tooltip={{ children: "Settings", side: "right", align: "center" }}
+            className="justify-start"
+          >
+            <Link href="/settings">
+              <Settings />
+              <span>Settings</span>
             </Link>
+          </SidebarMenuButton>
         </SidebarMenuItem>
         
       </SidebarMenu>

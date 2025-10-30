@@ -11,6 +11,7 @@ import { useGameState } from '@/hooks/use-game-data';
 import type { Task, Role } from "@/types";
 import { useTeamSettings } from "@/hooks/use-team-settings";
 import { useTaskNavigation } from "@/context/task-navigation-context";
+import { DebriefReportView } from "@/components/ai/debrief-report-view";
 
 export default function DebriefingPage() {
     const { profile } = useAuth();
@@ -130,6 +131,21 @@ export default function DebriefingPage() {
                     </CardContent>
                 </Card>
             )}
+
+            <Card>
+                <CardHeader>
+                    <div className="flex items-center gap-3">
+                        <FileText className="h-6 w-6" />
+                        <div>
+                            <CardTitle className="font-headline text-3xl">AI Debrief Archive</CardTitle>
+                            <CardDescription>Review the latest AI-generated round summary and key highlights.</CardDescription>
+                        </div>
+                    </div>
+                </CardHeader>
+                <CardContent>
+                    <DebriefReportView />
+                </CardContent>
+            </Card>
         </div>
     );
 }

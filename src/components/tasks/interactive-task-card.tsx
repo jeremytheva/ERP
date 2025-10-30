@@ -15,7 +15,8 @@ import { Button } from "@/components/ui/button";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
-import type { Task, TaskDataField, TaskPriority, GameState } from "@/types";
+import { PRIORITY_BADGE_VARIANT } from "./constants";
+import type { Task, TaskDataField, GameState } from "@/types";
 import { Clock, Code, ChevronDown, CheckCircle, Circle, AlertTriangle, Info, SkipForward, Sparkles, Loader2 } from "lucide-react";
 import { Separator } from "../ui/separator";
 import { Card } from "../ui/card";
@@ -32,13 +33,6 @@ interface InteractiveTaskCardProps {
   onUpdate: (task: Task) => void;
   onFindNext: (taskId: string) => void;
 }
-
-const priorityVariant: { [key in TaskPriority]: "destructive" | "default" | "secondary" | "outline" } = {
-  Critical: "destructive",
-  High: "default",
-  Medium: "secondary",
-  Low: "outline",
-};
 
 const completionIcon = (task: Task) => {
     if (task.completionType === "Data-Confirmed") {
@@ -201,7 +195,7 @@ export const InteractiveTaskCard = React.forwardRef<HTMLDivElement, InteractiveT
                 </div>
               </div>
               <Badge
-                variant={priorityVariant[task.priority]}
+                variant={PRIORITY_BADGE_VARIANT[task.priority]}
                 className="hidden sm:inline-flex"
               >
                 {task.priority}

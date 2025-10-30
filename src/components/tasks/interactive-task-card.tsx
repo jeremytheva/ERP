@@ -78,8 +78,67 @@ export const InteractiveTaskCard = React.forwardRef<HTMLDivElement, InteractiveT
     const isCompleted = task.completed;
     const dependencies = task.dependencyIDs?.map(depId => allTasks.find(t => t.id === depId)).filter(Boolean) as Task[] | undefined;
     const areDependenciesMet = !dependencies || dependencies.every(dep => dep.completed);
-    
+
     const hasAiRationale = task.dataFields?.some(df => df.aiRationale);
+    const currentRound = gameState.kpiHistory[gameState.kpiHistory.length - 1]?.round || 1;
+
+    const statusBadge = React.useMemo(() => {
+        if (isCompleted) {
+            return {
+                label: "Completed",
+                className: "bg-emerald-100 text-emerald-700 border-emerald-200 hover:bg-emerald-100",
+                title: "Task has been completed."
+            };
+        }
+
+        if (!areDependenciesMet) {
+            return {
+                label: "Blocked",
+                className: "bg-amber-100 text-amber-800 border-amber-200 hover:bg-amber-100",
+                title: "Waiting on prerequisite tasks to be finished."
+            };
+        }
+
+        if (isCurrent) {
+            return {
+                label: "Current",
+                className: "bg-blue-100 text-blue-700 border-blue-200 hover:bg-blue-100",
+                title: "This is the next prioritized task."
+            };
+        }
+
+        const timeframeLabels: Record<string, string> = {
+            StartPhase: "Start Phase",
+            MidPhase: "Mid Phase",
+            EndPhase: "End Phase",
+        };
+
+        const waitingContext: string[] = [];
+
+        if (task.timeframeConstraint && task.timeframeConstraint !== "None") {
+            const timeframeText = timeframeLabels[task.timeframeConstraint];
+            if (timeframeText) {
+                waitingContext.push(timeframeText);
+            }
+        }
+
+        if (task.roundRecurrence === "RoundStart") {
+            waitingContext.push("Round Start");
+        } else if (task.roundRecurrence === "Once" && task.startRound && task.startRound > currentRound) {
+            waitingContext.push(`Round ${task.startRound}`);
+        }
+
+        const contextLabel = waitingContext.length > 0 ? `Waiting • ${waitingContext.join(" • ")}` : "Waiting";
+        const title = waitingContext.length > 0
+            ? `Scheduled for ${waitingContext.join(", ")}.`
+            : "Ready once time allows.";
+
+        return {
+            label: contextLabel,
+            className: "bg-muted text-muted-foreground border-transparent",
+            title,
+        };
+    }, [areDependenciesMet, currentRound, isCompleted, isCurrent, task.roundRecurrence, task.startRound, task.timeframeConstraint]);
 
     const form = useForm({
         resolver: task.dataFields ? zodResolver(generateFormSchema(task.dataFields)) : undefined,
@@ -200,18 +259,32 @@ export const InteractiveTaskCard = React.forwardRef<HTMLDivElement, InteractiveT
                   </div>
                 </div>
               </div>
-              <Badge
-                variant={priorityVariant[task.priority]}
-                className="hidden sm:inline-flex"
-              >
-                {task.priority}
-              </Badge>
-              <ChevronDown
-                className={cn(
-                  "h-5 w-5 transition-transform",
-                  isActive && "rotate-180"
+              <div className="flex flex-wrap items-center justify-end gap-2">
+                {statusBadge && (
+                  <Badge
+                    variant="outline"
+                    className={cn(
+                      "whitespace-nowrap",
+                      statusBadge.className
+                    )}
+                    title={statusBadge.title}
+                  >
+                    {statusBadge.label}
+                  </Badge>
                 )}
-              />
+                <Badge
+                  variant={priorityVariant[task.priority]}
+                  className="whitespace-nowrap"
+                >
+                  {task.priority}
+                </Badge>
+                <ChevronDown
+                  className={cn(
+                    "h-5 w-5 flex-shrink-0 transition-transform",
+                    isActive && "rotate-180"
+                  )}
+                />
+              </div>
             </div>
           </CollapsibleTrigger>
           <CollapsibleContent>

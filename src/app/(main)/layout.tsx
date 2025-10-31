@@ -12,7 +12,8 @@ import { ConfirmRoundStartDialog } from "@/components/game/confirm-round-start-d
 import { GoToCurrentTaskButton } from "@/context/task-navigation-context";
 import { useTeamSettings } from "@/hooks/use-team-settings";
 
-const AUTH_PAGES = ["/"]; // Add any other auth-related pages here
+const LOGIN_ROUTE = "/login";
+const AUTH_PAGES = [LOGIN_ROUTE]; // Add any other auth-related pages here
 
 export default function MainLayout({ children }: { children: React.ReactNode }) {
   const { user, profile, loading } = useAuth();
@@ -24,7 +25,7 @@ export default function MainLayout({ children }: { children: React.ReactNode }) 
 
   useEffect(() => {
     if (!loading && !user && !AUTH_PAGES.includes(pathname)) {
-      router.push("/");
+      router.push(LOGIN_ROUTE);
     }
   }, [user, loading, router, pathname]);
 

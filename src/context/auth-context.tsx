@@ -9,6 +9,9 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { useAuth as useFirebaseAuth } from "@/firebase";
 import { useUserProfiles } from "@/hooks/use-user-profiles";
 
+const LOGIN_ROUTE = "/login";
+const DASHBOARD_ROUTE = "/dashboard";
+
 
 interface AuthContextType {
   user: User | null;
@@ -42,20 +45,20 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         setProfile(userProfile);
         // If there's a user but no profile, and we are not on the auth page, it might be the initial login
         // but if we have a user and profile, and are on the auth page, redirect to dashboard.
-        if (userProfile && pathname === '/') {
-          router.push('/dashboard');
-        } else if (!userProfile && pathname !== '/') {
+        if (userProfile && pathname === LOGIN_ROUTE) {
+          router.push(DASHBOARD_ROUTE);
+        } else if (!userProfile && pathname !== LOGIN_ROUTE) {
           // If profile is lost somehow, send back to login
           // but preserve history for back button
-          router.replace('/');
+          router.replace(LOGIN_ROUTE);
         }
 
       } else {
         setUser(null);
         setProfile(null);
         localStorage.removeItem("userProfileId");
-        if (pathname !== '/') {
-           router.push("/");
+        if (pathname !== LOGIN_ROUTE) {
+           router.push(LOGIN_ROUTE);
         }
       }
       setLoading(false);
@@ -75,10 +78,10 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         if (userProfile) {
             localStorage.setItem("userProfileId", userProfile.id);
         }
-        
+
         // Only push to dashboard if we are coming from the login page
-        if(pathname === '/') {
-            router.push("/dashboard");
+        if(pathname === LOGIN_ROUTE) {
+            router.push(DASHBOARD_ROUTE);
         }
     } catch (error)
     {
@@ -95,7 +98,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     setUser(null);
     setProfile(null);
     localStorage.removeItem("userProfileId");
-    router.push("/");
+    router.push(LOGIN_ROUTE);
     setLoading(false);
   };
   

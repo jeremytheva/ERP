@@ -12,16 +12,36 @@ export function initializeFirebase() {
     // integrates with the initializeApp() function to provide the environment variables needed to
     // populate the FirebaseOptions in production. It is critical that we attempt to call initializeApp()
     // without arguments.
+
+    const firebaseDefaultsFromProcess =
+      typeof process !== 'undefined' && typeof process.env !== 'undefined'
+        ? process.env.__FIREBASE_DEFAULTS__
+        : undefined;
+
+    const firebaseDefaultsFromGlobal =
+      typeof globalThis !== 'undefined'
+        ? (globalThis as { __FIREBASE_DEFAULTS__?: unknown }).__FIREBASE_DEFAULTS__
+        : undefined;
+
+    const canUseAutomaticInitialization = Boolean(
+      firebaseDefaultsFromProcess ?? firebaseDefaultsFromGlobal,
+    );
+
     let firebaseApp;
-    try {
-      // Attempt to initialize via Firebase App Hosting environment variables
-      firebaseApp = initializeApp();
-    } catch (e) {
-      // Only warn in production because it's normal to use the firebaseConfig to initialize
-      // during development
-      if (process.env.NODE_ENV === "production") {
-        console.warn('Automatic initialization failed. Falling back to firebase config object.', e);
+
+    if (canUseAutomaticInitialization) {
+      try {
+        // Attempt to initialize via Firebase App Hosting environment variables
+        firebaseApp = initializeApp();
+      } catch (e) {
+        // Only warn in production because it's normal to use the firebaseConfig to initialize
+        // during development
+        if (process.env.NODE_ENV === "production") {
+          console.warn('Automatic initialization failed. Falling back to firebase config object.', e);
+        }
+        firebaseApp = initializeApp(firebaseConfig);
       }
+    } else {
       firebaseApp = initializeApp(firebaseConfig);
     }
 
